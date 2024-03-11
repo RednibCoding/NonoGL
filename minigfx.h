@@ -1306,6 +1306,8 @@ void mgBlitMode(MgSurface* dst, int mode) {
 
 // mg_loadpng.c
 
+#include <errno.h>
+
 typedef struct {
     const unsigned char *p, *end;
 } PNG;
