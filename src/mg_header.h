@@ -346,6 +346,10 @@ extern "C"
     } MgKey;
 
     // Returns mouse input for a window.
+    // Example:
+    // int mx, my, buttons = 0;
+    // mgMouse(surface, &mx, &my, &buttons);
+    // if (buttons & 1 || buttons & 2 || buttons & 4) printf("Left/Right/Middle button pressed");
     void mgMouse(MgSurface *surface, int *x, int *y, int *buttons);
 
     typedef struct
