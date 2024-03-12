@@ -1,8 +1,9 @@
 #pragma once
 
 #ifdef __cplusplus
-extern "C" {
-#endif^
+extern "C"
+{
+#endif ^
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   Copy Start  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -12,35 +13,36 @@ extern "C" {
 // Comment the following if you want the window to maximize to fullscreen when user maximizes the window
 #define MG_DO_NOT_MAXIMIZE_TO_FULLSCREEN
 
-// Compiler configuration ----------------------------------------------------------------
-    #ifdef _MSC_VER
-    #define MG_INLINE static __forceinline
-    #else
-    #define MG_INLINE static inline
-    #endif
+    // Compiler configuration ----------------------------------------------------------------
+#ifdef _MSC_VER
+#define MG_INLINE static __forceinline
+#else
+#define MG_INLINE static inline
+#endif
 
-// Bitmaps ----------------------------------------------------------------
+    // Bitmaps ----------------------------------------------------------------
 
     // This struct contains one pixel.
-    typedef struct {
+    typedef struct
+    {
         unsigned char r, g, b, a;
     } MgPixel;
 
-    // Window flags.
-    #define MG_FIXED      0   // window's bitmap is a fixed size (default)
-    #define MG_AUTO       1   // window's bitmap is scaled with the window
-    #define MG_2X         2   // always enforce (at least) 2X pixel scale
-    #define MG_3X         4   // always enforce (at least) 3X pixel scale
-    #define MG_4X         8   // always enforce (at least) 4X pixel scale
-    #define MG_RETINA     16  // enable retina support on OS X
-    #define MG_NOCURSOR   32  // hide cursor
-    #define MG_FULLSCREEN 64  // start in full-screen mode
+// Window flags.
+#define MG_FIXED 0       // window's bitmap is a fixed size (default)
+#define MG_AUTO 1        // window's bitmap is scaled with the window
+#define MG_2X 2          // always enforce (at least) 2X pixel scale
+#define MG_3X 4          // always enforce (at least) 3X pixel scale
+#define MG_4X 8          // always enforce (at least) 4X pixel scale
+#define MG_NOCURSOR 16   // hide cursor
+#define MG_FULLSCREEN 32 // start in full-screen mode
 
     // A Mg bitmap.
-    typedef struct MgSurface {
+    typedef struct MgSurface
+    {
         int w, h;           // width/height (unscaled)
         int cx, cy, cw, ch; // clip rect
-        MgPixel *pixels;        // pixel data
+        MgPixel *pixels;    // pixel data
         void *handle;       // OS window handle, NULL for off-screen bitmaps.
         int blitMode;       // Target bitmap blit mode
     } MgSurface;
@@ -56,11 +58,6 @@ extern "C" {
     // In MG_AUTO mode, the initial window size is set to the bitmap size times the pixel
     // scale. Resizing the window will resize the bitmap using the specified scale.
     // For example, in forced 2X mode, the window will be twice as wide (and high) as the bitmap.
-    //
-    // Turning on MG_RETINA mode will request full backing resolution on OSX, meaning that
-    // the effective window size might be integer scaled to a larger size. In MG_AUTO mode,
-    // this means that the MgSurface bitmap will change size if the window is moved between
-    // retina and non-retina screens.
     //
     MgSurface *mgWindow(int w, int h, const char *title, int flags);
 
@@ -82,7 +79,7 @@ extern "C" {
 
     // Sets post shader for a window.
     // This replaces the built-in post-FX shader.
-    void mgSetPostShader(MgSurface *surface, const char* code, int size);
+    void mgSetPostShader(MgSurface *surface, const char *code, int size);
 
     // Sets post-FX properties for a window.
     //
@@ -93,8 +90,7 @@ extern "C" {
     // p4: contrast - contrast boost (1 = no change, 2 = 2X contrast, etc)
     void mgSetPostFX(MgSurface *surface, float p1, float p2, float p3, float p4);
 
-
-// Drawing ----------------------------------------------------------------
+    // Drawing ----------------------------------------------------------------
 
     // Helper for reading pixels.
     // For high performance, just access surface->pixels directly.
@@ -189,9 +185,10 @@ extern "C" {
     // Clips and blends.
     void mgBlitTint(MgSurface *dest, MgSurface *src, int dx, int dy, int sx, int sy, int w, int h, MgPixel tint);
 
-    enum MGBlitMode {
-        MG_KEEP_ALPHA = 0,    // Keep destination alpha value
-        MG_BLEND_ALPHA = 1,   // Blend destination alpha (default)
+    enum MGBlitMode
+    {
+        MG_KEEP_ALPHA = 0,  // Keep destination alpha value
+        MG_BLEND_ALPHA = 1, // Blend destination alpha (default)
     };
 
     // Set destination bitmap blend mode for blit operations.
@@ -200,29 +197,41 @@ extern "C" {
     // Helper for making colors.
     MG_INLINE MgPixel mgRGB(unsigned char r, unsigned char g, unsigned char b)
     {
-        MgPixel p; p.r = r; p.g = g; p.b = b; p.a = 0xff; return p;
+        MgPixel p;
+        p.r = r;
+        p.g = g;
+        p.b = b;
+        p.a = 0xff;
+        return p;
     }
 
     // Helper for making colors.
     MG_INLINE MgPixel mgRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
     {
-        MgPixel p; p.r = r; p.g = g; p.b = b; p.a = a; return p;
+        MgPixel p;
+        p.r = r;
+        p.g = g;
+        p.b = b;
+        p.a = a;
+        return p;
     }
 
+    // Font printing ----------------------------------------------------------
 
-// Font printing ----------------------------------------------------------
-
-    typedef struct MgGlyph {
+    typedef struct MgGlyph
+    {
         int code, x, y, w, h;
     } MgGlyph;
 
-    typedef struct MgFont {
+    typedef struct MgFont
+    {
         MgSurface *surface;
         int numGlyphs;
         MgGlyph *glyphs;
     } MgFont;
 
-    typedef enum TCodepage {
+    typedef enum TCodepage
+    {
         TCP_ASCII = 0,
         TCP_1252 = 1252,
         TCP_UTF32 = 12001
@@ -260,32 +269,94 @@ extern "C" {
     // The built-in font.
     extern MgFont *mgfont;
 
-
-// User Input -------------------------------------------------------------
+    // User Input -------------------------------------------------------------
 
     // Key scancodes. For letters/numbers, use ASCII ('A'-'Z' and '0'-'9').
-    typedef enum {
-        MK_PAD0=128,MK_PAD1,MK_PAD2,MK_PAD3,MK_PAD4,MK_PAD5,MK_PAD6,MK_PAD7,MK_PAD8,MK_PAD9,
-        MK_PADMUL,MK_PADADD,MK_PADENTER,MK_PADSUB,MK_PADDOT,MK_PADDIV,
-        MK_F1,MK_F2,MK_F3,MK_F4,MK_F5,MK_F6,MK_F7,MK_F8,MK_F9,MK_F10,MK_F11,MK_F12,
-        MK_BACKSPACE,MK_TAB,MK_RETURN,MK_SHIFT,MK_CONTROL,MK_ALT,MK_PAUSE,MK_CAPSLOCK,
-        MK_ESCAPE,MK_SPACE,MK_PAGEUP,MK_PAGEDN,MK_END,MK_HOME,MK_LEFT,MK_UP,MK_RIGHT,MK_DOWN,
-        MK_INSERT,MK_DELETE,MK_LWIN,MK_RWIN,MK_NUMLOCK,MK_SCROLL,MK_LSHIFT,MK_RSHIFT,
-        MK_LCONTROL,MK_RCONTROL,MK_LALT,MK_RALT,MK_SEMICOLON,MK_EQUALS,MK_COMMA,MK_MINUS,
-        MK_DOT,MK_SLASH,MK_BACKTICK,MK_LSQUARE,MK_BACKSLASH,MK_RSQUARE,MK_TICK
+    typedef enum
+    {
+        MK_PAD0 = 128,
+        MK_PAD1,
+        MK_PAD2,
+        MK_PAD3,
+        MK_PAD4,
+        MK_PAD5,
+        MK_PAD6,
+        MK_PAD7,
+        MK_PAD8,
+        MK_PAD9,
+        MK_PADMUL,
+        MK_PADADD,
+        MK_PADENTER,
+        MK_PADSUB,
+        MK_PADDOT,
+        MK_PADDIV,
+        MK_F1,
+        MK_F2,
+        MK_F3,
+        MK_F4,
+        MK_F5,
+        MK_F6,
+        MK_F7,
+        MK_F8,
+        MK_F9,
+        MK_F10,
+        MK_F11,
+        MK_F12,
+        MK_BACKSPACE,
+        MK_TAB,
+        MK_RETURN,
+        MK_SHIFT,
+        MK_CONTROL,
+        MK_ALT,
+        MK_PAUSE,
+        MK_CAPSLOCK,
+        MK_ESCAPE,
+        MK_SPACE,
+        MK_PAGEUP,
+        MK_PAGEDN,
+        MK_END,
+        MK_HOME,
+        MK_LEFT,
+        MK_UP,
+        MK_RIGHT,
+        MK_DOWN,
+        MK_INSERT,
+        MK_DELETE,
+        MK_LWIN,
+        MK_RWIN,
+        MK_NUMLOCK,
+        MK_SCROLL,
+        MK_LSHIFT,
+        MK_RSHIFT,
+        MK_LCONTROL,
+        MK_RCONTROL,
+        MK_LALT,
+        MK_RALT,
+        MK_SEMICOLON,
+        MK_EQUALS,
+        MK_COMMA,
+        MK_MINUS,
+        MK_DOT,
+        MK_SLASH,
+        MK_BACKTICK,
+        MK_LSQUARE,
+        MK_BACKSLASH,
+        MK_RSQUARE,
+        MK_TICK
     } MgKey;
 
     // Returns mouse input for a window.
     void mgMouse(MgSurface *surface, int *x, int *y, int *buttons);
 
-    typedef struct {
+    typedef struct
+    {
         int x;
         int y;
     } MgTouchPoint;
 
     // Reads touch input for a window.
     // Returns number of touch points read.
-    int mgTouch(MgSurface *surface, MgTouchPoint* points, int maxPoints);
+    int mgTouch(MgSurface *surface, MgTouchPoint *points, int maxPoints);
 
     // Reads the keyboard for a window.
     // Returns non-zero if a key is pressed/held.
@@ -297,12 +368,7 @@ extern "C" {
     // Returns the Unicode value of the last key pressed, or 0 if none.
     int mgReadChar(MgSurface *surface);
 
-    // Show / hide virtual keyboard.
-    // (Only available on iOS / Android)
-    void mgShowKeyboard(int show);
-
-
-// Bitmap I/O -------------------------------------------------------------
+    // Bitmap I/O -------------------------------------------------------------
 
     // Loads a PNG, from either a file or memory. (fileName is UTF-8)
     // On error, returns NULL and sets errno.
@@ -312,7 +378,6 @@ extern "C" {
     // Saves a PNG to a file. (fileName is UTF-8)
     // On error, returns zero and sets errno.
     int mgSaveImage(const char *fileName, MgSurface *surface);
-
 
     // Helpers ----------------------------------------------------------------
 
@@ -341,15 +406,13 @@ extern "C" {
     // Encodes a single UTF8 codepoint and returns the next pointer.
     char *mgEncodeUTF8(char *text, int cp);
 
-
-// Extensions ----------------------------------------------------------------
+    // Extensions ----------------------------------------------------------------
 
     // Returns the frames per second based on the given delta time.
     // Delta time can be received by calling 'mgTime()' once in the main loop.
     int mgFps(float dt);
 
-
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   Copy End  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   Copy End  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #ifdef __cplusplus
 }

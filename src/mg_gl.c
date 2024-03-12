@@ -1,9 +1,7 @@
 #include "mg_internal.h"
 #include <assert.h>
 
-
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   Copy Start  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 #if __linux__
 #define GLX_GLXEXT_PROTOTYPES
@@ -18,12 +16,12 @@ extern const int mg_upscale_gl_vs_size, mg_upscale_gl_fs_size, mg_default_fx_gl_
 #ifdef MG_GAPI_GL_WIN_USE_GLEXT
 #include <glext.h>
 #include <wglext.h>
-#else  // short version of glext.h and wglext.h so we don't need to depend on them
+#else // short version of glext.h and wglext.h so we don't need to depend on them
 #ifndef APIENTRY
 #define APIENTRY
 #endif
 #ifndef APIENTRYP
-#define APIENTRYP APIENTRY*
+#define APIENTRYP APIENTRY *
 #endif
 typedef ptrdiff_t GLsizeiptr;
 #define GL_COMPILE_STATUS 0x8B81
@@ -34,10 +32,10 @@ typedef ptrdiff_t GLsizeiptr;
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_BGRA 0x80E1
 #define GL_TEXTURE0 0x84C0
-typedef void(APIENTRYP PFNGLGENVERTEXARRAYSPROC)(GLsizei n, GLuint* arrays);
-typedef void(APIENTRYP PFNGLGENBUFFERSARBPROC)(GLsizei n, GLuint* buffers);
+typedef void(APIENTRYP PFNGLGENVERTEXARRAYSPROC)(GLsizei n, GLuint *arrays);
+typedef void(APIENTRYP PFNGLGENBUFFERSARBPROC)(GLsizei n, GLuint *buffers);
 typedef void(APIENTRYP PFNGLBINDBUFFERPROC)(GLenum target, GLuint buffer);
-typedef void(APIENTRYP PFNGLBUFFERDATAPROC)(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+typedef void(APIENTRYP PFNGLBUFFERDATAPROC)(GLenum target, GLsizeiptr size, const void *data, GLenum usage);
 typedef void(APIENTRYP PFNGLBINDVERTEXARRAYPROC)(GLuint array);
 typedef void(APIENTRYP PFNGLENABLEVERTEXATTRIBARRAYPROC)(GLuint index);
 typedef void(APIENTRYP PFNGLVERTEXATTRIBPOINTERPROC)(GLuint index,
@@ -45,30 +43,30 @@ typedef void(APIENTRYP PFNGLVERTEXATTRIBPOINTERPROC)(GLuint index,
                                                      GLenum type,
                                                      GLboolean normalized,
                                                      GLsizei stride,
-                                                     const void* pointer);
+                                                     const void *pointer);
 typedef GLuint(APIENTRYP PFNGLCREATESHADERPROC)(GLenum type);
 typedef char GLchar;
 typedef void(APIENTRYP PFNGLSHADERSOURCEPROC)(GLuint shader,
                                               GLsizei count,
-                                              const GLchar* const* string,
-                                              const GLint* length);
+                                              const GLchar *const *string,
+                                              const GLint *length);
 typedef void(APIENTRYP PFNGLCOMPILESHADERPROC)(GLuint shader);
 typedef GLuint(APIENTRYP PFNGLCREATEPROGRAMPROC)(void);
 typedef void(APIENTRYP PFNGLATTACHSHADERPROC)(GLuint program, GLuint shader);
 typedef void(APIENTRYP PFNGLLINKPROGRAMPROC)(GLuint program);
 typedef void(APIENTRYP PFNGLDELETESHADERPROC)(GLuint shader);
 typedef void(APIENTRYP PFNGLDELETEPROGRAMPROC)(GLuint program);
-typedef void(APIENTRYP PFNGLGETSHADERIVPROC)(GLuint shader, GLenum pname, GLint* params);
-typedef void(APIENTRYP PFNGLGETSHADERINFOLOGPROC)(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
-typedef void(APIENTRYP PFNGLGETPROGRAMIVPROC)(GLuint program, GLenum pname, GLint* params);
-typedef void(APIENTRYP PFNGLGETPROGRAMINFOLOGPROC)(GLuint program, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
+typedef void(APIENTRYP PFNGLGETSHADERIVPROC)(GLuint shader, GLenum pname, GLint *params);
+typedef void(APIENTRYP PFNGLGETSHADERINFOLOGPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef void(APIENTRYP PFNGLGETPROGRAMIVPROC)(GLuint program, GLenum pname, GLint *params);
+typedef void(APIENTRYP PFNGLGETPROGRAMINFOLOGPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 typedef void(APIENTRYP PFNGLUSEPROGRAMPROC)(GLuint program);
-typedef GLint(APIENTRYP PFNGLGETUNIFORMLOCATIONPROC)(GLuint program, const GLchar* name);
+typedef GLint(APIENTRYP PFNGLGETUNIFORMLOCATIONPROC)(GLuint program, const GLchar *name);
 typedef void(APIENTRYP PFNGLUNIFORM4FPROC)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 typedef void(APIENTRYP PFNGLUNIFORMMATRIX4FVPROC)(GLint location,
                                                   GLsizei count,
                                                   GLboolean transpose,
-                                                  const GLfloat* value);
+                                                  const GLfloat *value);
 typedef void(APIENTRYP PFNGLACTIVETEXTUREPROC)(GLenum texture);
 #define WGL_DRAW_TO_WINDOW_ARB 0x2001
 #define WGL_SUPPORT_OPENGL_ARB 0x2010
@@ -80,13 +78,13 @@ typedef void(APIENTRYP PFNGLACTIVETEXTUREPROC)(GLenum texture);
 #define WGL_TYPE_RGBA_ARB 0x202B
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
-typedef BOOL(WINAPI* PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC hdc,
-                                                     const int* piAttribIList,
-                                                     const FLOAT* pfAttribFList,
+typedef BOOL(WINAPI *PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC hdc,
+                                                     const int *piAttribIList,
+                                                     const FLOAT *pfAttribFList,
                                                      UINT nMaxFormats,
-                                                     int* piFormats,
-                                                     UINT* nNumFormats);
-typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int* attribList);
+                                                     int *piFormats,
+                                                     UINT *nNumFormats);
+typedef HGLRC(WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int *attribList);
 #endif
 
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormat;
@@ -116,53 +114,59 @@ PFNGLUNIFORM4FPROC glUniform4f;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 
-int mgGL11Init(MgSurface* surface) {
+int mgGL11Init(MgSurface *surface)
+{
     int pixel_format;
-    MgInternal* win = mgInternal(surface);
-    GLStuff* gl = &win->gl;
-    PIXELFORMATDESCRIPTOR pfd = { sizeof(PIXELFORMATDESCRIPTOR),
-                                  1,
-                                  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_SWAP_EXCHANGE,
-                                  PFD_TYPE_RGBA,
-                                  32,  // color bits
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  24,  // depth
-                                  8,   // stencil
-                                  0,
-                                  PFD_MAIN_PLANE,  // is it ignored ?
-                                  0,
-                                  0,
-                                  0,
-                                  0 };
-    if (!(gl->dc = GetDC((HWND)surface->handle))) {
+    MgInternal *win = mgInternal(surface);
+    GLStuff *gl = &win->gl;
+    PIXELFORMATDESCRIPTOR pfd = {sizeof(PIXELFORMATDESCRIPTOR),
+                                 1,
+                                 PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_SWAP_EXCHANGE,
+                                 PFD_TYPE_RGBA,
+                                 32, // color bits
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 24, // depth
+                                 8,  // stencil
+                                 0,
+                                 PFD_MAIN_PLANE, // is it ignored ?
+                                 0,
+                                 0,
+                                 0,
+                                 0};
+    if (!(gl->dc = GetDC((HWND)surface->handle)))
+    {
         mgError(surface, "Cannot create OpenGL device context.\n");
         return -1;
     }
-    if (!(pixel_format = ChoosePixelFormat(gl->dc, &pfd))) {
+    if (!(pixel_format = ChoosePixelFormat(gl->dc, &pfd)))
+    {
         mgError(surface, "Cannot choose OpenGL pixel format.\n");
         return -1;
     }
-    if (!SetPixelFormat(gl->dc, pixel_format, &pfd)) {
+    if (!SetPixelFormat(gl->dc, pixel_format, &pfd))
+    {
         mgError(surface, "Cannot set OpenGL pixel format.\n");
         return -1;
     }
-    if (!(gl->hglrc = wglCreateContext(gl->dc))) {
+    if (!(gl->hglrc = wglCreateContext(gl->dc)))
+    {
         mgError(surface, "Cannot create OpenGL context.\n");
         return -1;
     }
-    if (!wglMakeCurrent(gl->dc, gl->hglrc)) {
+    if (!wglMakeCurrent(gl->dc, gl->hglrc))
+    {
         mgError(surface, "Cannot activate OpenGL context.\n");
         return -1;
     }
@@ -170,11 +174,12 @@ int mgGL11Init(MgSurface* surface) {
     return 0;
 }
 
-int mgGL33Init(MgSurface* surface) {
+int mgGL33Init(MgSurface *surface)
+{
     int pixel_format;
     UINT num_formats;
-    MgInternal* win = mgInternal(surface);
-    GLStuff* gl = &win->gl;
+    MgInternal *win = mgInternal(surface);
+    GLStuff *gl = &win->gl;
 
     wglChoosePixelFormat = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
     wglCreateContextAttribs = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
@@ -203,35 +208,39 @@ int mgGL33Init(MgSurface* surface) {
     glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
     glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
 
-    if (!wglChoosePixelFormat || !wglCreateContextAttribs) {
+    if (!wglChoosePixelFormat || !wglCreateContextAttribs)
+    {
         mgError(surface, "Cannot create OpenGL context.\n");
         return -1;
     }
-    const int attribList[] = { WGL_DRAW_TO_WINDOW_ARB,
-                               GL_TRUE,
-                               WGL_SUPPORT_OPENGL_ARB,
-                               GL_TRUE,
-                               WGL_DOUBLE_BUFFER_ARB,
-                               GL_TRUE,
-                               WGL_PIXEL_TYPE_ARB,
-                               WGL_TYPE_RGBA_ARB,
-                               WGL_COLOR_BITS_ARB,
-                               32,
-                               WGL_DEPTH_BITS_ARB,
-                               24,
-                               WGL_STENCIL_BITS_ARB,
-                               8,
-                               0 };
-    int attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 3, 0 };
-    if (!wglChoosePixelFormat(gl->dc, attribList, NULL, 1, &pixel_format, &num_formats)) {
+    const int attribList[] = {WGL_DRAW_TO_WINDOW_ARB,
+                              GL_TRUE,
+                              WGL_SUPPORT_OPENGL_ARB,
+                              GL_TRUE,
+                              WGL_DOUBLE_BUFFER_ARB,
+                              GL_TRUE,
+                              WGL_PIXEL_TYPE_ARB,
+                              WGL_TYPE_RGBA_ARB,
+                              WGL_COLOR_BITS_ARB,
+                              32,
+                              WGL_DEPTH_BITS_ARB,
+                              24,
+                              WGL_STENCIL_BITS_ARB,
+                              8,
+                              0};
+    int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 3, 0};
+    if (!wglChoosePixelFormat(gl->dc, attribList, NULL, 1, &pixel_format, &num_formats))
+    {
         mgError(surface, "Cannot choose OpenGL pixel format.\n");
         return -1;
     }
-    if (!(gl->hglrc = wglCreateContextAttribs(gl->dc, gl->hglrc, attribs))) {
+    if (!(gl->hglrc = wglCreateContextAttribs(gl->dc, gl->hglrc, attribs)))
+    {
         mgError(surface, "Cannot create OpenGL context attribs.\n");
         return -1;
     }
-    if (!wglMakeCurrent(gl->dc, gl->hglrc)) {
+    if (!wglMakeCurrent(gl->dc, gl->hglrc))
+    {
         mgError(surface, "Cannot activate OpenGL context.\n");
         return -1;
     }
@@ -240,48 +249,56 @@ int mgGL33Init(MgSurface* surface) {
 }
 #endif
 
-void mgCheckGLError(const char* state) {
+void mgCheckGLError(const char *state)
+{
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR) {
+    if (err != GL_NO_ERROR)
+    {
         mgError(NULL, "got GL error %x when doing %s\n", err, state);
     }
 }
 
-void mgCheckShaderErrors(GLuint object) {
+void mgCheckShaderErrors(GLuint object)
+{
     GLint success;
     GLchar info[2048];
     glGetShaderiv(object, GL_COMPILE_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetShaderInfoLog(object, sizeof(info), NULL, info);
         mgError(NULL, "shader compile error : %s\n", info);
     }
 }
 
-void mgCheckProgramErrors(GLuint object) {
+void mgCheckProgramErrors(GLuint object)
+{
     GLint success;
     GLchar info[2048];
     glGetProgramiv(object, GL_LINK_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetProgramInfoLog(object, sizeof(info), NULL, info);
         mgError(NULL, "shader link error : %s\n", info);
     }
 }
 
-void mgCreateShaderProgram(GLStuff* gl, const char* fxSource, int fxSize) {
-    if (gl->program != 0) {
+void mgCreateShaderProgram(GLStuff *gl, const char *fxSource, int fxSize)
+{
+    if (gl->program != 0)
+    {
         glDeleteProgram(gl->program);
         gl->program = 0;
     }
 
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    const char* vs_source = (const char*)&mg_upscale_gl_vs;
+    const char *vs_source = (const char *)&mg_upscale_gl_vs;
     glShaderSource(vs, 1, &vs_source, &mg_upscale_gl_vs_size);
     glCompileShader(vs);
     mgCheckShaderErrors(vs);
 
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* fs_sources[] = {
-        (const char*)mg_upscale_gl_fs,
+    const char *fs_sources[] = {
+        (const char *)mg_upscale_gl_fs,
         fxSource,
     };
     const int fs_lengths[] = {
@@ -305,14 +322,14 @@ void mgCreateShaderProgram(GLStuff* gl, const char* fxSource, int fxSize) {
     gl->uniform_parameters = glGetUniformLocation(gl->program, "parameters");
 }
 
-void mgGAPICreate(MgSurface* surface) {
-    MgInternal* win = mgInternal(surface);
-    GLStuff* gl = &win->gl;
+void mgGAPICreate(MgSurface *surface)
+{
+    MgInternal *win = mgInternal(surface);
+    GLStuff *gl = &win->gl;
     GLuint VBO;
-    GLfloat vertices[] = { // pos      uv
-                           0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                           0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f
-    };
+    GLfloat vertices[] = {// pos      uv
+                          0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                          0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f};
 
 #ifdef _WIN32
     if (mgGL11Init(surface))
@@ -320,7 +337,8 @@ void mgGAPICreate(MgSurface* surface) {
     mgGL33Init(surface);
 #endif
 
-    if (!gl->gl_legacy) {
+    if (!gl->gl_legacy)
+    {
         // create vao
         glGenVertexArrays(1, &gl->vao);
         glGenBuffers(1, &VBO);
@@ -337,11 +355,13 @@ void mgGAPICreate(MgSurface* surface) {
     }
 
     // create textures
-    if (gl->gl_legacy) {
+    if (gl->gl_legacy)
+    {
         glEnable(GL_TEXTURE_2D);
     }
     glGenTextures(2, gl->tex);
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i)
+    {
         glBindTexture(GL_TEXTURE_2D, gl->tex[i]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl->gl_legacy ? GL_NEAREST : GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl->gl_legacy ? GL_NEAREST : GL_LINEAR);
@@ -352,44 +372,52 @@ void mgGAPICreate(MgSurface* surface) {
     mgCheckGLError("initialization");
 }
 
-void mgGAPIDestroy(MgSurface* surface) {
-    MgInternal* win = mgInternal(surface);
-    GLStuff* gl = &win->gl;
+void mgGAPIDestroy(MgSurface *surface)
+{
+    MgInternal *win = mgInternal(surface);
+    GLStuff *gl = &win->gl;
 
-    if (mgGAPIBegin(surface) < 0) {
+    if (mgGAPIBegin(surface) < 0)
+    {
         mgError(surface, "Cannot activate OpenGL context.\n");
         return;
     }
 
-    if (!gl->gl_legacy) {
+    if (!gl->gl_legacy)
+    {
         glDeleteTextures(2, gl->tex);
         glDeleteProgram(gl->program);
     }
 
     mgCheckGLError("destroy");
 
-    if (mgGAPIEnd(surface) < 0) {
+    if (mgGAPIEnd(surface) < 0)
+    {
         mgError(surface, "Cannot deactivate OpenGL context.\n");
         return;
     }
 }
 
-void mgGAPIDraw(int legacy, GLuint uniform_model, GLuint tex, MgSurface* surface, int x1, int y1, int x2, int y2) {
+void mgGAPIDraw(int legacy, GLuint uniform_model, GLuint tex, MgSurface *surface, int x1, int y1, int x2, int y2)
+{
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
-    if (!legacy) {
+    if (!legacy)
+    {
         float sx = (float)(x2 - x1);
         float sy = (float)(y2 - y1);
         float tx = (float)x1;
         float ty = (float)y1;
 
-        float model[16] = { sx, 0.0f, 0.0f, 0.0f, 0.0f, sy, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, tx, ty, 0.0f, 1.0f };
+        float model[16] = {sx, 0.0f, 0.0f, 0.0f, 0.0f, sy, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, tx, ty, 0.0f, 1.0f};
 
         glUniformMatrix4fv(uniform_model, 1, GL_FALSE, model);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-    } else {
-#if !(__APPLE__ || __ANDROID__)
+    }
+    else
+    {
+
         glBegin(GL_QUADS);
         glTexCoord2f(1.0f, 0.0f);
         glVertex2i(x2, y1);
@@ -400,61 +428,62 @@ void mgGAPIDraw(int legacy, GLuint uniform_model, GLuint tex, MgSurface* surface
         glTexCoord2f(1.0f, 1.0f);
         glVertex2i(x2, y2);
         glEnd();
-#else
-        assert(0);
-#endif
     }
 }
 
-void mgGAPIPresent(MgSurface* surface, int w, int h) {
-    MgInternal* win = mgInternal(surface);
-    GLStuff* gl = &win->gl;
+void mgGAPIPresent(MgSurface *surface, int w, int h)
+{
+    MgInternal *win = mgInternal(surface);
+    GLStuff *gl = &win->gl;
 
     glViewport(0, 0, w, h);
-    if (!gl->gl_user_opengl_rendering) {
+    if (!gl->gl_user_opengl_rendering)
+    {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    if (!gl->gl_legacy) {
-        float projection[16] = { 2.0f / w, 0.0f, 0.0f, 0.0f, 0.0f,  -2.0f / h, 0.0f, 0.0f,
-                                 0.0f,     0.0f, 1.0f, 0.0f, -1.0f, 1.0f,      0.0f, 1.0f };
+    if (!gl->gl_legacy)
+    {
+        float projection[16] = {2.0f / w, 0.0f, 0.0f, 0.0f, 0.0f, -2.0f / h, 0.0f, 0.0f,
+                                0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f};
 
         glActiveTexture(GL_TEXTURE0);
         glBindVertexArray(gl->vao);
         glUseProgram(gl->program);
         glUniformMatrix4fv(gl->uniform_projection, 1, GL_FALSE, projection);
         glUniform4f(gl->uniform_parameters, win->p1, win->p2, win->p3, win->p4);
-    } else {
-#if !(__APPLE__ || __ANDROID__)
+    }
+    else
+    {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(0, w, h, 0, -1.0f, 1.0f);
         glEnable(GL_TEXTURE_2D);
-#else
-        assert(0);
-#endif
     }
 
-    if (gl->gl_user_opengl_rendering) {
+    if (gl->gl_user_opengl_rendering)
+    {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    } else {
+    }
+    else
+    {
         glDisable(GL_BLEND);
     }
     mgGAPIDraw(gl->gl_legacy, gl->uniform_model, gl->tex[0], surface, win->pos[0], win->pos[1], win->pos[2], win->pos[3]);
 
-    if (win->widgetsScale > 0) {
+    if (win->widgetsScale > 0)
+    {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         mgGAPIDraw(gl->gl_legacy, gl->uniform_model, gl->tex[1], win->widgets,
-                     (int)(w - win->widgets->w * win->widgetsScale), 0, w, (int)(win->widgets->h * win->widgetsScale));
+                   (int)(w - win->widgets->w * win->widgetsScale), 0, w, (int)(win->widgets->h * win->widgetsScale));
     }
 
     mgCheckGLError("present");
 
     gl->gl_user_opengl_rendering = 0;
 }
-
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   Copy End  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
