@@ -83,7 +83,7 @@
  *
  *         float duration = 1;
  *         float phase = 0;
- *         while (!mgClosed(screen) && !mgKeyDown(screen, TK_ESCAPE)) {
+ *         while (!mgClosed(screen) && !mgKeyDown(screen, MK_ESCAPE)) {
  *             phase += mgTime();
  *             while (phase > duration) {
  *                 phase -= duration;
@@ -91,7 +91,7 @@
  *             float p = 6.28 * phase / duration;
  *             mgSetPostFX(screen, p, 0, 0, 0);
  *             mgClear(screen, mgRGB(0x80, 0x90, 0xa0));
- *             mgPrint(screen, tfont, 120, 110, mgRGB(0xff, 0xff, 0xff), "Shady business");
+ *             mgPrint(screen, mgfont, 120, 110, mgRGB(0xff, 0xff, 0xff), "Shady business");
  *             mgUpdate(screen);
  *         }
  *         mgFree(screen);
