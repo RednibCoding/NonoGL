@@ -18,14 +18,16 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
     cd minig
     ```
 
-2. **Compile your project with GLFW and OpenGL**:
+2. **Copy the 'minig' folder into your project**
+
+3. **Compile your project with GLFW and OpenGL**:
     Make sure to link against the GLFW (see the lib directory) and OpenGL libraries.
 
     ```sh
-    gcc -o main main.c -lglfw -lGL -I./minig/includes
+    gcc -o main main.c -lglfw -lGL -I./minig/lib/<your-arch>
     ```
 
-3. **Include the MiniG header**:
+4. **Include the MiniG header**:
     ```c
     #include "minig/mg.h"
     ```
