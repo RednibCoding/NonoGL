@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include "internal/glfw3.h"
 #include "internal/stb_image.h"
-#include "internal/stb_truetype.h"
 
 typedef struct {
     GLFWwindow *window;
@@ -123,8 +122,6 @@ bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf cir
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "internal/stb_image.h"
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "internal/stb_truetype.h"
 
 _mgState _mgstate;
 
