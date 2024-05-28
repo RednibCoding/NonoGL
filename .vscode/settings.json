@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "glfw3.h": "c",
+        "stb_truetype.h": "c"
+    }
+}

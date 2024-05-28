@@ -1,125 +1,115 @@
-# minigfx
 
-A really minimal single header file graphics library for c
+# MiniG - Mini Graphics Library
 
-minigfx is a tiny graphics library, providing a unified API for Windows and
-Linux. It was inspired by the tigr graphics library, but has been stripped down
-on one side but has been extended with other useful things on the other side.
+MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C, designed for easy and quick setup of 2D rendering using OpenGL and GLFW. It provides basic functionalities for window creation, image loading, text rendering, basic collisions handling and mouse and keyboard input handling.
 
-- Bitmap-backed windows
-- Direct access to bitmaps, no locking.
-- Basic drawing helpers (plot, line, blitter)
-- Text output using bitmap fonts
-- Mouse, touch and keyboard input
-- PNG loading, drawing and saving
-- Easy pixel shader access
+## Features
 
-minigfx is designed to be small and independent. The 'hello world' example is
-less than 100kB:
+- **Window Management**: Easy creation and management of OpenGL windows using GLFW.
+- **Image Loading**: Load and render PNG images using stb_image.
+- **Collision handling**: Basic functions to check point-rectangle, rectangle-rectangle, point-circle, and rectangle-circle overlaps.
+- **Mouse and Keyboard input handling**: Simple functions to check for mouse and keyboard button presses.
 
-| _Platform_     | _Size_ |
-| -------------- | ------ |
-| windows x86_64 | 48k    |
-| linux x86_64   | 43k    |
+## Installation
 
-There are no additional libraries to include; everything is baked right into
-your program.
+1. **Clone the repository**:
+    ```sh
+    git clone <repository_url>
+    cd minig
+    ```
 
-## How do I program with minigfx?
+2. **Compile your project with GLFW and OpenGL**:
+    Make sure to link against the GLFW (see the lib directory) and OpenGL libraries.
 
-Here's an example Hello World program. For more information, just read
-`minigfx.h` to see the APIs available.
+    ```sh
+    gcc -o main main.c -lglfw -lGL -I./minig/includes
+    ```
+
+3. **Include the MiniG header**:
+    ```c
+    #include "minig/mg.h"
+    ```
+
+## Example Usage
+
+Here's a basic example of using MiniG to create a window and render text:
 
 ```c
-// Define MINIGFX_IMPLEMENTATION before you include minigfx.h
-// to also include the implementations.
-// Usualy you only need this once in your main.c file, in all
-// other files, you only want to include the definitions from the minigfx.h.
-// So in those cases dont do: #define MINIGFX_IMPLEMENTATION
-#define MINIGFX_IMPLEMENTATION
-#include "minigfx.h"
+#include <stdio.h>
+#include <stdbool.h>
 
-int main(int argc, char *argv[])
-{
-    MgSurface *screen = mgWindow(320, 240, "Hello", MG_AUTO | MG_2X);
-    while (!mgClosed(screen))
-    {
-        mgClear(screen, mgRGB(0x80, 0x90, 0xa0));
-        mgPrint(screen, mgfont, 120, 110, mgRGB(0xff, 0xff, 0xff), "Hello, world.");
-        mgUpdate(screen);
+#define MG_IMPL
+#include "minig/mg.h"
+
+int main() {
+    bool success = mgCreateWindow("MiniG Window", 1024, 600, true, false);
+    if (!success) return -1;
+
+    mgImage image = mgLoadImage("assets/GLFW.png");
+
+    while (!mgWindowShouldClose()) {
+        mgClear();
+
+        mgDrawImage(image, (mgPointf){20.0f, 20.0f});
+        mgDrawImagePortion(image, (mgPointf){200.0f, 200.0f}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
+
+        mgSwap();
     }
-    mgFree(screen);
-    return 0;
+
+    mgDestroyWindow();
 }
 ```
 
-## How to set up minigfx
+## API Reference
 
-minigfx is supplied as a single .h file. To use it, you just drop it right into
-your project.
+### Window Management
 
-1. Grab minigfx.h
-2. Throw it into your project
-3. Link with:
-   - -lopengl32 and -lgdi32 on Windows
-   - -lGLU -lGL -lX11 on Linux
+- `bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool filtered)`
+  Creates a window with the specified title, width, and height.
 
-## Custom fonts
+- `void mgDestroyWindow()`
+  Destroys the created window and cleans up resources.
 
-minigfx comes with a built-in bitmap font, accessed by the tfont variable.
-Custom fonts can be loaded from bitmaps using mgLoadFont. A font bitmap contains
-rows of characters separated by same-colored borders. minigfx assumes that the
-borders use the same color as the top-left pixel in the bitmap. Each character
-is assumed to be drawn in white on a transparent background to make tinting
-work.
+- `bool mgWindowShouldClose()`
+  Returns `true` if the window should close, `false` otherwise.
 
-minigfx font sheets are simply PNG files with rows of white characters on a
-transparent background, separated by single-colored borders:
+- `void mgClear()`
+  Clears the window with the specified background color.
 
-![](readme/fontsheet.png)
+- `void mgSwap()`
+  Swaps the front and back buffers.
 
-> This is the default font included in minigfx (variable name is `mgfont`), and
-> has a black drop shadow.
+### Image Loading and Drawing
 
-## Custom pixel shaders
+- `mgImage mgLoadImage(const char* filepath)`
+  Loads a PNG image from the specified file path.
 
-minigfx uses a built-in pixel shader that provides a couple of stock effects as
-controlled by mgSetPostFX. These stock effects can be replaced by calling
-mgSetPostShader with a custom shader. The custom shader is in the form of a
-shader function: void fxShader(out vec4 color, in vec2 uv) and has access to the
-four parameters from mgSetPostFX as a uniform vec4 called parameters.
+- `void mgDrawImage(mgImage image, mgPointf pos)`
+  Draws the loaded image at the specified position.
 
-Example:
+- `void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)`
+  Draws a portion of the loaded image.
 
-```c
-#include "minigfx.h"
-#include "math.h"
+### Text Rendering
+- TODO
 
-const char fxShader[] =
-    "void fxShader(out vec4 color, in vec2 uv) {"
-    "   vec2 tex_size = vec2(textureSize(image, 0));"
-    "   vec4 c = texture(image, (floor(uv * tex_size) + 0.5 * sin(parameters.x)) / tex_size);"
-    "   color = c;"
-    "}";
+### Collision
 
-int main(int argc, char* argv[]) {
-    MgSurface* screen = mgWindow(320, 240, "Shady", 0);
-    mgSetPostShader(screen, fxShader, sizeof(fxShader) - 1);
+- `bool mgPointRecOverlaps(mgPointf point, mgRecf rec)`
+  Checks if a point overlaps with a rectangle.
 
-    float duration = 1;
-    float phase = 0;
-    while (!mgClosed(screen) && !mgKeyDown(screen, TK_ESCAPE)) {
-        phase += mgTime();
-        while (phase > duration) {
-            phase -= duration;
-        }
-        float p = 6.28 * phase / duration;
-        mgSetPostFX(screen, p, 0, 0, 0);
-        mgClear(screen, mgRGB(0x80, 0x90, 0xa0));
-        mgPrint(screen, tfont, 120, 110, mgRGB(0xff, 0xff, 0xff), "Shady business");
-        mgUpdate(screen);
-    }
-    mgFree(screen);
-    return 0;
-}
-```
+- `bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)`
+  Checks if two rectangles overlap.
+
+- `bool mgPointCircleOverlaps(mgPointf point, mgPointf circleCenter, float circleRadius)`
+  Checks if a point overlaps with a circle.
+
+- `bool mgRecCircleOverlaps(mgRecf rec, mgPointf circleCenter, float circleRadius)`
+  Checks if a rectangle overlaps with a circle.
+
+- `bool mgCirclesOverlap(mgPointf circle1Center, float circle1Radius, mgPointf circle2Center, float circle2Radius)`
+  Checks if two circles overlap.
+
+## License
+
+MiniG is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
