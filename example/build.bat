@@ -17,14 +17,14 @@ set RES_FILES=
 REM Define the source files to include
 set SRC_FILES=main.c
 
-REM Define additional compiler flags to use
-set CFLAGS=-L../minig/lib/win64 -lglfw3 -lopengl32 -lgdi32 -luser32
+REM Define additional flags to use
+set FLAGS=-D FREEGLUT_STATIC -L../minig/lib/win32/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
 
 REM Debug build
- %COMPILER% %SRC_FILES% %RES_FILES% -o %OUTPUT_FILE_NAME% %CFLAGS% -std=c99
+ %COMPILER% %SRC_FILES% %RES_FILES% -o %OUTPUT_FILE_NAME% %FLAGS% -std=c99
 
 REM Release build
-@REM %COMPILER% %SRC_FILES% %RES_FILES% -o %OUTPUT_FILE_NAME% %CFLAGS% -O3 -Wall -s -std=c99 -fno-strict-aliasing -fomit-frame-pointer -mwindows
+@REM %COMPILER% %SRC_FILES% %RES_FILES% -o %OUTPUT_FILE_NAME% %FLAGS% -O3 -Wall -s -std=c99 -fno-strict-aliasing -fomit-frame-pointer -mwindows
 
 if %ERRORLEVEL% NEQ 0 (
     echo Compilation failed.

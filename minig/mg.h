@@ -7,29 +7,9 @@
 #define MINI_G_H
 
 #include <stdbool.h>
-#include "internal/glfw3.h"
+#include "internal/freeglut.h"
 #include "internal/stb_image.h"
 
-typedef struct {
-    GLFWwindow *window;
-    char *title;
-    int initialWidth;
-    int initialHeight;
-    int width;
-    int height;
-    bool filtered;
-    bool scaleable;
-    float scale;
-    float deltaTime;
-    float lastTime;
-    int currentFPS;
-} _mgState;
-
-typedef struct {
-    unsigned int id;
-    int width;
-    int height;
-} mgImage;
 
 typedef struct {
     float x;
@@ -50,6 +30,26 @@ typedef struct {
     float a;
 } mgColorf;
 
+typedef struct {
+    unsigned int id;
+    int width;
+    int height;
+} mgImage;
+
+typedef struct {
+    char* title;
+    int initialWidth;
+    int initialHeight;
+    int width;
+    int height;
+    bool scaleable;
+    bool filtered;
+    float deltaTime;
+    double lastTime;
+    int currentFPS;
+    int window;
+} _mgState;
+
 // Create a window
 bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool filtered);
 
@@ -64,6 +64,9 @@ void mgSetWindowTitle(char *title);
 
 // Set the clear color
 void mgSetClearColor(mgColorf color);
+
+// Set the draw collor
+void mgSetColor(mgColorf color);
 
 // Clear the screen
 void mgClear();
@@ -95,6 +98,9 @@ void mgDrawImage(mgImage image, mgPointf pos);
 // Draw a portion of an image
 void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec);
 
+// Draw text on the screen
+void mgDrawText(char *text, mgPointf pos);
+
 // Check if a point overlaps with a rectangle
 bool mgPointRecOverlaps(mgPointf point, mgRecf rect);
 
@@ -125,26 +131,58 @@ bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf cir
 
 _mgState _mgstate;
 
-void _mgKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+// Global function pointer for the display callback
+void (*gDisplayCallback)(void) = NULL;
+
+// Define custom exit handlers
+void _customExitFunction(int status) {
+    exit(status);
 }
 
-void _mgMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+// Wrapper display function that calls the function pointer
+void _mgDisplayCallbackWrapper() {
+    if (gDisplayCallback != NULL) {
+        gDisplayCallback();
+    }
+    glutSwapBuffers(); // Ensure the buffers are swapped after drawing
+}
+
+void _customExitFunctionWithMessage(const char* msg, int status) {
+    if (msg) {
+        fprintf(stderr, "%s\n", msg);
+    }
+    exit(status);
+}
+
+void _mgKeyCallback(unsigned char key, int x, int y) {
+    if (key == 27) // ESC key
+    printf("Hello key");
+    glutLeaveMainLoop();
+}
+
+void _mgSpecialKeyCallback(int key, int x, int y) {
+    // Handle special keys if needed
+}
+
+void _mgMouseButtonCallback(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
         printf("Left mouse button pressed\n");
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
         printf("Right mouse button pressed\n");
-    else if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+    else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
         printf("Middle mouse button pressed\n");
 }
 
-void _mgMouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-    printf("Scroll offset: (%.2f, %.2f)\n", xoffset, yoffset);
+void _mgMouseScrollCallback(int button, int dir, int x, int y) {
+    // This is how FreeGLUT handles mouse wheel
+    if (dir > 0)
+        printf("Mouse wheel up\n");
+    else
+        printf("Mouse wheel down\n");
 }
 
-void _mgCursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
-    printf("Cursor position: (%.2f, %.2f)\n", xpos, ypos);
+void _mgCursorPositionCallback(int x, int y) {
+    printf("Cursor position: (%.2f, %.2f)\n", x, y);
 }
 
 void _mgSetupOrthoProjection(int width, int height) {
@@ -169,14 +207,32 @@ void _mgUpdateScale(int width, int height, int shouldUpdate) {
     }
 }
 
-void _mgFramebufferSizeCallback(GLFWwindow* window, int width, int height) {
+void _mgFramebufferSizeCallback(int width, int height) {
     glViewport(0, 0, width, height);
     _mgSetupOrthoProjection(width, height);
     _mgUpdateScale(width, height, _mgstate.scaleable);
 }
 
+void _mgTimerCallback(int value) {
+    // Calculate deltaTime and currentFPS
+    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    _mgstate.deltaTime = currentTime - _mgstate.lastTime;
+    _mgstate.currentFPS = 1.0 / _mgstate.deltaTime;
+    _mgstate.lastTime = currentTime;
+
+    // Redisplay and reset timer
+    glutPostRedisplay();
+}
+
+void _mgDisplayCallback(void (*callback)(void)) {
+    callback();
+    glutSwapBuffers();
+    glutTimerFunc(1000 / 60, _mgTimerCallback, 0); // Call the timer function again to keep updating
+}
+
+
 /*******************************************************************************************************/
-// Publing api functions
+// Public api functions
 /*******************************************************************************************************/
 
 bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool filtered) {
@@ -190,70 +246,69 @@ bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool fil
     _mgstate.height = height;
 
     _mgstate.deltaTime = 0.0f;
-    _mgstate.lastTime = glfwGetTime();
+    _mgstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
     _mgstate.currentFPS = 0;
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
-    if (!glfwInit())
-        return false;
+    int argc = 1;
+    char *argv[1] = {(char*)"Something"};
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+    glutInitWindowSize(width, height);
+    _mgstate.window = glutCreateWindow(title);
 
-    /* Create a windowed mode window and its OpenGL context */
-    _mgstate.window = glfwCreateWindow(_mgstate.initialWidth, _mgstate.initialHeight, _mgstate.title, NULL, NULL);
-    if (!_mgstate.window)
-    {
-        glfwTerminate();
-        return false;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(_mgstate.window);
-
-    /* Set the key callback */
-    glfwSetKeyCallback(_mgstate.window, _mgKeyCallback);
-
-    /* Set the mouse button and cursor position callbacks */
-    glfwSetMouseButtonCallback(_mgstate.window, _mgMouseButtonCallback);
-    glfwSetCursorPosCallback(_mgstate.window, _mgCursorPositionCallback);
-
-    /* Set the scroll callback */
-    glfwSetScrollCallback(_mgstate.window, _mgMouseScrollCallback);
-
-    /* Set the framebuffer size callback to handle window resizing */
-    glfwSetFramebufferSizeCallback(_mgstate.window, _mgFramebufferSizeCallback);
+    /* Set the callbacks */
+    // glutDisplayFunc(_mgDisplayCallback);
+    glutKeyboardFunc(_mgKeyCallback);
+    glutSpecialFunc(_mgSpecialKeyCallback);
+    glutMouseFunc(_mgMouseButtonCallback);
+    glutMotionFunc(_mgCursorPositionCallback);
+    glutPassiveMotionFunc(_mgCursorPositionCallback);
+    glutMouseWheelFunc(_mgMouseScrollCallback);
+    glutReshapeFunc(_mgFramebufferSizeCallback);
 
     /* Set up the orthographic projection */
-    glfwGetFramebufferSize(_mgstate.window, &_mgstate.width, &_mgstate.height);
     _mgSetupOrthoProjection(_mgstate.width, _mgstate.height);
     _mgUpdateScale(_mgstate.width, _mgstate.height, _mgstate.scaleable);
 
     /* Set initial scale */
     _mgSetScale(1.0f, 1.0f);
 
-    glfwSwapInterval(1); // Default to 60 FPS
+    /* Start the timer for limiting FPS */
+    glutTimerFunc(1000 / 60, _mgTimerCallback, 0);
 
     return true;
 }
 
 void mgDestroyWindow() {
-
-    if (_mgstate.window) {
-        glfwDestroyWindow(_mgstate.window);
-    }    
-    glfwTerminate();
+    glutDestroyWindow(_mgstate.window);
+    // Free any allocated resources if necessary
 }
 
 bool mgWindowShouldClose() {
-    return glfwWindowShouldClose(_mgstate.window);
+    return false;
 }
 
-void mgSetWindowTitle(char *title) {
-    glfwSetWindowTitle(_mgstate.window, title);
-}
-
-// Set the clear color
 void mgSetClearColor(mgColorf color) {
     glClearColor(color.r, color.g, color.b, color.a);
+}
+
+void mgSetColor(mgColorf color) {
+    glColor4f(color.r, color.g, color.b, color.a);
+}
+
+void mgSetDisplayLoop(void (*callback)(void)) {
+    gDisplayCallback = callback;
+    glutDisplayFunc(_mgDisplayCallbackWrapper);
+}
+
+void mgRun() {
+    if (gDisplayCallback == NULL) {
+        printf("DisplayCallback not set, shutting down...");
+        exit(-1);
+    }
+    glutMainLoop();
 }
 
 // Clear the screen
@@ -261,18 +316,13 @@ void mgClear() {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
+void mgSetWindowTitle(char *title) {
+    glutSetWindowTitle(title);
+}
+
 void mgSwap() {
-    /* Swap front and back buffers */
-    glfwSwapBuffers(_mgstate.window);
-
-    /* Poll for and process events */
-    glfwPollEvents();
-
-    // Calculate deltaTime and currentFPS
-    double currentTime = glfwGetTime();
-    _mgstate.deltaTime = currentTime - _mgstate.lastTime;
-    _mgstate.currentFPS = 1.0 / _mgstate.deltaTime;
-    _mgstate.lastTime = currentTime;
+    glutSwapBuffers();
+    glutMainLoopEvent();
 }
 
 float mgDeltaTime() {
@@ -286,7 +336,7 @@ int mgCurrentFps() {
 unsigned char* mgLoadFileBytes(const char* filepath, int* size) {
     FILE* file = fopen(filepath, "rb");
     if (!file) {
-        printf("Failed to open file: %s\n", filepath);
+        printf("Failed to open file:\n%s\n", filepath);
         return NULL;
     }
 
@@ -318,7 +368,7 @@ mgImage mgLoadImage(const char* filepath) {
     // stbi_set_flip_vertically_on_load(1);
     unsigned char* imageData = stbi_load(filepath, &image.width, &image.height, 0, 4);
     if (!imageData) {
-        printf("Failed to load image\n");
+        printf("Failed to load image:\n%s\n", filepath);
         image.id = 0;
         return image;
     }
@@ -358,12 +408,12 @@ mgImage mgLoadImageMem(const unsigned char *data, int size) {
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
-    if (!_mgstate.filtered) {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    } else {
+    if (_mgstate.filtered) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -405,6 +455,15 @@ void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec) {
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
+}
+
+void mgDrawText(char *text, mgPointf pos) {
+    // Set the position for the text
+    glRasterPos2f(pos.x, pos.y);
+
+    for (char *c = text; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
 }
 
 bool mgPointRecOverlaps(mgPointf point, mgRecf rec) {
