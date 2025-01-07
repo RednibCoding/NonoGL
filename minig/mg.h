@@ -42,6 +42,14 @@ typedef struct
     int height;
 } mgImage;
 
+typedef struct
+{
+    unsigned int textureID; // OpenGL texture ID
+    int width;              // Width of the buffer
+    int height;             // Height of the buffer
+    mgColorf *pixels;       // CPU-side pixel buffer
+} mgPixelBuffer;
+
 int mgFPS;
 float mgDT;
 
@@ -84,6 +92,21 @@ void mgDrawImage(mgImage image, mgPointf pos);
 // Draw a portion of an image
 void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec);
 
+// Create a pixel buffer with the given width and height
+mgPixelBuffer *mgCreatePixelBuffer(int width, int height);
+
+// Write a pixel at x, y location with the given color to the given pixel buffer
+void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color);
+
+// Update pixels that have changed in the pixel buffer
+void mgUpdatePixelBuffer(mgPixelBuffer *buffer);
+
+// Draw the pixel buffer to the screen
+void mgDrawPixelBuffer(mgPixelBuffer *buffer);
+
+// Free the given pixel buffer
+void mgFreePixelBuffer(mgPixelBuffer *buffer);
+
 // Draw text on the screen
 void mgDrawText(const char *format, mgPointf pos, ...);
 
@@ -102,34 +125,38 @@ bool mgRecCircleOverlaps(mgRecf rec, mgPointf circlecenter, float circleradius);
 // Check if two cirles overlap
 bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf circle2center, float circle2radius);
 
-#endif // MINI_G_H
+// Returns `true` if the specified key was pressed since the last frame.
+bool mgKeyHit(int key);
+
+// Returns `true` if the specified key is currently being held down.
+bool mgKeyDown(int key);
+
+// Returns `true` if the specified key was released since the last frame.
+bool mgKeyReleased(int key);
+
+// Returns `true` if the specified mouse button was clicked since the last frame.
+bool mgMouseHit(int button);
+
+// Returns `true` if the specified mouse button is currently being held down.
+bool mgMouseDown(int button);
+
+// Returns `true` if the specified mouse button was released since the last frame.
+bool mgMouseReleased(int button);
+
+// Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
+int mgMouseWheelDelta();
+
+// Returns the current position of the mouse cursor as an `mgPointf` struct.
+mgPointf mgGetMousePosition();
+
+// Returns the mouse motion delta (change in position) since the last frame.
+mgPointf mgMouseMotionDelta();
 
 /******************************************************************************************************************************/
-
+/*  End of Public API */
 /******************************************************************************************************************************/
-
-/*  IMPLEMENTATION */
-
-/******************************************************************************************************************************/
-#ifdef MG_IMPL
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "internal/include/stb_image.h"
-
 #define _MG_MAX_KEYS 256
 #define _MG_MAX_MOUSE_BUTTONS 3
-
-// static bool _mgKeys[_MG_MAX_KEYS] = {0};
-// static bool _mgKeysPressed[_MG_MAX_KEYS] = {0};
-// static bool _mgKeysReleased[_MG_MAX_KEYS] = {0};
-
-// static bool _mgMouseButtons[_MG_MAX_MOUSE_BUTTONS] = {0};
-// static bool _mgMouseButtonsPressed[_MG_MAX_MOUSE_BUTTONS] = {0};
-// static bool _mgMouseButtonsReleased[_MG_MAX_MOUSE_BUTTONS] = {0};
-// static int _mgMouseWheelDelta = 0;
-// static mgPointf _mgMousePosition = {0.0f, 0.0f};
-// static mgPointf _mgPreviousMousePosition = {0.0f, 0.0f};
-// static mgPointf _mgMouseMotionDelta = {0.0f, 0.0f};
 
 typedef struct
 {
@@ -159,6 +186,17 @@ typedef struct
     mgPointf mouseMotionDelta;
 
 } _mgState;
+#endif // MINI_G_H
+
+/******************************************************************************************************************************/
+
+/*  IMPLEMENTATION */
+
+/******************************************************************************************************************************/
+#ifdef MG_IMPL
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "internal/include/stb_image.h"
 
 _mgState _mgstate;
 
@@ -548,25 +586,103 @@ void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)
     glDisable(GL_TEXTURE_2D);
 }
 
-// Function to draw text with formatting support
+mgPixelBuffer *mgCreatePixelBuffer(int width, int height)
+{
+    mgPixelBuffer *buffer = malloc(sizeof(mgPixelBuffer));
+    if (!buffer)
+        return NULL;
+
+    buffer->width = width;
+    buffer->height = height;
+
+    // Allocate pixel memory
+    buffer->pixels = calloc(width * height, sizeof(mgColorf));
+    if (!buffer->pixels)
+    {
+        free(buffer);
+        return NULL;
+    }
+
+    // Create OpenGL texture
+    glGenTextures(1, &buffer->textureID);
+    glBindTexture(GL_TEXTURE_2D, buffer->textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, buffer->pixels);
+
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return buffer;
+}
+
+void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color)
+{
+    if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
+        return;
+
+    buffer->pixels[y * buffer->width + x] = color;
+}
+
+void mgUpdatePixelBuffer(mgPixelBuffer *buffer)
+{
+    if (!buffer || !buffer->pixels)
+        return;
+
+    glBindTexture(GL_TEXTURE_2D, buffer->textureID);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, buffer->width, buffer->height, GL_RGBA, GL_FLOAT, buffer->pixels);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void mgDrawPixelBuffer(mgPixelBuffer *buffer)
+{
+    if (!buffer)
+        return;
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, buffer->textureID);
+
+    // Draw a full-screen quad
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, 0.0f); // Bottom-left
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(buffer->width, 0.0f); // Bottom-right
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(buffer->width, buffer->height); // Top-right
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, buffer->height); // Top-left
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+}
+
+void mgFreePixelBuffer(mgPixelBuffer *buffer)
+{
+    if (!buffer)
+        return;
+
+    if (buffer->pixels)
+        free(buffer->pixels);
+    glDeleteTextures(1, &buffer->textureID);
+    free(buffer);
+}
+
 void mgDrawText(const char *format, mgPointf pos, ...)
 {
-    char buffer[1024]; // Buffer to hold the formatted string
+    char buffer[1024];
 
-    // Initialize the variable argument list
     va_list args;
     va_start(args, pos);
 
-    // Format the string
     vsnprintf(buffer, sizeof(buffer), format, args);
 
-    // End the variable argument list
     va_end(args);
 
-    // Set the position for the text
     glRasterPos2f(pos.x, pos.y);
 
-    // Render each character of the formatted string
     for (char *c = buffer; *c != '\0'; c++)
     {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);

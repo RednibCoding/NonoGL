@@ -11,7 +11,7 @@ void display()
     mgSetWindowTitle("MiniG Window  FPS: %d", mgFPS);
     mgCls();
 
-    mgDrawImage(image, (mgPointf){20.0f, 20.0f});
+    mgDrawImage(image, (mgPointf){200.0f, 120.0f});
 
     mgDrawImagePortion(image, (mgPointf){200.0f, 200.0f}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
 

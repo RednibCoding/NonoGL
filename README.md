@@ -122,16 +122,33 @@ int main()
 ### Image Loading and Drawing
 
 - **`mgImage mgLoadImage(const char *filepath)`**
-  Loads a PNG image from the specified file path.
+  Loads an image from the specified file path.
 
 - **`mgImage mgLoadImageMem(const unsigned char *data, int size)`**
-  Loads a PNG image from memory.
+  Loads an image from memory.
 
 - **`void mgDrawImage(mgImage image, mgPointf pos)`**
   Draws the loaded image at the specified position.
 
 - **`void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)`**
   Draws a portion of the loaded image.
+
+### Pixelbuffer Management and Drawing
+
+- **`mgPixelBuffer *mgCreatePixelBuffer(int width, int height);`**
+  Creates a pixel buffer with the given width and height.
+
+- **`void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color);`**
+  Writes a pixel at x, y location with the given color to the given pixel buffer.
+
+- **`void mgUpdatePixelBuffer(mgPixelBuffer *buffer);`**
+  Update pixels that have changed in the given pixel buffer.
+
+- **`void mgDrawPixelBuffer(mgPixelBuffer *buffer);`**
+  Draws the pixel buffer to the screen.
+
+- **`void mgFreePixelBuffer(mgPixelBuffer *buffer);`**
+  Frees the given pixel buffer.
 
 ### Text Rendering
 
@@ -241,6 +258,17 @@ int main()
       int width;       // Width of the image
       int height;      // Height of the image
   } mgImage;
+  ```
+
+- **`mgPixmap`**
+  Represents a 2D buffer of colors (`mgColorf`)
+  ```c
+  typedef struct
+  {
+      int width;        // Width of the color buffer
+      int height;       // Height of the color buffer
+      mgColorf *pixels; // Array of pixels
+  } mgPixmap;
   ```
 
 ## License
