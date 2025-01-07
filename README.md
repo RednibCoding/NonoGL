@@ -1,6 +1,6 @@
 # TinyGL - Tiny Graphics Library
 
-TinyGL (Tiny Graphics Library) is a lightweight and simple graphics library for C, designed for easy and quick setup of 2D rendering using OpenGL and FreeGLUT. It provides basic functionalities for window creation, image loading, text rendering, basic collision handling, and mouse and keyboard input handling.
+TinyGL (Tiny Graphics Library) is a lightweight and simple 2D graphics library for C, designed for easy and quick setup of 2D rendering using OpenGL and FreeGLUT. It provides basic functionalities for window creation, image loading, text rendering, basic collision handling, and mouse and keyboard input handling.
 
 ## Features
 
