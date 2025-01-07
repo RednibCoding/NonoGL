@@ -12,31 +12,35 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 ## Installation
 
 1. **Clone the repository**:
-    ```sh
-    git clone git@github.com:RednibCoding/miniG.git
-    ```
+
+   ```sh
+   git clone git@github.com:RednibCoding/miniG.git
+   ```
 
 2. **Copy the 'minig' folder into your project**.
 
 3. **Compile your project with FreeGLUT and OpenGL**:
-    > Note: freeGlut comes with miniG, so there is no need to install it manually
 
-    Use the following GCC command to compile your project:
+   > Note: freeGlut comes with miniG, so there is no need to install it manually
 
-    Example for Linux:
-    ```sh
-    gcc main.c -o main -Lminig/internal/lib/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
-    ```
+   Use the following GCC command to compile your project:
 
-    Example for Windows:
-    ```sh
-    gcc main.c -o main.exe -Lminig/internal/lib/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
-    ```
+   Example for Linux:
+
+   ```sh
+   gcc main.c -o main -Lminig/internal/lib/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
+   ```
+
+   Example for Windows:
+
+   ```sh
+   gcc main.c -o main.exe -Lminig/internal/lib/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
+   ```
 
 4. **Include the MiniG header**:
-    ```c
-    #include "minig/mg.h"
-    ```
+   ```c
+   #include "minig/mg.h"
+   ```
 
 ## Example Usage
 
@@ -107,6 +111,9 @@ int main()
 - **`void mgSetColor(mgColorf color)`**
   Sets the current drawing color.
 
+- **`void mgResetColor()`**
+  // Resets the color to default (1.0, 1.0, 1.0)
+
 - **`void mgCls()`**
   Clears the screen with the current clear color.
 
@@ -133,30 +140,42 @@ int main()
 - **`void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)`**
   Draws a portion of the loaded image.
 
+- **`void mgFreeImage(mgImage image)`**
+  Frees the given image
+
 ### Pixelbuffer Management and Drawing
 
-- **`mgPixelBuffer *mgCreatePixelBuffer(int width, int height);`**
+- **`mgPixelBuffer *mgCreatePixelBuffer(int width, int height)`**
   Creates a pixel buffer with the given width and height.
 
-- **`void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color);`**
+- **`void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color)`**
   Writes a pixel at x, y location with the given color to the given pixel buffer.
 
-- **`void mgUpdatePixelBuffer(mgPixelBuffer *buffer);`**
+- **`void mgUpdatePixelBuffer(mgPixelBuffer *buffer)`**
   Update pixels that have changed in the given pixel buffer.
 
-- **`void mgDrawPixelBuffer(mgPixelBuffer *buffer);`**
+- **`void mgDrawPixelBuffer(mgPixelBuffer *buffer)`**
   Draws the pixel buffer to the screen.
 
-- **`void mgFreePixelBuffer(mgPixelBuffer *buffer);`**
+- **`void mgFreePixelBuffer(mgPixelBuffer *buffer)`**
   Frees the given pixel buffer.
 
-- **`void drawPixel(float x, float y, mgColorf color);`**
+- **`void drawPixel(float x, float y, mgColorf color)`**
   Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
 
 ### Text Rendering
 
+- **`mgFont *mgLoadFont(const char *filepath, float fontSize)`**
+  Load a font from a file
+
+- **`void mgSetFont(mgFont *font)`**
+  Set font for text rendering, if not set, a default non-scalable font will be used
+
 - **`void mgDrawText(const char *format, mgPointf pos, ...)`**
   Renders formatted text at the specified position.
+
+- **`void mgFreeFont(mgFont *font)`**
+  Free the font
 
 ### Collision Detection
 
@@ -178,6 +197,7 @@ int main()
 ### Input Handling
 
 - **Keyboard Input**
+
   - **`bool mgKeyHit(int key)`**
     Returns `true` if the specified key was pressed since the last frame.
 
@@ -188,6 +208,7 @@ int main()
     Returns `true` if the specified key was released since the last frame.
 
 - **Mouse Input**
+
   - **`bool mgMouseHit(int button)`**
     Returns `true` if the specified mouse button was clicked since the last frame.
 
@@ -222,8 +243,9 @@ int main()
 
 ### Structs
 
-- **`mgPointf`** 
+- **`mgPointf`**
   Represents a 2D point.
+
   ```c
   typedef struct {
       float x; // X-coordinate
@@ -233,6 +255,7 @@ int main()
 
 - **`mgRecf`**
   Represents a 2D rectangle.
+
   ```c
   typedef struct {
       float x;      // X-coordinate of the rectangle's top-left corner
@@ -244,6 +267,7 @@ int main()
 
 - **`mgColorf`**
   Represents an RGBA color.
+
   ```c
   typedef struct {
       float r; // Red component (0.0 to 1.0)
@@ -255,6 +279,7 @@ int main()
 
 - **`mgImage`**
   Represents an image loaded into OpenGL.
+
   ```c
   typedef struct {
       unsigned int id; // OpenGL texture ID

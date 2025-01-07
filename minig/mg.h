@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "internal/include/GL/freeglut.h"
 #include "internal/include/stb_image.h"
+#include "internal/include/stb_truetype.h"
 
 /******************************************************************************************************************************/
 
@@ -37,7 +38,7 @@ typedef struct
 
 typedef struct
 {
-    unsigned int id;
+    unsigned int textureID;
     int width;
     int height;
 } mgImage;
@@ -49,6 +50,18 @@ typedef struct
     int height;             // Height of the buffer
     mgColorf *pixels;       // CPU-side pixel buffer
 } mgPixelBuffer;
+
+// Represents a font loaded with stb_truetype
+typedef struct
+{
+    stbtt_fontinfo fontInfo;
+    unsigned char *fontBuffer;    // Holds the font file data
+    unsigned int textureID;       // OpenGL texture for the font atlas
+    int atlasWidth;               // Width of the font atlas
+    int atlasHeight;              // Height of the font atlas
+    float scale;                  // Font scaling factor
+    stbtt_bakedchar charData[96]; // Holds character data for ASCII 32-127
+} mgFont;
 
 int mgFPS;
 float mgDT;
@@ -67,6 +80,9 @@ void mgSetClearColor(mgColorf color);
 
 // Set the draw color
 void mgSetColor(mgColorf color);
+
+// Resets the color to default (1.0, 1.0, 1.0)
+void mgResetColor();
 
 // Clear the screen
 void mgCls();
@@ -92,6 +108,9 @@ void mgDrawImage(mgImage image, mgPointf pos);
 // Draw a portion of an image
 void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec);
 
+// Frees the given image
+void mgFreeImage(mgImage image);
+
 // Create a pixel buffer with the given width and height
 mgPixelBuffer *mgCreatePixelBuffer(int width, int height);
 
@@ -108,10 +127,19 @@ void mgDrawPixelBuffer(mgPixelBuffer *buffer);
 void mgFreePixelBuffer(mgPixelBuffer *buffer);
 
 // Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
-void drawPixel(float x, float y, mgColorf color);
+void drawPixel(float x, float y);
 
-// Draw text on the screen
+// Load a font from a file
+mgFont *mgLoadFont(const char *filepath, float fontSize);
+
+// Set font for text rendering, if not set, a default non-scalable font will be used
+void mgSetFont(mgFont *font);
+
+// Render text using the font
 void mgDrawText(const char *format, mgPointf pos, ...);
+
+// Free the font
+void mgFreeFont(mgFont *font);
 
 // Check if a point overlaps with a rectangle
 bool mgPointRecOverlaps(mgPointf point, mgRecf rect);
@@ -174,6 +202,7 @@ typedef struct
     double lastTime;
     int currentFPS;
     int window;
+    mgFont *font;
 
     // Keyboard state
     bool keys[_MG_MAX_KEYS];
@@ -200,6 +229,8 @@ typedef struct
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "internal/include/stb_image.h"
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "internal/include/stb_truetype.h"
 
 _mgState _mgstate;
 
@@ -335,6 +366,25 @@ void _mgMouseMotionFunc(int x, int y)
     _mgstate.mousePosition = newMousePosition;
 }
 
+void _mgDrawTextDefaultFont(const char *format, mgPointf pos, ...)
+{
+    if (!format)
+        return;
+
+    char buffer[1024];
+    va_list args;
+    va_start(args, pos);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    glRasterPos2f(pos.x, pos.y);
+
+    for (char *c = buffer; *c != '\0'; c++)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *c);
+    }
+}
+
 /*******************************************************************************************************/
 // Public api function implementations
 /*******************************************************************************************************/
@@ -399,6 +449,11 @@ void mgSetClearColor(mgColorf color)
 void mgSetColor(mgColorf color)
 {
     glColor4f(color.r, color.g, color.b, color.a);
+}
+
+void mgResetColor()
+{
+    glColor4f(1.0, 1.0, 1.0, 1.0);
 }
 
 void mgSetDisplayLoop(void (*callback)(void))
@@ -483,12 +538,12 @@ mgImage mgLoadImage(const char *filepath)
     if (!imageData)
     {
         printf("Failed to load image:\n%s\n", filepath);
-        image.id = 0;
+        image.textureID = 0;
         return image;
     }
 
-    glGenTextures(1, &image.id);
-    glBindTexture(GL_TEXTURE_2D, image.id);
+    glGenTextures(1, &image.textureID);
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
@@ -518,12 +573,12 @@ mgImage mgLoadImageMem(const unsigned char *data, int size)
     if (!imageData)
     {
         printf("Failed to load image from memory\n");
-        image.id = 0;
+        image.textureID = 0;
         return image;
     }
 
-    glGenTextures(1, &image.id);
-    glBindTexture(GL_TEXTURE_2D, image.id);
+    glGenTextures(1, &image.textureID);
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
@@ -548,7 +603,7 @@ mgImage mgLoadImageMem(const unsigned char *data, int size)
 
 void mgDrawImage(mgImage image, mgPointf pos)
 {
-    glBindTexture(GL_TEXTURE_2D, image.id);
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
 
     glBegin(GL_QUADS);
@@ -567,7 +622,7 @@ void mgDrawImage(mgImage image, mgPointf pos)
 
 void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)
 {
-    glBindTexture(GL_TEXTURE_2D, image.id);
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
 
     float texLeft = srcRec.x / image.width;
@@ -587,6 +642,14 @@ void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
+}
+
+void mgFreeImage(mgImage image)
+{
+    if (!image.textureID == 0)
+        return;
+
+    glDeleteTextures(1, &image.textureID);
 }
 
 mgPixelBuffer *mgCreatePixelBuffer(int width, int height)
@@ -673,32 +736,152 @@ void mgFreePixelBuffer(mgPixelBuffer *buffer)
     free(buffer);
 }
 
-void drawPixel(float x, float y, mgColorf color)
+void drawPixel(float x, float y)
 {
-    glColor4f(color.r, color.g, color.b, color.a);
-
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
 }
 
+mgFont *mgLoadFont(const char *filepath, float fontSize)
+{
+    mgFont *font = malloc(sizeof(mgFont));
+    if (!font)
+        return NULL;
+
+    // Load the font file into memory
+    FILE *file = fopen(filepath, "rb");
+    if (!file)
+    {
+        printf("Failed to open font file: %s\n", filepath);
+        free(font);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    font->fontBuffer = malloc(size);
+    if (!font->fontBuffer)
+    {
+        printf("Failed to allocate memory for font buffer.\n");
+        fclose(file);
+        free(font);
+        return NULL;
+    }
+    fread(font->fontBuffer, 1, size, file);
+    fclose(file);
+
+    // Initialize font info
+    if (!stbtt_InitFont(&font->fontInfo, font->fontBuffer, 0))
+    {
+        printf("Failed to initialize font.\n");
+        free(font->fontBuffer);
+        free(font);
+        return NULL;
+    }
+
+    // Calculate font scale
+    font->scale = stbtt_ScaleForPixelHeight(&font->fontInfo, fontSize);
+
+    // Create the font atlas
+    font->atlasWidth = 512;
+    font->atlasHeight = 512;
+
+    unsigned char *bitmap = calloc(1, font->atlasWidth * font->atlasHeight);
+    if (!bitmap)
+    {
+        printf("Failed to allocate memory for font atlas.\n");
+        free(font->fontBuffer);
+        free(font);
+        return NULL;
+    }
+
+    // Bake the font
+    stbtt_BakeFontBitmap(font->fontBuffer, 0, fontSize, bitmap, font->atlasWidth, font->atlasHeight, 32, 96, font->charData);
+
+    // Upload the atlas to OpenGL
+    glGenTextures(1, &font->textureID);
+    glBindTexture(GL_TEXTURE_2D, font->textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, font->atlasWidth, font->atlasHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    free(bitmap);
+
+    return font;
+}
+
+void mgSetFont(mgFont *font)
+{
+    if (!font)
+        return;
+
+    _mgstate.font = font;
+}
+
 void mgDrawText(const char *format, mgPointf pos, ...)
 {
-    char buffer[1024];
+    if (!format)
+        return;
 
+    if (!_mgstate.font)
+    {
+        _mgDrawTextDefaultFont(format, pos);
+        return;
+    }
+
+    char buffer[1024];
     va_list args;
     va_start(args, pos);
-
     vsnprintf(buffer, sizeof(buffer), format, args);
-
     va_end(args);
 
-    glRasterPos2f(pos.x, pos.y);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, _mgstate.font->textureID);
 
+    glBegin(GL_QUADS);
+
+    float x = pos.x;
     for (char *c = buffer; *c != '\0'; c++)
     {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        if (*c < 32 || *c >= 128)
+            continue;
+
+        stbtt_aligned_quad quad;
+        stbtt_GetBakedQuad(_mgstate.font->charData, _mgstate.font->atlasWidth, _mgstate.font->atlasHeight, *c - 32, &x, &pos.y, &quad, 1);
+
+        glTexCoord2f(quad.s0, quad.t1);
+        glVertex2f(quad.x0, quad.y1);
+        glTexCoord2f(quad.s1, quad.t1);
+        glVertex2f(quad.x1, quad.y1);
+        glTexCoord2f(quad.s1, quad.t0);
+        glVertex2f(quad.x1, quad.y0);
+        glTexCoord2f(quad.s0, quad.t0);
+        glVertex2f(quad.x0, quad.y0);
     }
+
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+}
+
+void mgFreeFont(mgFont *font)
+{
+    if (!font)
+        return;
+
+    if (font->fontBuffer)
+        free(font->fontBuffer);
+
+    glDeleteTextures(1, &font->textureID);
+    free(font);
 }
 
 bool mgPointRecOverlaps(mgPointf point, mgRecf rec)

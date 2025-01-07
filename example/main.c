@@ -5,6 +5,7 @@
 #include "../minig/mg.h"
 
 mgImage image;
+mgFont *font;
 
 void display()
 {
@@ -15,18 +16,15 @@ void display()
 
     mgDrawImagePortion(image, (mgPointf){200.0f, 200.0f}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
-    mgSetColor((mgColorf){0.5f, 0.5f, 0.8f, 1.0f});
-
     mgDrawText("Hello World", (mgPointf){200.0f, 300.0f});
 
-    mgSetColor((mgColorf){1.5f, 0.5f, 0.8f, 1.0f});
-
+    mgSetColor((mgColorf){1.0f, 0.5f, 0.8f, 1.0f});
     mgDrawText("Hello Color", (mgPointf){200.0f, 340.0f});
 
-    mgSetColor((mgColorf){1.0f, 1.0f, 1.0f, 1.0f});
-
+    mgSetColor((mgColorf){1.0f, 1.0f, 0.0f, 1.0f});
     mgDrawText("FPS: %d", (mgPointf){200.0f, 370.0f}, mgFPS);
     mgDrawText("Delta Time: %f", (mgPointf){200.0f, 400.0f}, mgDT);
+    mgResetColor();
 
     if (mgKeyHit('a'))
     {
@@ -84,10 +82,21 @@ int main()
     if (!success)
         return -1;
 
+    font = mgLoadFont("./assets/Roboto-Regular.ttf", 24.0f);
+    if (!font)
+    {
+        printf("Failed to load font.\n");
+        return -1;
+    }
+
+    mgSetFont(font);
+
     image = mgLoadImage("./assets/opengl.png");
 
     mgSetDisplayLoop(display);
     mgRun();
 
+    mgFreeFont(font);
+    mgFreeImage(image);
     mgDestroyWindow();
 }
