@@ -19,7 +19,7 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 2. **Copy the 'minig' folder into your project**.
 
 3. **Compile your project with FreeGLUT and OpenGL**:
-    Ensure you link against FreeGLUT and OpenGL libraries.
+    Ensure you link against FreeGLUT and OpenGL libraries. (Comes with minig)
 
     Example for Linux:
     ```sh
