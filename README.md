@@ -104,7 +104,8 @@ int main()
 ### Window Management
 
 - **`bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)`**
-  Creates a window with the specified title, width, and height. Scalable determines wether the content should be resized when the window resizes. Filterd determines wether images should be filtered or pixelated.
+  Creates a window with the specified title, width and height. Scalable determines wether the drawn content on the screen should be resized when the window resizes.
+  Filterd determines wether a smoothing filter should be applied to images and text. Otherwise they stay pixelated (good for pixel art).
 
 - **`void tgDestroyWindow()`**
   Destroys the created window and cleans up resources.
