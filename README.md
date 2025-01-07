@@ -22,7 +22,7 @@ TinyGL (Tiny Graphics Library) is a lightweight and simple 2D graphics library f
 
 3. **Compile your project with FreeGLUT and OpenGL**:
 
-   > Note: TinyGL comes bundled freeGlut, so there is no need to install freeGlut manually
+   > Note: TinyGL comes bundled with freeGlut, so there is no need to install freeGlut manually
 
    Use the following GCC command to compile your project:
 
