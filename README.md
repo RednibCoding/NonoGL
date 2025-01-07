@@ -50,44 +50,44 @@ Here is a basic example of using TinyGL to create a window and render images and
 #include <stdio.h>
 #include <stdbool.h>
 
-#define MG_IMPL
+#define TGL_IMPL
 #include "tinygl/tgl.h"
 
-mgImage image;
+tgImage image;
 
 void display()
 {
-    mgCls();
+    tgCls();
 
-    mgDrawImage(image, 20, 20);
+    tgDrawImage(image, 20, 20);
 
-    mgDrawImagePortion(image, 200, 200}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
+    tgDrawImagePortion(image, 200, 200}, (tgRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
-    mgSetColor((mgColorf){0.5f, 0.5f, 0.8f, 1.0f});
-    mgDrawText("Hello World", 200, 300});
+    tgSetColor((tgColorf){0.5f, 0.5f, 0.8f, 1.0f});
+    tgDrawText("Hello World", 200, 300});
 
-    mgSetColor((mgColorf){1.5f, 0.5f, 0.8f, 1.0f});
-    mgDrawText("Hello Color", 200, 340});
+    tgSetColor((tgColorf){1.5f, 0.5f, 0.8f, 1.0f});
+    tgDrawText("Hello Color", 200, 340});
 
-    mgSetColor((mgColorf){1.0f, 1.0f, 1.0f, 1.0f});
-    mgDrawText("FPS: %d", 200, 360}, mgFPS);
-    mgDrawText("Delta Time: %f", 200, 400}, mgDT);
+    tgSetColor((tgColorf){1.0f, 1.0f, 1.0f, 1.0f});
+    tgDrawText("FPS: %d", 200, 360}, tgFPS);
+    tgDrawText("Delta Time: %f", 200, 400}, tgDT);
 
-    mgFlip();
+    tgFlip();
 }
 
 int main()
 {
-    bool success = mgCreateWindow("TinyGL Window", 1024, 600, true, true);
+    bool success = tgCreateWindow("TinyGL Window", 1024, 600, true, true);
     if (!success)
         return -1;
 
-    image = mgLoadImage("./assets/opengl.png");
+    image = tgLoadImage("./assets/opengl.png");
 
-    mgSetDisplayLoop(display);
-    mgRun();
+    tgSetDisplayLoop(display);
+    tgRun();
 
-    mgDestroyWindow();
+    tgDestroyWindow();
     return 0;
 }
 ```
@@ -96,165 +96,165 @@ int main()
 
 ### Window Management
 
-- **`bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)`**
+- **`bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)`**
   Creates a window with the specified title, width, and height. Scalable determines wether the content should be resized when the window resizes. Filterd determines wether images should be filtered or pixelated.
 
-- **`void mgDestroyWindow()`**
+- **`void tgDestroyWindow()`**
   Destroys the created window and cleans up resources.
 
-- **`void mgSetWindowTitle(const char *format, ...)`**
+- **`void tgSetWindowTitle(const char *format, ...)`**
   Sets the window title with formatted text.
 
-- **`void mgSetClearColor(mgColorf color)`**
+- **`void tgSetClearColor(tgColorf color)`**
   Sets the background color for clearing the window.
 
-- **`void mgSetColor(mgColorf color)`**
+- **`void tgSetColor(tgColorf color)`**
   Sets the current drawing color.
 
-- **`void mgResetColor()`**
+- **`void tgResetColor()`**
   // Resets the color to default (1.0, 1.0, 1.0)
 
-- **`void mgCls()`**
+- **`void tgCls()`**
   Clears the screen with the current clear color.
 
-- **`void mgFlip()`**
+- **`void tgFlip()`**
   Swaps the front- and backbuffer.
 
-- **`void mgSetDisplayLoop(void (*callback)(void))`**
+- **`void tgSetDisplayLoop(void (*callback)(void))`**
   Sets the display loop function to handle rendering.
 
-- **`void mgRun()`**
+- **`void tgRun()`**
   Starts the main rendering loop.
 
 ### Image Loading and Drawing
 
-- **`mgImage mgLoadImage(const char *filepath)`**
+- **`tgImage tgLoadImage(const char *filepath)`**
   Loads an image from the specified file path.
 
-- **`mgImage mgLoadImageMem(const unsigned char *data, int size)`**
+- **`tgImage tgLoadImageMem(const unsigned char *data, int size)`**
   Loads an image from memory.
 
-- **`void mgDrawImage(mgImage image, int x, int y)`**
+- **`void tgDrawImage(tgImage image, int x, int y)`**
   Draws the loaded image at the specified position.
 
-- **`void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec)`**
+- **`void tgDrawImagePortion(tgImage image, int x, int y, tgRecf srcRec)`**
   Draws a portion of the loaded image.
 
-- **`void mgFreeImage(mgImage image)`**
+- **`void tgFreeImage(tgImage image)`**
   Frees the given image
 
 ### Pixmap (pixel buffer) Management and Drawing
 
-- **`mgPixmap *mgCreatePixmap(int width, int height)`**
+- **`tgPixmap *tgCreatePixmap(int width, int height)`**
   Creates a Pixmap with the given width and height.
 
-- **`void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color)`**
+- **`void tgPutPixel(tgPixmap *buffer, int x, int y, tgColorf color)`**
   Writes a pixel at x, y location with the given color to the given Pixmap.
 
-- **`void mgUpdatePixmap(mgPixmap *buffer)`**
+- **`void tgUpdatePixmap(tgPixmap *buffer)`**
   Update pixels that have changed in the given Pixmap.
 
-- **`void mgDrawPixmap(mgPixmap *buffer)`**
+- **`void tgDrawPixmap(tgPixmap *buffer)`**
   Draws the Pixmap to the screen.
 
-- **`void mgFreePixmap(mgPixmap *buffer)`**
+- **`void tgFreePixmap(tgPixmap *buffer)`**
   Frees the given Pixmap.
 
-- **`void drawPixel(float x, float y, mgColorf color)`**
+- **`void drawPixel(float x, float y, tgColorf color)`**
   Draws an individual pixel to the screen.
   > Note: When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons.
 
 ### Text Rendering
 
-- **`mgFont *mgLoadFont(const char *filepath, float fontSize)`**
+- **`tgFont *mgLoadFont(const char *filepath, float fontSize)`**
   Load a font from a file.
 
-- **`void mgSetFont(mgFont *font)`**
+- **`void tgSetFont(tgFont *font)`**
   Set font for text rendering, if not set, a default non-scalable font will be used.
 
-- **`void mgDrawText(const char *format, int x, int y, ...)`**
+- **`void tgDrawText(const char *format, int x, int y, ...)`**
   Renders formatted text at the specified position.
 
-- **`void mgFreeFont(mgFont *font)`**
+- **`void tgFreeFont(tgFont *font)`**
   Free the font
 
 ### Collision Detection
 
-- **`bool mgVec2RecOverlaps(int x, int y, mgRecf rect)`**
+- **`bool tgVec2RecOverlaps(int x, int y, tgRecf rect)`**
   Checks if a point overlaps with a rectangle.
 
-- **`bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)`**
+- **`bool tgRecsOverlap(tgRecf rec1, tgRecf rec2)`**
   Checks if two rectangles overlap.
 
-- **`bool mgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius)`**
+- **`bool tgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius)`**
   Checks if a point overlaps with a circle.
 
-- **`bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleradius)`**
+- **`bool tgRecCircleOverlaps(tgRecf rec, int cx, int cy, float circleradius)`**
   Checks if a rectangle overlaps with a circle.
 
-- **`bool mgCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius)`**
+- **`bool tgCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius)`**
   Checks if two circles overlap.
 
 ### Input Handling
 
 - **Keyboard Input**
 
-  - **`bool mgKeyHit(int key)`**
+  - **`bool tgKeyHit(int key)`**
     Returns `true` if the specified key was pressed since the last frame.
 
-  - **`bool mgKeyDown(int key)`**
+  - **`bool tgKeyDown(int key)`**
     Returns `true` if the specified key is currently being held down.
 
-  - **`bool mgKeyReleased(int key)`**
+  - **`bool tgKeyReleased(int key)`**
     Returns `true` if the specified key was released since the last frame.
 
 - **Mouse Input**
 
-  - **`bool mgMouseHit(int button)`**
+  - **`bool tgMouseHit(int button)`**
     Returns `true` if the specified mouse button was clicked since the last frame.
 
-  - **`bool mgMouseDown(int button)`**
+  - **`bool tgMouseDown(int button)`**
     Returns `true` if the specified mouse button is currently being held down.
 
-  - **`bool mgMouseReleased(int button)`**
+  - **`bool tgMouseReleased(int button)`**
     Returns `true` if the specified mouse button was released since the last frame.
 
-  - **`int mgMouseWheelDelta()`**
+  - **`int tgMouseWheelDelta()`**
     Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
 
-  - **`mgVec2 mgGetMousePosition()`**
-    Returns the current position of the mouse cursor as an `mgVec2` struct.
+  - **`tgVec2 tgGetMousePosition()`**
+    Returns the current position of the mouse cursor as an `tgVec2` struct.
 
-  - **`mgVec2 mgMouseMotionDelta()`**
+  - **`tgVec2 tgMouseMotionDelta()`**
     Returns the mouse motion delta (change in position) since the last frame.
 
 ### Utility Functions
 
-- **`unsigned char *mgLoadFileBytes(const char *filepath, int *size)`**
+- **`unsigned char *tgLoadFileBytes(const char *filepath, int *size)`**
   Loads a file into a buffer and returns its pointer.
 
-- **`void mgFreeFileBytes(unsigned char *buffer)`**
-  Frees the memory allocated by `mgLoadFileBytes`.
+- **`void tgFreeFileBytes(unsigned char *buffer)`**
+  Frees the memory allocated by `tgLoadFileBytes`.
 
-- **`int mgFPS`**
+- **`int tgFPS`**
   Holds the current frames per second.
 
-- **`float mgDT`**
+- **`float tgDT`**
   Holds the delta time (time elapsed since the last frame).
 
 ### Structs
 
-- **`mgVec2`**
+- **`tgVec2`**
   Represents a 2D point.
 
   ```c
   typedef struct {
       int x; // X-coordinate
       int y; // Y-coordinate
-  } mgVec2;
+  } tgVec2;
   ```
 
-- **`mgRecf`**
+- **`tgRecf`**
   Represents a 2D rectangle.
 
   ```c
@@ -263,10 +263,10 @@ int main()
       float y;      // Y-coordinate of the rectangle's top-left corner
       float width;  // Width of the rectangle
       float height; // Height of the rectangle
-  } mgRecf;
+  } tgRecf;
   ```
 
-- **`mgColorf`**
+- **`tgColorf`**
   Represents an RGBA color.
 
   ```c
@@ -275,10 +275,10 @@ int main()
       float g; // Green component (0.0 to 1.0)
       float b; // Blue component (0.0 to 1.0)
       float a; // Alpha (transparency) component (0.0 to 1.0)
-  } mgColorf;
+  } tgColorf;
   ```
 
-- **`mgImage`**
+- **`tgImage`**
   Represents an image loaded into OpenGL.
 
   ```c
@@ -286,19 +286,19 @@ int main()
       unsigned int id; // OpenGL texture ID
       int width;       // Width of the image
       int height;      // Height of the image
-  } mgImage;
+  } tgImage;
   ```
 
-- **`mgPixmap`**
-  Represents a 2D buffer of colors (`mgColorf`)
+- **`tgPixmap`**
+  Represents a 2D buffer of colors (`tgColorf`)
   ```c
   typedef struct
   {
     unsigned int textureID; // OpenGL texture ID
     int width;              // Width of the buffer
     int height;             // Height of the buffer
-    mgColorf *pixels;       // CPU-side pixel buffer
-  } mgPixmap;
+    tgColorf *pixels;       // CPU-side pixel buffer
+  } tgPixmap;
   ```
 
 ## License
