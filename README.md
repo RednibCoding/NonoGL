@@ -4,8 +4,9 @@ TinyGL (Tiny Graphics Library) is a lightweight and simple graphics library for 
 
 ## Features
 
-- **Window Management**: Easy creation and management.
+- **Window Management**: Easy window creation and management.
 - **Image Loading**: Load and render images. (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
+- **Truetype Font Loading**: Load and render Truetype fonts.
 - **Collision Handling**: Basic functions to check point-rectangle, rectangle-rectangle, point-circle, and rectangle-circle overlaps.
 - **Mouse and Keyboard Input Handling**: Simple functions to check for mouse and keyboard button presses.
 
