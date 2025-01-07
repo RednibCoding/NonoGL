@@ -10,7 +10,6 @@
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-DFREEGLUT_STATIC",
                 "-Lminig\\internal\\lib\\x64",
                 "-l:libfreeglut_static.a",
                 "-lopengl32",
