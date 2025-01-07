@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define TGL_IMPL
+#define TINYGL_IMPLEMENTATION
 #include "../tinygl/tgl.h"
 
 tgImage image;

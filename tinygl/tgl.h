@@ -225,7 +225,7 @@ typedef struct
 /*  IMPLEMENTATION */
 
 /******************************************************************************************************************************/
-#ifdef TGL_IMPL
+#ifdef TINYGL_IMPLEMENTATION
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "internal/include/stb_image.h"
@@ -985,4 +985,4 @@ tgVec2 tgMouseMotionDelta()
     return delta;
 }
 
-#endif // TGL_IMPL
+#endif // TINYGL_IMPLEMENTATION

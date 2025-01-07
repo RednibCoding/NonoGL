@@ -50,7 +50,7 @@ Here is a basic example of using TinyGL to create a window and render images and
 #include <stdio.h>
 #include <stdbool.h>
 
-#define TGL_IMPL
+#define TINYGL_IMPLEMENTATION
 #include "tinygl/tgl.h"
 
 tgImage image;
