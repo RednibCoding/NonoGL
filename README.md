@@ -4,7 +4,7 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 
 ## Features
 
-- **Window Management**: Easy creation and management of OpenGL windows using FreeGLUT.
+- **Window Management**: Easy creation and management.
 - **Image Loading**: Load and render images. (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
 - **Collision Handling**: Basic functions to check point-rectangle, rectangle-rectangle, point-circle, and rectangle-circle overlaps.
 - **Mouse and Keyboard Input Handling**: Simple functions to check for mouse and keyboard button presses.
@@ -161,15 +161,15 @@ int main()
   Frees the given Pixmap.
 
 - **`void drawPixel(float x, float y, mgColorf color)`**
-  Draw an individual pixel to the screen (use a Pixmap (pixel buffer) for large chunks of pixels instead)
+  Draw an individual pixel to the screen (when dealing with large chunks of pixels, use a Pixmap (pixel buffer) instead).
 
 ### Text Rendering
 
 - **`mgFont *mgLoadFont(const char *filepath, float fontSize)`**
-  Load a font from a file
+  Load a font from a file.
 
 - **`void mgSetFont(mgFont *font)`**
-  Set font for text rendering, if not set, a default non-scalable font will be used
+  Set font for text rendering, if not set, a default non-scalable font will be used.
 
 - **`void mgDrawText(const char *format, int x, int y, ...)`**
   Renders formatted text at the specified position.
