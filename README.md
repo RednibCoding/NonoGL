@@ -29,13 +29,13 @@ TinyGL (Tiny Graphics Library) is a lightweight and simple graphics library for 
    Example for Linux:
 
    ```sh
-   gcc main.c -o main -Ltinygl/internal/lib/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
+   gcc main.c -o main -Ltinygl/internal/lib/linux/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
    ```
 
    Example for Windows:
 
    ```sh
-   gcc main.c -o main.exe -Ltinygl/internal/lib/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
+   gcc main.c -o main.exe -Ltinygl/internal/lib/win32/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
    ```
 
 4. **Include the TinyGL header**:
