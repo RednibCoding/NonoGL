@@ -1,9 +1,11 @@
 @echo off
 
 REM Simple build script template for small projects
-REM No need for 'make' and stuff
 
 echo Starting compilation...
+
+
+REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@ Edit the following to your liking @@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 REM Define compiler
 set COMPILER=gcc
@@ -17,14 +19,27 @@ set RES_FILES=
 REM Define the source files to include
 set SRC_FILES=main.c
 
-REM Define additional flags to use
-set FLAGS=-D FREEGLUT_STATIC -L../minig/lib/win32/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
+REM Define additional compiler flags to use
+set CFLAGS=
 
-REM Debug build
- %COMPILER% %SRC_FILES% %RES_FILES% -o %OUTPUT_FILE_NAME% %FLAGS% -std=c99
+REM Define additional linker flags to use (add -mwindows to hide the console)
+set LDFLAGS=-L../minig/internal/lib/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
 
-REM Release build
-@REM %COMPILER% %SRC_FILES% %RES_FILES% -o %OUTPUT_FILE_NAME% %FLAGS% -O3 -Wall -s -std=c99 -fno-strict-aliasing -fomit-frame-pointer -mwindows
+REM Set the c standard
+set CSTD=-std=c99
+
+REM Release build optimization flags
+set RELEASEFLAGS=-O3 -Wall -s -fno-strict-aliasing -fomit-frame-pointer
+
+REM Release build (comment/uncomment)
+%COMPILER% -c %SRC_FILES% %CSTD% %CFLAGS% %RELEASEFLAGS% -o main.o
+
+REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Edit the above to your liking @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+REM Linkage
+echo Starting linking...
+%COMPILER% -o %OUTPUT_FILE_NAME% main.o %LDFLAGS%
 
 if %ERRORLEVEL% NEQ 0 (
     echo Compilation failed.

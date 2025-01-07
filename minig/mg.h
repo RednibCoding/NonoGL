@@ -1,95 +1,81 @@
-/*
-    Dont forget to link against ./minig/lib/<arch>/libglfw3.a
-    e.g.: -L./minig/lib/win64 -lglfw3
-*/
+#define FREEGLUT_STATIC
 
 #ifndef MINI_G_H
 #define MINI_G_H
 
 #include <stdbool.h>
-#include "internal/freeglut.h"
-#include "internal/stb_image.h"
+#include "internal/include/GL/freeglut.h"
+#include "internal/include/stb_image.h"
 
+/******************************************************************************************************************************/
 
-typedef struct {
+/*  Public API */
+
+/******************************************************************************************************************************/
+
+typedef struct
+{
     float x;
     float y;
 } mgPointf;
 
-typedef struct {
+typedef struct
+{
     float x;
     float y;
     float width;
     float height;
 } mgRecf;
 
-typedef struct {
+typedef struct
+{
     float r;
     float g;
     float b;
     float a;
 } mgColorf;
 
-typedef struct {
+typedef struct
+{
     unsigned int id;
     int width;
     int height;
 } mgImage;
 
-typedef struct {
-    char* title;
-    int initialWidth;
-    int initialHeight;
-    int width;
-    int height;
-    bool scaleable;
-    bool filtered;
-    float deltaTime;
-    double lastTime;
-    int currentFPS;
-    int window;
-} _mgState;
+int mgFPS;
+float mgDT;
 
 // Create a window
-bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool filtered);
+bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filtered);
 
 // Release resources and free memory
 void mgDestroyWindow();
 
-// Returns true when window close event has been triggered, other false
-bool mgWindowShouldClose();
-
 // Set the window title
-void mgSetWindowTitle(char *title);
+void mgSetWindowTitle(const char *format, ...);
 
 // Set the clear color
 void mgSetClearColor(mgColorf color);
 
-// Set the draw collor
+// Set the draw color
 void mgSetColor(mgColorf color);
 
 // Clear the screen
-void mgClear();
+void mgCls();
 
-// End rendering
-void mgSwap();
-
-// Get the delta time
-float mgDeltaTime();
-
-// Get the current fps
-int mgCurrentFps();
+// End rendering and swap buffers
+void mgFlip();
 
 // Load a file as bytes into a buffer and return the pointer to that buffer
-unsigned char* mgLoadFileBytes(const char* filepath, int* size);
+unsigned char *mgLoadFileBytes(const char *filepath, int *size);
 
 // Free the buffer allocated by mgLoadFileBytes
-void mgFreeFileBytes(unsigned char* buffer);
+void mgFreeFileBytes(unsigned char *buffer);
 
-// Load a png image from file
-mgImage mgLoadImage(const char* filepath);
+// Load an image from file
+mgImage mgLoadImage(const char *filepath);
 
-// Load a png image from memory
+// Load an image from memory
 mgImage mgLoadImageMem(const unsigned char *data, int size);
 
 // Draw an image on the screen
@@ -99,7 +85,7 @@ void mgDrawImage(mgImage image, mgPointf pos);
 void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec);
 
 // Draw text on the screen
-void mgDrawText(char *text, mgPointf pos);
+void mgDrawText(const char *format, mgPointf pos, ...);
 
 // Check if a point overlaps with a rectangle
 bool mgPointRecOverlaps(mgPointf point, mgRecf rect);
@@ -118,6 +104,7 @@ bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf cir
 
 #endif // MINI_G_H
 
+/******************************************************************************************************************************/
 
 /******************************************************************************************************************************/
 
@@ -127,7 +114,22 @@ bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf cir
 #ifdef MG_IMPL
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "internal/stb_image.h"
+#include "internal/include/stb_image.h"
+
+typedef struct
+{
+    char *title;
+    int initialWidth;
+    int initialHeight;
+    int width;
+    int height;
+    bool scalable;
+    bool filtered;
+    float deltaTime;
+    double lastTime;
+    int currentFPS;
+    int window;
+} _mgState;
 
 _mgState _mgstate;
 
@@ -135,36 +137,43 @@ _mgState _mgstate;
 void (*gDisplayCallback)(void) = NULL;
 
 // Define custom exit handlers
-void _customExitFunction(int status) {
+void _customExitFunction(int status)
+{
     exit(status);
 }
 
 // Wrapper display function that calls the function pointer
-void _mgDisplayCallbackWrapper() {
-    if (gDisplayCallback != NULL) {
+void _mgDisplayCallbackWrapper()
+{
+    if (gDisplayCallback != NULL)
+    {
         gDisplayCallback();
     }
-    glutSwapBuffers(); // Ensure the buffers are swapped after drawing
 }
 
-void _customExitFunctionWithMessage(const char* msg, int status) {
-    if (msg) {
+void _customExitFunctionWithMessage(const char *msg, int status)
+{
+    if (msg)
+    {
         fprintf(stderr, "%s\n", msg);
     }
     exit(status);
 }
 
-void _mgKeyCallback(unsigned char key, int x, int y) {
+void _mgKeyCallback(unsigned char key, int x, int y)
+{
     if (key == 27) // ESC key
-    printf("Hello key");
+        printf("Hello key");
     glutLeaveMainLoop();
 }
 
-void _mgSpecialKeyCallback(int key, int x, int y) {
+void _mgSpecialKeyCallback(int key, int x, int y)
+{
     // Handle special keys if needed
 }
 
-void _mgMouseButtonCallback(int button, int state, int x, int y) {
+void _mgMouseButtonCallback(int button, int state, int x, int y)
+{
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
         printf("Left mouse button pressed\n");
     else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
@@ -173,7 +182,8 @@ void _mgMouseButtonCallback(int button, int state, int x, int y) {
         printf("Middle mouse button pressed\n");
 }
 
-void _mgMouseScrollCallback(int button, int dir, int x, int y) {
+void _mgMouseScrollCallback(int button, int dir, int x, int y)
+{
     // This is how FreeGLUT handles mouse wheel
     if (dir > 0)
         printf("Mouse wheel up\n");
@@ -181,11 +191,13 @@ void _mgMouseScrollCallback(int button, int dir, int x, int y) {
         printf("Mouse wheel down\n");
 }
 
-void _mgCursorPositionCallback(int x, int y) {
-    printf("Cursor position: (%.2f, %.2f)\n", x, y);
+void _mgCursorPositionCallback(int x, int y)
+{
+    printf("Cursor position: (%d, %d)\n", x, y);
 }
 
-void _mgSetupOrthoProjection(int width, int height) {
+void _mgSetupOrthoProjection(int width, int height)
+{
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0.0, width, height, 0.0, -1.0, 1.0);
@@ -193,50 +205,55 @@ void _mgSetupOrthoProjection(int width, int height) {
     glLoadIdentity();
 }
 
-void _mgSetScale(float scaleX, float scaleY) {
+void _mgSetScale(float scaleX, float scaleY)
+{
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glScalef(scaleX, scaleY, 1.0f);
 }
 
-void _mgUpdateScale(int width, int height, int shouldUpdate) {
-    if (shouldUpdate != 0) {
+void _mgUpdateScale(int width, int height, int shouldUpdate)
+{
+    if (shouldUpdate != 0)
+    {
         float scaleX = (float)width / _mgstate.initialWidth;
         float scaleY = (float)height / _mgstate.initialHeight;
         _mgSetScale(scaleX, scaleY);
     }
 }
 
-void _mgFramebufferSizeCallback(int width, int height) {
+void _mgFramebufferSizeCallback(int width, int height)
+{
     glViewport(0, 0, width, height);
     _mgSetupOrthoProjection(width, height);
-    _mgUpdateScale(width, height, _mgstate.scaleable);
+    _mgUpdateScale(width, height, _mgstate.scalable);
 }
 
-void _mgTimerCallback(int value) {
+void _mgTimerCallback(int value)
+{
     // Calculate deltaTime and currentFPS
-    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0; // Get time in seconds
     _mgstate.deltaTime = currentTime - _mgstate.lastTime;
-    _mgstate.currentFPS = 1.0 / _mgstate.deltaTime;
+    _mgstate.currentFPS = (_mgstate.deltaTime > 0) ? (1.0 / _mgstate.deltaTime) : 0;
     _mgstate.lastTime = currentTime;
 
-    // Redisplay and reset timer
+    mgFPS = _mgstate.currentFPS;
+    mgDT = _mgstate.deltaTime;
+
+    // Trigger display refresh
     glutPostRedisplay();
+
+    // Re-register the timer callback for 60 FPS
+    glutTimerFunc(1000 / 60, _mgTimerCallback, 0);
 }
 
-void _mgDisplayCallback(void (*callback)(void)) {
-    callback();
-    glutSwapBuffers();
-    glutTimerFunc(1000 / 60, _mgTimerCallback, 0); // Call the timer function again to keep updating
-}
-
-
 /*******************************************************************************************************/
-// Public api functions
+// Public api function implementations
 /*******************************************************************************************************/
 
-bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool filtered) {
-    _mgstate.scaleable = scaleable;
+bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)
+{
+    _mgstate.scalable = scalable;
     _mgstate.filtered = filtered;
 
     _mgstate.title = title;
@@ -252,14 +269,13 @@ bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool fil
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
     int argc = 1;
-    char *argv[1] = {(char*)"Something"};
+    char *argv[1] = {(char *)"Something"};
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowSize(width, height);
     _mgstate.window = glutCreateWindow(title);
 
     /* Set the callbacks */
-    // glutDisplayFunc(_mgDisplayCallback);
     glutKeyboardFunc(_mgKeyCallback);
     glutSpecialFunc(_mgSpecialKeyCallback);
     glutMouseFunc(_mgMouseButtonCallback);
@@ -270,7 +286,7 @@ bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool fil
 
     /* Set up the orthographic projection */
     _mgSetupOrthoProjection(_mgstate.width, _mgstate.height);
-    _mgUpdateScale(_mgstate.width, _mgstate.height, _mgstate.scaleable);
+    _mgUpdateScale(_mgstate.width, _mgstate.height, _mgstate.scalable);
 
     /* Set initial scale */
     _mgSetScale(1.0f, 1.0f);
@@ -281,61 +297,65 @@ bool mgCreateWindow(char *title, int width, int height, bool scaleable, bool fil
     return true;
 }
 
-void mgDestroyWindow() {
+void mgDestroyWindow()
+{
     glutDestroyWindow(_mgstate.window);
-    // Free any allocated resources if necessary
 }
 
-bool mgWindowShouldClose() {
-    return false;
-}
-
-void mgSetClearColor(mgColorf color) {
+void mgSetClearColor(mgColorf color)
+{
     glClearColor(color.r, color.g, color.b, color.a);
 }
 
-void mgSetColor(mgColorf color) {
+void mgSetColor(mgColorf color)
+{
     glColor4f(color.r, color.g, color.b, color.a);
 }
 
-void mgSetDisplayLoop(void (*callback)(void)) {
+void mgSetDisplayLoop(void (*callback)(void))
+{
     gDisplayCallback = callback;
     glutDisplayFunc(_mgDisplayCallbackWrapper);
 }
 
-void mgRun() {
-    if (gDisplayCallback == NULL) {
+void mgRun()
+{
+    if (gDisplayCallback == NULL)
+    {
         printf("DisplayCallback not set, shutting down...");
         exit(-1);
     }
     glutMainLoop();
 }
 
-// Clear the screen
-void mgClear() {
+void mgCls()
+{
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void mgSetWindowTitle(char *title) {
-    glutSetWindowTitle(title);
+void mgSetWindowTitle(const char *format, ...)
+{
+    char buffer[256];
+
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    glutSetWindowTitle(buffer);
 }
 
-void mgSwap() {
+void mgFlip()
+{
     glutSwapBuffers();
     glutMainLoopEvent();
 }
 
-float mgDeltaTime() {
-    return _mgstate.deltaTime;
-}
-
-int mgCurrentFps() {
-    return _mgstate.currentFPS;
-}
-
-unsigned char* mgLoadFileBytes(const char* filepath, int* size) {
-    FILE* file = fopen(filepath, "rb");
-    if (!file) {
+unsigned char *mgLoadFileBytes(const char *filepath, int *size)
+{
+    FILE *file = fopen(filepath, "rb");
+    if (!file)
+    {
         printf("Failed to open file:\n%s\n", filepath);
         return NULL;
     }
@@ -344,8 +364,9 @@ unsigned char* mgLoadFileBytes(const char* filepath, int* size) {
     *size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    unsigned char* buffer = (unsigned char*)malloc(*size);
-    if (!buffer) {
+    unsigned char *buffer = (unsigned char *)malloc(*size);
+    if (!buffer)
+    {
         printf("Failed to allocate memory for file: %s\n", filepath);
         fclose(file);
         return NULL;
@@ -357,17 +378,21 @@ unsigned char* mgLoadFileBytes(const char* filepath, int* size) {
     return buffer;
 }
 
-void mgFreeFileBytes(unsigned char* buffer) {
-    if (buffer) {
+void mgFreeFileBytes(unsigned char *buffer)
+{
+    if (buffer)
+    {
         free(buffer);
     }
 }
 
-mgImage mgLoadImage(const char* filepath) {
+mgImage mgLoadImage(const char *filepath)
+{
     mgImage image;
     // stbi_set_flip_vertically_on_load(1);
-    unsigned char* imageData = stbi_load(filepath, &image.width, &image.height, 0, 4);
-    if (!imageData) {
+    unsigned char *imageData = stbi_load(filepath, &image.width, &image.height, 0, 4);
+    if (!imageData)
+    {
         printf("Failed to load image:\n%s\n", filepath);
         image.id = 0;
         return image;
@@ -378,10 +403,13 @@ mgImage mgLoadImage(const char* filepath) {
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
-    if (!_mgstate.filtered) {
+    if (!_mgstate.filtered)
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    } else {
+    }
+    else
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
@@ -394,10 +422,12 @@ mgImage mgLoadImage(const char* filepath) {
     return image;
 }
 
-mgImage mgLoadImageMem(const unsigned char *data, int size) {
+mgImage mgLoadImageMem(const unsigned char *data, int size)
+{
     mgImage image;
-    unsigned char* imageData = stbi_load_from_memory(data, size, &image.width, &image.height, 0, 4);
-    if (!imageData) {
+    unsigned char *imageData = stbi_load_from_memory(data, size, &image.width, &image.height, 0, 4);
+    if (!imageData)
+    {
         printf("Failed to load image from memory\n");
         image.id = 0;
         return image;
@@ -408,10 +438,13 @@ mgImage mgLoadImageMem(const unsigned char *data, int size) {
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
-    if (_mgstate.filtered) {
+    if (_mgstate.filtered)
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    } else {
+    }
+    else
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
@@ -424,21 +457,27 @@ mgImage mgLoadImageMem(const unsigned char *data, int size) {
     return image;
 }
 
-void mgDrawImage(mgImage image, mgPointf pos) {
+void mgDrawImage(mgImage image, mgPointf pos)
+{
     glBindTexture(GL_TEXTURE_2D, image.id);
     glEnable(GL_TEXTURE_2D);
 
     glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex2f(pos.x, pos.y);
-        glTexCoord2f(1.0f, 0.0f); glVertex2f(pos.x + image.width, pos.y);
-        glTexCoord2f(1.0f, 1.0f); glVertex2f(pos.x + image.width, pos.y + image.height);
-        glTexCoord2f(0.0f, 1.0f); glVertex2f(pos.x, pos.y + image.height);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(pos.x, pos.y);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(pos.x + image.width, pos.y);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(pos.x + image.width, pos.y + image.height);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(pos.x, pos.y + image.height);
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec) {
+void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)
+{
     glBindTexture(GL_TEXTURE_2D, image.id);
     glEnable(GL_TEXTURE_2D);
 
@@ -448,51 +487,78 @@ void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec) {
     float texBottom = (srcRec.y + srcRec.height) / image.height;
 
     glBegin(GL_QUADS);
-        glTexCoord2f(texLeft, texTop); glVertex2f(pos.x, pos.y);
-        glTexCoord2f(texRight, texTop); glVertex2f(pos.x + srcRec.width, pos.y);
-        glTexCoord2f(texRight, texBottom); glVertex2f(pos.x + srcRec.width, pos.y + srcRec.height);
-        glTexCoord2f(texLeft, texBottom); glVertex2f(pos.x, pos.y + srcRec.height);
+    glTexCoord2f(texLeft, texTop);
+    glVertex2f(pos.x, pos.y);
+    glTexCoord2f(texRight, texTop);
+    glVertex2f(pos.x + srcRec.width, pos.y);
+    glTexCoord2f(texRight, texBottom);
+    glVertex2f(pos.x + srcRec.width, pos.y + srcRec.height);
+    glTexCoord2f(texLeft, texBottom);
+    glVertex2f(pos.x, pos.y + srcRec.height);
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgDrawText(char *text, mgPointf pos) {
+// Function to draw text with formatting support
+void mgDrawText(const char *format, mgPointf pos, ...)
+{
+    char buffer[1024]; // Buffer to hold the formatted string
+
+    // Initialize the variable argument list
+    va_list args;
+    va_start(args, pos);
+
+    // Format the string
+    vsnprintf(buffer, sizeof(buffer), format, args);
+
+    // End the variable argument list
+    va_end(args);
+
     // Set the position for the text
     glRasterPos2f(pos.x, pos.y);
 
-    for (char *c = text; *c != '\0'; c++) {
+    // Render each character of the formatted string
+    for (char *c = buffer; *c != '\0'; c++)
+    {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
     }
 }
 
-bool mgPointRecOverlaps(mgPointf point, mgRecf rec) {
+bool mgPointRecOverlaps(mgPointf point, mgRecf rec)
+{
     return (point.x >= rec.x && point.x <= rec.x + rec.width && point.y >= rec.y && point.y <= rec.y + rec.height) ? true : false;
 }
 
-bool mgRecsOverlap(mgRecf rec1, mgRecf rec2) {
+bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)
+{
     return (rec1.x < rec2.x + rec2.width && rec1.x + rec1.width > rec2.x && rec1.y < rec2.y + rec2.height && rec1.y + rec1.height > rec2.y) ? true : false;
 }
 
-bool mgPointCircleOverlaps(mgPointf point, mgPointf circleCenter, float circleRadius) {
+bool mgPointCircleOverlaps(mgPointf point, mgPointf circleCenter, float circleRadius)
+{
     float dx = point.x - circleCenter.x;
     float dy = point.y - circleCenter.y;
     return (dx * dx + dy * dy <= circleRadius * circleRadius) ? true : false;
 }
 
-bool mgRecCircleOverlaps(mgRecf rec, mgPointf circleCenter, float circleRadius) {
+bool mgRecCircleOverlaps(mgRecf rec, mgPointf circleCenter, float circleRadius)
+{
     // Find the closest point on the rectangle to the circle center
-    float closestX = (circleCenter.x < rec.x) ? rec.x : (circleCenter.x > rec.x + rec.width) ? rec.x + rec.width : circleCenter.x;
-    float closestY = (circleCenter.y < rec.y) ? rec.y : (circleCenter.y > rec.y + rec.height) ? rec.y + rec.height : circleCenter.y;
-    
+    float closestX = (circleCenter.x < rec.x) ? rec.x : (circleCenter.x > rec.x + rec.width) ? rec.x + rec.width
+                                                                                             : circleCenter.x;
+    float closestY = (circleCenter.y < rec.y) ? rec.y : (circleCenter.y > rec.y + rec.height) ? rec.y + rec.height
+                                                                                              : circleCenter.y;
+
     // Calculate the distance between the circle center and this closest point
     float dx = circleCenter.x - closestX;
     float dy = circleCenter.y - closestY;
-    
+
     return (dx * dx + dy * dy <= circleRadius * circleRadius) ? true : false;
 }
 
-bool mgCirclesOverlaps(mgPointf circle1Center, float circle1Radius, mgPointf circle2Center, float circle2Radius) {
+bool mgCirclesOverlaps(mgPointf circle1Center, float circle1Radius, mgPointf circle2Center, float circle2Radius)
+{
     float dx = circle1Center.x - circle2Center.x;
     float dy = circle1Center.y - circle2Center.y;
     float distanceSquared = dx * dx + dy * dy;

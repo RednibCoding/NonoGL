@@ -2,7 +2,7 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: gcc.exe build active file",
+            "label": "C/C++: gcc.exe build active file with static freeglut",
             "command": "gcc.exe",
             "args": [
                 "-fdiagnostics-color=always",
@@ -10,11 +10,13 @@
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-L../minig/lib/win64",
-                "-lglfw3",
+                "-DFREEGLUT_STATIC",
+                "-Lminig\\internal\\lib\\x64",
+                "-l:libfreeglut_static.a",
                 "-lopengl32",
-                "-lgdi32",
-                "-luser32"
+                "-lglu32",
+                "-lwinmm",
+                "-lgdi32"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -25,7 +27,7 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            },
+            }
         }
     ],
     "version": "2.0.0"
