@@ -39,6 +39,12 @@ TinyGL (Tiny Graphics Library) is a lightweight and simple graphics library for 
 
 4. **Include the TinyGL header**:
    ```c
+   #define TINYGL_IMPLEMENTATION
+   #include "tinygl/tgl.h"
+   ```
+   Do this before you include this file in _one_ C file to create the implementation.
+   In all other files just include `tinygl` without creating the implementations.
+   ```c
    #include "tinygl/tgl.h"
    ```
 
@@ -50,7 +56,7 @@ Here is a basic example of using TinyGL to create a window and render images and
 #include <stdio.h>
 #include <stdbool.h>
 
-#define TINYGL_IMPLEMENTATION
+#define TINYGL_IMPLEMENTATION // Also create the implementations
 #include "tinygl/tgl.h"
 
 tgImage image;
