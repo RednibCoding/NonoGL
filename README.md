@@ -228,7 +228,7 @@ int main()
     Returns `true` if the specified mouse button was released since the last frame.
 
   - **`int tgMouseWheelDelta()`**
-    Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
+    Returns the direction of the mouse wheel movement: `positive number` means up, `negative number` means down, and `0` if no movement occurred.
 
   - **`tgVec2 tgGetMousePosition()`**
     Returns the current position of the mouse cursor as an `tgVec2` struct.
