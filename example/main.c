@@ -2,14 +2,14 @@
 #include <stdbool.h>
 
 #define MG_IMPL
-#include "../minig/mg.h"
+#include "../tinygl/tgl.h"
 
 mgImage image;
 mgFont *font;
 
 void display()
 {
-    mgSetWindowTitle("MiniG Window  FPS: %d", mgFPS);
+    mgSetWindowTitle("TinyGL Window  FPS: %d", mgFPS);
     mgCls();
 
     mgDrawImage(image, 200, 120);
@@ -78,7 +78,7 @@ void display()
 
 int main()
 {
-    bool success = mgCreateWindow("MiniG Window", 1024, 600, true, true);
+    bool success = mgCreateWindow("TinyGL Window", 1024, 600, true, true);
     if (!success)
         return -1;
 

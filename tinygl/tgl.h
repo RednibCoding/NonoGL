@@ -1,7 +1,7 @@
 #define FREEGLUT_STATIC
 
-#ifndef MINI_G_H
-#define MINI_G_H
+#ifndef TINY_GL_H
+#define TINY_GL_H
 
 #include <stdbool.h>
 #include "internal/include/GL/freeglut.h"
@@ -218,7 +218,7 @@ typedef struct
     mgVec2 mouseMotionDelta;
 
 } _mgState;
-#endif // MINI_G_H
+#endif // TINY_GL_H
 
 /******************************************************************************************************************************/
 

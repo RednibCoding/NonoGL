@@ -23,7 +23,7 @@ REM Define additional compiler flags to use
 set CFLAGS=
 
 REM Define additional linker flags to use (add -mwindows to hide the console)
-set LDFLAGS=-L../minig/internal/lib/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
+set LDFLAGS=-L../tinygl/internal/lib/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
 
 REM Set the c standard
 set CSTD=-std=c99

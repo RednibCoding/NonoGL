@@ -1,6 +1,6 @@
-# MiniG - Mini Graphics Library
+# TinyGL - Tiny Graphics Library
 
-MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C, designed for easy and quick setup of 2D rendering using OpenGL and FreeGLUT. It provides basic functionalities for window creation, image loading, text rendering, basic collision handling, and mouse and keyboard input handling.
+TinyGL (Tiny Graphics Library) is a lightweight and simple graphics library for C, designed for easy and quick setup of 2D rendering using OpenGL and FreeGLUT. It provides basic functionalities for window creation, image loading, text rendering, basic collision handling, and mouse and keyboard input handling.
 
 ## Features
 
@@ -14,44 +14,44 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 1. **Clone the repository**:
 
    ```sh
-   git clone git@github.com:RednibCoding/miniG.git
+   git clone git@github.com:RednibCoding/tinygl.git
    ```
 
-2. **Copy the 'minig' folder into your project**.
+2. **Copy the 'tinygl' folder into your project**.
 
 3. **Compile your project with FreeGLUT and OpenGL**:
 
-   > Note: freeGlut comes with miniG, so there is no need to install it manually
+   > Note: freeGlut comes with TinyGL, so there is no need to install it manually
 
    Use the following GCC command to compile your project:
 
    Example for Linux:
 
    ```sh
-   gcc main.c -o main -Lminig/internal/lib/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
+   gcc main.c -o main -Ltinygl/internal/lib/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
    ```
 
    Example for Windows:
 
    ```sh
-   gcc main.c -o main.exe -Lminig/internal/lib/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
+   gcc main.c -o main.exe -Ltinygl/internal/lib/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
    ```
 
-4. **Include the MiniG header**:
+4. **Include the TinyGL header**:
    ```c
-   #include "minig/mg.h"
+   #include "tinygl/tgl.h"
    ```
 
 ## Example Usage
 
-Here is a basic example of using MiniG to create a window and render images and text:
+Here is a basic example of using TinyGL to create a window and render images and text:
 
 ```c
 #include <stdio.h>
 #include <stdbool.h>
 
 #define MG_IMPL
-#include "minig/mg.h"
+#include "tinygl/tgl.h"
 
 mgImage image;
 
@@ -78,7 +78,7 @@ void display()
 
 int main()
 {
-    bool success = mgCreateWindow("MiniG Window", 1024, 600, true, true);
+    bool success = mgCreateWindow("TinyGL Window", 1024, 600, true, true);
     if (!success)
         return -1;
 
@@ -303,4 +303,4 @@ int main()
 
 ## License
 
-MiniG is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+TinyG is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
