@@ -28,6 +28,53 @@ void display()
     mgDrawText("FPS: %d", (mgPointf){200.0f, 370.0f}, mgFPS);
     mgDrawText("Delta Time: %f", (mgPointf){200.0f, 400.0f}, mgDT);
 
+    if (mgKeyHit('a'))
+    {
+        printf("Key 'A' was just pressed!\n");
+    }
+
+    if (mgKeyDown('a'))
+    {
+        printf("Key 'A' is being held down!\n");
+    }
+
+    if (mgKeyReleased('a'))
+    {
+        printf("Key 'A' was just released!\n");
+    }
+
+    if (mgMouseHit(0))
+    {
+        printf("Left mouse button was just clicked!\n");
+    }
+
+    if (mgMouseDown(0))
+    {
+        printf("Left mouse button is being held down!\n");
+    }
+
+    if (mgMouseReleased(0))
+    {
+        printf("Left mouse button was just released!\n");
+    }
+
+    int wheelDelta = mgMouseWheelDelta();
+    if (wheelDelta > 0)
+    {
+        printf("Mouse wheel moved up!\n");
+    }
+    else if (wheelDelta < 0)
+    {
+        printf("Mouse wheel moved down!\n");
+    }
+
+    mgPointf pos = mgGetMousePosition();
+    mgPointf motionDelta = mgMouseMotionDelta();
+    if (motionDelta.x != 0 || motionDelta.y != 0)
+    {
+        printf("Mouse moved: %.2f,  %.2f | %.2f %.2f \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
+    }
+
     mgFlip();
 }
 

@@ -5,7 +5,7 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 ## Features
 
 - **Window Management**: Easy creation and management of OpenGL windows using FreeGLUT.
-- **Image Loading**: Load and render PNG images using stb_image.
+- **Image Loading**: Load and render images using stb_image. (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
 - **Collision Handling**: Basic functions to check point-rectangle, rectangle-rectangle, point-circle, and rectangle-circle overlaps.
 - **Mouse and Keyboard Input Handling**: Simple functions to check for mouse and keyboard button presses.
 
@@ -19,7 +19,9 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 2. **Copy the 'minig' folder into your project**.
 
 3. **Compile your project with FreeGLUT and OpenGL**:
-    Ensure you link against FreeGLUT and OpenGL libraries. (Comes with minig)
+    > Note: freeGlut comes with miniG, so there is no need to install it manually
+
+    Use the following GCC command to compile your project:
 
     Example for Linux:
     ```sh
@@ -120,10 +122,10 @@ int main()
 ### Image Loading and Drawing
 
 - **`mgImage mgLoadImage(const char *filepath)`**
-  Loads an image from the specified file path. (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
+  Loads a PNG image from the specified file path.
 
 - **`mgImage mgLoadImageMem(const unsigned char *data, int size)`**
-  Loads an image from memory. (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
+  Loads a PNG image from memory.
 
 - **`void mgDrawImage(mgImage image, mgPointf pos)`**
   Draws the loaded image at the specified position.
@@ -153,6 +155,37 @@ int main()
 - **`bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf circle2center, float circle2radius)`**
   Checks if two circles overlap.
 
+### Input Handling
+
+- **Keyboard Input**
+  - **`bool mgKeyHit(int key)`**
+    Returns `true` if the specified key was pressed since the last frame.
+
+  - **`bool mgKeyDown(int key)`**
+    Returns `true` if the specified key is currently being held down.
+
+  - **`bool mgKeyReleased(int key)`**
+    Returns `true` if the specified key was released since the last frame.
+
+- **Mouse Input**
+  - **`bool mgMouseHit(int button)`**
+    Returns `true` if the specified mouse button was clicked since the last frame.
+
+  - **`bool mgMouseDown(int button)`**
+    Returns `true` if the specified mouse button is currently being held down.
+
+  - **`bool mgMouseReleased(int button)`**
+    Returns `true` if the specified mouse button was released since the last frame.
+
+  - **`int mgMouseWheelDelta()`**
+    Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
+
+  - **`mgPointf mgGetMousePosition()`**
+    Returns the current position of the mouse cursor as an `mgPointf` struct.
+
+  - **`mgPointf mgMouseMotionDelta()`**
+    Returns the mouse motion delta (change in position) since the last frame.
+
 ### Utility Functions
 
 - **`unsigned char *mgLoadFileBytes(const char *filepath, int *size)`**
@@ -168,46 +201,48 @@ int main()
   Holds the delta time (time elapsed since the last frame).
 
 ### Structs
+
 - **`mgPointf`** 
-```c
-  typedef struct
-  {
-      float x;
-      float y;
+  Represents a 2D point.
+  ```c
+  typedef struct {
+      float x; // X-coordinate
+      float y; // Y-coordinate
   } mgPointf;
   ```
 
 - **`mgRecf`**
-```c
-  typedef struct
-  {
-      float x;
-      float y;
-      float width;
-      float height;
+  Represents a 2D rectangle.
+  ```c
+  typedef struct {
+      float x;      // X-coordinate of the rectangle's top-left corner
+      float y;      // Y-coordinate of the rectangle's top-left corner
+      float width;  // Width of the rectangle
+      float height; // Height of the rectangle
   } mgRecf;
-```
+  ```
+
 - **`mgColorf`**
-```c
-typedef struct
-{
-    float r;
-    float g;
-    float b;
-    float a;
-} mgColorf;
-```
+  Represents an RGBA color.
+  ```c
+  typedef struct {
+      float r; // Red component (0.0 to 1.0)
+      float g; // Green component (0.0 to 1.0)
+      float b; // Blue component (0.0 to 1.0)
+      float a; // Alpha (transparency) component (0.0 to 1.0)
+  } mgColorf;
+  ```
+
 - **`mgImage`**
-```c
-typedef struct
-{
-    unsigned int id;
-    int width;
-    int height;
-} mgImage;
-```
+  Represents an image loaded into OpenGL.
+  ```c
+  typedef struct {
+      unsigned int id; // OpenGL texture ID
+      int width;       // Width of the image
+      int height;      // Height of the image
+  } mgImage;
+  ```
 
 ## License
 
 MiniG is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-

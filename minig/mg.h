@@ -116,6 +116,21 @@ bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf cir
 #define STB_IMAGE_IMPLEMENTATION
 #include "internal/include/stb_image.h"
 
+#define _MG_MAX_KEYS 256
+#define _MG_MAX_MOUSE_BUTTONS 3
+
+// static bool _mgKeys[_MG_MAX_KEYS] = {0};
+// static bool _mgKeysPressed[_MG_MAX_KEYS] = {0};
+// static bool _mgKeysReleased[_MG_MAX_KEYS] = {0};
+
+// static bool _mgMouseButtons[_MG_MAX_MOUSE_BUTTONS] = {0};
+// static bool _mgMouseButtonsPressed[_MG_MAX_MOUSE_BUTTONS] = {0};
+// static bool _mgMouseButtonsReleased[_MG_MAX_MOUSE_BUTTONS] = {0};
+// static int _mgMouseWheelDelta = 0;
+// static mgPointf _mgMousePosition = {0.0f, 0.0f};
+// static mgPointf _mgPreviousMousePosition = {0.0f, 0.0f};
+// static mgPointf _mgMouseMotionDelta = {0.0f, 0.0f};
+
 typedef struct
 {
     char *title;
@@ -129,6 +144,20 @@ typedef struct
     double lastTime;
     int currentFPS;
     int window;
+
+    // Keyboard state
+    bool keys[_MG_MAX_KEYS];
+    bool keysPressed[_MG_MAX_KEYS];
+    bool keysReleased[_MG_MAX_KEYS];
+
+    // Mouse state
+    bool mouseButtons[_MG_MAX_MOUSE_BUTTONS];
+    bool mouseButtonsPressed[_MG_MAX_MOUSE_BUTTONS];
+    bool mouseButtonsReleased[_MG_MAX_MOUSE_BUTTONS];
+    int mouseWheelDelta;
+    mgPointf mousePosition;
+    mgPointf mouseMotionDelta;
+
 } _mgState;
 
 _mgState _mgstate;
@@ -160,40 +189,9 @@ void _customExitFunctionWithMessage(const char *msg, int status)
     exit(status);
 }
 
-void _mgKeyCallback(unsigned char key, int x, int y)
-{
-    if (key == 27) // ESC key
-        printf("Hello key");
-    glutLeaveMainLoop();
-}
-
 void _mgSpecialKeyCallback(int key, int x, int y)
 {
-    // Handle special keys if needed
-}
-
-void _mgMouseButtonCallback(int button, int state, int x, int y)
-{
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-        printf("Left mouse button pressed\n");
-    else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
-        printf("Right mouse button pressed\n");
-    else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
-        printf("Middle mouse button pressed\n");
-}
-
-void _mgMouseScrollCallback(int button, int dir, int x, int y)
-{
-    // This is how FreeGLUT handles mouse wheel
-    if (dir > 0)
-        printf("Mouse wheel up\n");
-    else
-        printf("Mouse wheel down\n");
-}
-
-void _mgCursorPositionCallback(int x, int y)
-{
-    printf("Cursor position: (%d, %d)\n", x, y);
+    // Handle special keys here
 }
 
 void _mgSetupOrthoProjection(int width, int height)
@@ -247,6 +245,55 @@ void _mgTimerCallback(int value)
     glutTimerFunc(1000 / 60, _mgTimerCallback, 0);
 }
 
+void _mgKeyDownCallback(unsigned char key, int x, int y)
+{
+    if (!_mgstate.keys[key])
+    {
+        _mgstate.keysPressed[key] = true;
+    }
+    _mgstate.keys[key] = true;
+}
+
+void _mgKeyUpCallback(unsigned char key, int x, int y)
+{
+    _mgstate.keys[key] = false;
+    _mgstate.keysReleased[key] = true;
+}
+
+void _mgMouseButtonCallback(int button, int state, int x, int y)
+{
+    if (button < _MG_MAX_MOUSE_BUTTONS)
+    {
+        if (state == GLUT_DOWN)
+        {
+            if (!_mgstate.mouseButtons[button])
+            {
+                _mgstate.mouseButtonsPressed[button] = true;
+            }
+            _mgstate.mouseButtons[button] = true;
+        }
+        else if (state == GLUT_UP)
+        {
+            _mgstate.mouseButtons[button] = false;
+            _mgstate.mouseButtonsReleased[button] = true;
+        }
+    }
+}
+
+void _mgMouseWheelFunc(int wheel, int direction, int x, int y)
+{
+    _mgstate.mouseWheelDelta = direction; // +1 for up, -1 for down
+}
+
+void _mgMouseMotionFunc(int x, int y)
+{
+    // Motion delta
+    mgPointf newMousePosition = {(float)x, (float)y};
+    _mgstate.mouseMotionDelta.x = newMousePosition.x - _mgstate.mousePosition.x;
+    _mgstate.mouseMotionDelta.y = newMousePosition.y - _mgstate.mousePosition.y;
+    _mgstate.mousePosition = newMousePosition;
+}
+
 /*******************************************************************************************************/
 // Public api function implementations
 /*******************************************************************************************************/
@@ -276,12 +323,13 @@ bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _mgstate.window = glutCreateWindow(title);
 
     /* Set the callbacks */
-    glutKeyboardFunc(_mgKeyCallback);
-    glutSpecialFunc(_mgSpecialKeyCallback);
+    glutKeyboardFunc(_mgKeyDownCallback);
+    glutKeyboardUpFunc(_mgKeyUpCallback);
     glutMouseFunc(_mgMouseButtonCallback);
-    glutMotionFunc(_mgCursorPositionCallback);
-    glutPassiveMotionFunc(_mgCursorPositionCallback);
-    glutMouseWheelFunc(_mgMouseScrollCallback);
+    glutMouseWheelFunc(_mgMouseWheelFunc);
+    glutMotionFunc(_mgMouseMotionFunc);
+    glutPassiveMotionFunc(_mgMouseMotionFunc);
+    glutSpecialFunc(_mgSpecialKeyCallback);
     glutReshapeFunc(_mgFramebufferSizeCallback);
 
     /* Set up the orthographic projection */
@@ -564,6 +612,64 @@ bool mgCirclesOverlaps(mgPointf circle1Center, float circle1Radius, mgPointf cir
     float distanceSquared = dx * dx + dy * dy;
     float radiusSum = circle1Radius + circle2Radius;
     return (distanceSquared <= radiusSum * radiusSum) ? true : false;
+}
+
+bool mgKeyHit(int key)
+{
+    bool wasPressed = _mgstate.keysPressed[key];
+    _mgstate.keysPressed[key] = false; // Reset after checking
+    return wasPressed;
+}
+
+bool mgKeyDown(int key)
+{
+    return _mgstate.keys[key];
+}
+
+bool mgKeyReleased(int key)
+{
+    bool wasReleased = _mgstate.keysReleased[key];
+    _mgstate.keysReleased[key] = false; // Reset after checking
+    return wasReleased;
+}
+
+bool mgMouseHit(int button)
+{
+    bool wasPressed = _mgstate.mouseButtonsPressed[button];
+    _mgstate.mouseButtonsPressed[button] = false; // Reset after checking
+    return wasPressed;
+}
+
+bool mgMouseDown(int button)
+{
+    return _mgstate.mouseButtons[button];
+}
+
+bool mgMouseReleased(int button)
+{
+    bool wasReleased = _mgstate.mouseButtonsReleased[button];
+    _mgstate.mouseButtonsReleased[button] = false; // Reset after checking
+    return wasReleased;
+}
+
+int mgMouseWheelDelta()
+{
+    int delta = _mgstate.mouseWheelDelta;
+    _mgstate.mouseWheelDelta = 0; // Reset after checking
+    return delta;
+}
+
+mgPointf mgGetMousePosition()
+{
+    return _mgstate.mousePosition;
+}
+
+mgPointf mgMouseMotionDelta()
+{
+    mgPointf delta = _mgstate.mouseMotionDelta;
+    _mgstate.mouseMotionDelta.x = 0.0f; // Reset after checking
+    _mgstate.mouseMotionDelta.y = 0.0f;
+    return delta;
 }
 
 #endif // MG_IMPL
