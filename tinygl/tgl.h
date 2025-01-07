@@ -186,6 +186,21 @@ tgVec2 tgMouseMotionDelta();
 /******************************************************************************************************************************/
 /*  End of Public API */
 /******************************************************************************************************************************/
+
+#endif // TINY_GL_H
+
+/******************************************************************************************************************************/
+
+/*  IMPLEMENTATION */
+
+/******************************************************************************************************************************/
+#ifdef TINYGL_IMPLEMENTATION
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "internal/include/stb_image.h"
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "internal/include/stb_truetype.h"
+
 #define _MG_MAX_KEYS 256
 #define _MG_MAX_MOUSE_BUTTONS 3
 
@@ -218,19 +233,6 @@ typedef struct
     tgVec2 mouseMotionDelta;
 
 } _tgState;
-#endif // TINY_GL_H
-
-/******************************************************************************************************************************/
-
-/*  IMPLEMENTATION */
-
-/******************************************************************************************************************************/
-#ifdef TINYGL_IMPLEMENTATION
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "internal/include/stb_image.h"
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "internal/include/stb_truetype.h"
 
 _tgState _tgstate;
 
@@ -805,8 +807,17 @@ tgFont *tgLoadFont(const char *filepath, float fontSize)
     glGenTextures(1, &font->textureID);
     glBindTexture(GL_TEXTURE_2D, font->textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, font->atlasWidth, font->atlasHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if (!_tgstate.filtered)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
 
     glBindTexture(GL_TEXTURE_2D, 0);
 

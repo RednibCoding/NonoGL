@@ -78,7 +78,7 @@ void display()
 
 int main()
 {
-    bool success = tgCreateWindow("TinyGL Window", 1024, 600, true, true);
+    bool success = tgCreateWindow("TinyGL Window", 1024, 600, true, false);
     if (!success)
         return -1;
 
