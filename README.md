@@ -263,15 +263,16 @@ int main()
   } mgImage;
   ```
 
-- **`mgPixmap`**
+- **`mgPixelBuffer`**
   Represents a 2D buffer of colors (`mgColorf`)
   ```c
   typedef struct
   {
-      int width;        // Width of the color buffer
-      int height;       // Height of the color buffer
-      mgColorf *pixels; // Array of pixels
-  } mgPixmap;
+    unsigned int textureID; // OpenGL texture ID
+    int width;              // Width of the buffer
+    int height;             // Height of the buffer
+    mgColorf *pixels;       // CPU-side pixel buffer
+  } mgPixelBuffer;
   ```
 
 ## License
