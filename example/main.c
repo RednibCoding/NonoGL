@@ -12,18 +12,18 @@ void display()
     mgSetWindowTitle("MiniG Window  FPS: %d", mgFPS);
     mgCls();
 
-    mgDrawImage(image, (mgPointf){200.0f, 120.0f});
+    mgDrawImage(image, 200, 120);
 
-    mgDrawImagePortion(image, (mgPointf){200.0f, 200.0f}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
+    mgDrawImagePortion(image, 200, 200, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
-    mgDrawText("Hello World", (mgPointf){200.0f, 300.0f});
+    mgDrawText("Hello World", 200, 300);
 
     mgSetColor((mgColorf){1.0f, 0.5f, 0.8f, 1.0f});
-    mgDrawText("Hello Color", (mgPointf){200.0f, 340.0f});
+    mgDrawText("Hello Color", 200, 340);
 
     mgSetColor((mgColorf){1.0f, 1.0f, 0.0f, 1.0f});
-    mgDrawText("FPS: %d", (mgPointf){200.0f, 370.0f}, mgFPS);
-    mgDrawText("Delta Time: %f", (mgPointf){200.0f, 400.0f}, mgDT);
+    mgDrawText("FPS: %d", 200, 370, mgFPS);
+    mgDrawText("Delta Time: %f", 200, 400, mgDT);
     mgResetColor();
 
     if (mgKeyHit('a'))
@@ -66,11 +66,11 @@ void display()
         printf("Mouse wheel moved down!\n");
     }
 
-    mgPointf pos = mgGetMousePosition();
-    mgPointf motionDelta = mgMouseMotionDelta();
+    mgVec2 pos = mgGetMousePosition();
+    mgVec2 motionDelta = mgMouseMotionDelta();
     if (motionDelta.x != 0 || motionDelta.y != 0)
     {
-        printf("Mouse moved: %.2f,  %.2f | %.2f %.2f \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
+        printf("Mouse moved: %d, %d | %d, %d \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
     }
 
     mgFlip();

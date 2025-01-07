@@ -59,19 +59,19 @@ void display()
 {
     mgCls();
 
-    mgDrawImage(image, (mgPointf){20.0f, 20.0f});
+    mgDrawImage(image, 20, 20);
 
-    mgDrawImagePortion(image, (mgPointf){200.0f, 200.0f}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
+    mgDrawImagePortion(image, 200, 200}, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
     mgSetColor((mgColorf){0.5f, 0.5f, 0.8f, 1.0f});
-    mgDrawText("Hello World", (mgPointf){200.0f, 300.0f});
+    mgDrawText("Hello World", 200, 300});
 
     mgSetColor((mgColorf){1.5f, 0.5f, 0.8f, 1.0f});
-    mgDrawText("Hello Color", (mgPointf){200.0f, 340.0f});
+    mgDrawText("Hello Color", 200, 340});
 
     mgSetColor((mgColorf){1.0f, 1.0f, 1.0f, 1.0f});
-    mgDrawText("FPS: %d", (mgPointf){200.0f, 360.0f}, mgFPS);
-    mgDrawText("Delta Time: %f", (mgPointf){200.0f, 400.0f}, mgDT);
+    mgDrawText("FPS: %d", 200, 360}, mgFPS);
+    mgDrawText("Delta Time: %f", 200, 400}, mgDT);
 
     mgFlip();
 }
@@ -134,10 +134,10 @@ int main()
 - **`mgImage mgLoadImageMem(const unsigned char *data, int size)`**
   Loads an image from memory.
 
-- **`void mgDrawImage(mgImage image, mgPointf pos)`**
+- **`void mgDrawImage(mgImage image, int x, int y)`**
   Draws the loaded image at the specified position.
 
-- **`void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)`**
+- **`void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec)`**
   Draws a portion of the loaded image.
 
 - **`void mgFreeImage(mgImage image)`**
@@ -171,7 +171,7 @@ int main()
 - **`void mgSetFont(mgFont *font)`**
   Set font for text rendering, if not set, a default non-scalable font will be used
 
-- **`void mgDrawText(const char *format, mgPointf pos, ...)`**
+- **`void mgDrawText(const char *format, int x, int y, ...)`**
   Renders formatted text at the specified position.
 
 - **`void mgFreeFont(mgFont *font)`**
@@ -179,19 +179,19 @@ int main()
 
 ### Collision Detection
 
-- **`bool mgPointRecOverlaps(mgPointf point, mgRecf rect)`**
+- **`bool mgVec2RecOverlaps(int x, int y, mgRecf rect)`**
   Checks if a point overlaps with a rectangle.
 
 - **`bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)`**
   Checks if two rectangles overlap.
 
-- **`bool mgPointCircleOverlaps(mgPointf point, mgPointf circlecenter, float circleradius)`**
+- **`bool mgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius)`**
   Checks if a point overlaps with a circle.
 
-- **`bool mgRecCircleOverlaps(mgRecf rec, mgPointf circlecenter, float circleradius)`**
+- **`bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleradius)`**
   Checks if a rectangle overlaps with a circle.
 
-- **`bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf circle2center, float circle2radius)`**
+- **`bool mgCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius)`**
   Checks if two circles overlap.
 
 ### Input Handling
@@ -221,10 +221,10 @@ int main()
   - **`int mgMouseWheelDelta()`**
     Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
 
-  - **`mgPointf mgGetMousePosition()`**
-    Returns the current position of the mouse cursor as an `mgPointf` struct.
+  - **`mgVec2 mgGetMousePosition()`**
+    Returns the current position of the mouse cursor as an `mgVec2` struct.
 
-  - **`mgPointf mgMouseMotionDelta()`**
+  - **`mgVec2 mgMouseMotionDelta()`**
     Returns the mouse motion delta (change in position) since the last frame.
 
 ### Utility Functions
@@ -243,14 +243,14 @@ int main()
 
 ### Structs
 
-- **`mgPointf`**
+- **`mgVec2`**
   Represents a 2D point.
 
   ```c
   typedef struct {
-      float x; // X-coordinate
-      float y; // Y-coordinate
-  } mgPointf;
+      int x; // X-coordinate
+      int y; // Y-coordinate
+  } mgVec2;
   ```
 
 - **`mgRecf`**

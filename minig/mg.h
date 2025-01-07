@@ -16,9 +16,9 @@
 
 typedef struct
 {
-    float x;
-    float y;
-} mgPointf;
+    int x;
+    int y;
+} mgVec2;
 
 typedef struct
 {
@@ -103,10 +103,10 @@ mgImage mgLoadImage(const char *filepath);
 mgImage mgLoadImageMem(const unsigned char *data, int size);
 
 // Draw an image on the screen
-void mgDrawImage(mgImage image, mgPointf pos);
+void mgDrawImage(mgImage image, int x, int y);
 
 // Draw a portion of an image
-void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec);
+void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec);
 
 // Frees the given image
 void mgFreeImage(mgImage image);
@@ -136,25 +136,25 @@ mgFont *mgLoadFont(const char *filepath, float fontSize);
 void mgSetFont(mgFont *font);
 
 // Render text using the font
-void mgDrawText(const char *format, mgPointf pos, ...);
+void mgDrawText(const char *format, int x, int y, ...);
 
 // Free the font
 void mgFreeFont(mgFont *font);
 
 // Check if a point overlaps with a rectangle
-bool mgPointRecOverlaps(mgPointf point, mgRecf rect);
+bool mgVec2RecOverlaps(int x, int y, mgRecf rect);
 
 // Check if two rectangles overlap
 bool mgRecsOverlap(mgRecf rec1, mgRecf rec2);
 
 // Check if a point overlaps with a circle
-bool mgPointCircleOverlaps(mgPointf point, mgPointf circlecenter, float circleradius);
+bool mgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius);
 
 // Check if a rectangle overlaps with a circle
-bool mgRecCircleOverlaps(mgRecf rec, mgPointf circlecenter, float circleradius);
+bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleradius);
 
 // Check if two cirles overlap
-bool mgCirclesOverlaps(mgPointf circle1center, float circle1radius, mgPointf circle2center, float circle2radius);
+bool mgCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius);
 
 // Returns `true` if the specified key was pressed since the last frame.
 bool mgKeyHit(int key);
@@ -177,11 +177,11 @@ bool mgMouseReleased(int button);
 // Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
 int mgMouseWheelDelta();
 
-// Returns the current position of the mouse cursor as an `mgPointf` struct.
-mgPointf mgGetMousePosition();
+// Returns the current position of the mouse cursor as an `mgVec2` struct.
+mgVec2 mgGetMousePosition();
 
 // Returns the mouse motion delta (change in position) since the last frame.
-mgPointf mgMouseMotionDelta();
+mgVec2 mgMouseMotionDelta();
 
 /******************************************************************************************************************************/
 /*  End of Public API */
@@ -214,8 +214,8 @@ typedef struct
     bool mouseButtonsPressed[_MG_MAX_MOUSE_BUTTONS];
     bool mouseButtonsReleased[_MG_MAX_MOUSE_BUTTONS];
     int mouseWheelDelta;
-    mgPointf mousePosition;
-    mgPointf mouseMotionDelta;
+    mgVec2 mousePosition;
+    mgVec2 mouseMotionDelta;
 
 } _mgState;
 #endif // MINI_G_H
@@ -360,24 +360,24 @@ void _mgMouseWheelFunc(int wheel, int direction, int x, int y)
 void _mgMouseMotionFunc(int x, int y)
 {
     // Motion delta
-    mgPointf newMousePosition = {(float)x, (float)y};
+    mgVec2 newMousePosition = {(float)x, (float)y};
     _mgstate.mouseMotionDelta.x = newMousePosition.x - _mgstate.mousePosition.x;
     _mgstate.mouseMotionDelta.y = newMousePosition.y - _mgstate.mousePosition.y;
     _mgstate.mousePosition = newMousePosition;
 }
 
-void _mgDrawTextDefaultFont(const char *format, mgPointf pos, ...)
+void _mgDrawTextDefaultFont(const char *format, int x, int y, ...)
 {
     if (!format)
         return;
 
     char buffer[1024];
     va_list args;
-    va_start(args, pos);
+    va_start(args, y);
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
-    glRasterPos2f(pos.x, pos.y);
+    glRasterPos2i(x, y);
 
     for (char *c = buffer; *c != '\0'; c++)
     {
@@ -601,26 +601,26 @@ mgImage mgLoadImageMem(const unsigned char *data, int size)
     return image;
 }
 
-void mgDrawImage(mgImage image, mgPointf pos)
+void mgDrawImage(mgImage image, int x, int y)
 {
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
 
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(pos.x, pos.y);
+    glVertex2f(x, y);
     glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(pos.x + image.width, pos.y);
+    glVertex2f(x + image.width, y);
     glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(pos.x + image.width, pos.y + image.height);
+    glVertex2f(x + image.width, y + image.height);
     glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(pos.x, pos.y + image.height);
+    glVertex2f(x, y + image.height);
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)
+void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec)
 {
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
@@ -632,13 +632,13 @@ void mgDrawImagePortion(mgImage image, mgPointf pos, mgRecf srcRec)
 
     glBegin(GL_QUADS);
     glTexCoord2f(texLeft, texTop);
-    glVertex2f(pos.x, pos.y);
+    glVertex2f(x, y);
     glTexCoord2f(texRight, texTop);
-    glVertex2f(pos.x + srcRec.width, pos.y);
+    glVertex2f(x + srcRec.width, y);
     glTexCoord2f(texRight, texBottom);
-    glVertex2f(pos.x + srcRec.width, pos.y + srcRec.height);
+    glVertex2f(x + srcRec.width, y + srcRec.height);
     glTexCoord2f(texLeft, texBottom);
-    glVertex2f(pos.x, pos.y + srcRec.height);
+    glVertex2f(x, y + srcRec.height);
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
@@ -823,20 +823,20 @@ void mgSetFont(mgFont *font)
     _mgstate.font = font;
 }
 
-void mgDrawText(const char *format, mgPointf pos, ...)
+void mgDrawText(const char *format, int x, int y, ...)
 {
     if (!format)
         return;
 
     if (!_mgstate.font)
     {
-        _mgDrawTextDefaultFont(format, pos);
+        _mgDrawTextDefaultFont(format, x, y);
         return;
     }
 
     char buffer[1024];
     va_list args;
-    va_start(args, pos);
+    va_start(args, y);
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
@@ -847,14 +847,16 @@ void mgDrawText(const char *format, mgPointf pos, ...)
 
     glBegin(GL_QUADS);
 
-    float x = pos.x;
+    float tx = (float)x;
+    float ty = (float)y;
+
     for (char *c = buffer; *c != '\0'; c++)
     {
         if (*c < 32 || *c >= 128)
             continue;
 
         stbtt_aligned_quad quad;
-        stbtt_GetBakedQuad(_mgstate.font->charData, _mgstate.font->atlasWidth, _mgstate.font->atlasHeight, *c - 32, &x, &pos.y, &quad, 1);
+        stbtt_GetBakedQuad(_mgstate.font->charData, _mgstate.font->atlasWidth, _mgstate.font->atlasHeight, *c - 32, &tx, &ty, &quad, 1);
 
         glTexCoord2f(quad.s0, quad.t1);
         glVertex2f(quad.x0, quad.y1);
@@ -884,9 +886,9 @@ void mgFreeFont(mgFont *font)
     free(font);
 }
 
-bool mgPointRecOverlaps(mgPointf point, mgRecf rec)
+bool mgVec2RecOverlaps(int x, int y, mgRecf rec)
 {
-    return (point.x >= rec.x && point.x <= rec.x + rec.width && point.y >= rec.y && point.y <= rec.y + rec.height) ? true : false;
+    return (x >= rec.x && x <= rec.x + rec.width && y >= rec.y && y <= rec.y + rec.height) ? true : false;
 }
 
 bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)
@@ -894,32 +896,32 @@ bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)
     return (rec1.x < rec2.x + rec2.width && rec1.x + rec1.width > rec2.x && rec1.y < rec2.y + rec2.height && rec1.y + rec1.height > rec2.y) ? true : false;
 }
 
-bool mgPointCircleOverlaps(mgPointf point, mgPointf circleCenter, float circleRadius)
+bool mgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleRadius)
 {
-    float dx = point.x - circleCenter.x;
-    float dy = point.y - circleCenter.y;
+    float dx = x - cx;
+    float dy = y - cy;
     return (dx * dx + dy * dy <= circleRadius * circleRadius) ? true : false;
 }
 
-bool mgRecCircleOverlaps(mgRecf rec, mgPointf circleCenter, float circleRadius)
+bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleRadius)
 {
     // Find the closest point on the rectangle to the circle center
-    float closestX = (circleCenter.x < rec.x) ? rec.x : (circleCenter.x > rec.x + rec.width) ? rec.x + rec.width
-                                                                                             : circleCenter.x;
-    float closestY = (circleCenter.y < rec.y) ? rec.y : (circleCenter.y > rec.y + rec.height) ? rec.y + rec.height
-                                                                                              : circleCenter.y;
+    float closestX = (cx < rec.x) ? rec.x : (cx > rec.x + rec.width) ? rec.x + rec.width
+                                                                     : cx;
+    float closestY = (cy < rec.y) ? rec.y : (cy > rec.y + rec.height) ? rec.y + rec.height
+                                                                      : cy;
 
     // Calculate the distance between the circle center and this closest point
-    float dx = circleCenter.x - closestX;
-    float dy = circleCenter.y - closestY;
+    float dx = cx - closestX;
+    float dy = cy - closestY;
 
     return (dx * dx + dy * dy <= circleRadius * circleRadius) ? true : false;
 }
 
-bool mgCirclesOverlaps(mgPointf circle1Center, float circle1Radius, mgPointf circle2Center, float circle2Radius)
+bool mgCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, float circle2Radius)
 {
-    float dx = circle1Center.x - circle2Center.x;
-    float dy = circle1Center.y - circle2Center.y;
+    float dx = cx1 - cx2;
+    float dy = cy1 - cy2;
     float distanceSquared = dx * dx + dy * dy;
     float radiusSum = circle1Radius + circle2Radius;
     return (distanceSquared <= radiusSum * radiusSum) ? true : false;
@@ -970,16 +972,16 @@ int mgMouseWheelDelta()
     return delta;
 }
 
-mgPointf mgGetMousePosition()
+mgVec2 mgGetMousePosition()
 {
     return _mgstate.mousePosition;
 }
 
-mgPointf mgMouseMotionDelta()
+mgVec2 mgMouseMotionDelta()
 {
-    mgPointf delta = _mgstate.mouseMotionDelta;
-    _mgstate.mouseMotionDelta.x = 0.0f; // Reset after checking
-    _mgstate.mouseMotionDelta.y = 0.0f;
+    mgVec2 delta = _mgstate.mouseMotionDelta;
+    _mgstate.mouseMotionDelta.x = 0; // Reset after checking
+    _mgstate.mouseMotionDelta.y = 0;
     return delta;
 }
 
