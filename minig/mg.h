@@ -107,6 +107,9 @@ void mgDrawPixelBuffer(mgPixelBuffer *buffer);
 // Free the given pixel buffer
 void mgFreePixelBuffer(mgPixelBuffer *buffer);
 
+// Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
+void drawPixel(float x, float y, mgColorf color);
+
 // Draw text on the screen
 void mgDrawText(const char *format, mgPointf pos, ...);
 
@@ -668,6 +671,15 @@ void mgFreePixelBuffer(mgPixelBuffer *buffer)
         free(buffer->pixels);
     glDeleteTextures(1, &buffer->textureID);
     free(buffer);
+}
+
+void drawPixel(float x, float y, mgColorf color)
+{
+    glColor4f(color.r, color.g, color.b, color.a);
+
+    glBegin(GL_POINTS);
+    glVertex2f(x, y);
+    glEnd();
 }
 
 void mgDrawText(const char *format, mgPointf pos, ...)

@@ -150,6 +150,9 @@ int main()
 - **`void mgFreePixelBuffer(mgPixelBuffer *buffer);`**
   Frees the given pixel buffer.
 
+- **`void drawPixel(float x, float y, mgColorf color);`**
+  Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
+
 ### Text Rendering
 
 - **`void mgDrawText(const char *format, mgPointf pos, ...)`**
