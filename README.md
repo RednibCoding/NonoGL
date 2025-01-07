@@ -13,8 +13,7 @@ MiniG (Mini Graphics Library) is a lightweight and simple graphics library for C
 
 1. **Clone the repository**:
     ```sh
-    git clone <repository_url>
-    cd minig
+    git clone git@github.com:RednibCoding/miniG.git
     ```
 
 2. **Copy the 'minig' folder into your project**.
