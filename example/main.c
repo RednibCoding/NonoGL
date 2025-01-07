@@ -1,62 +1,62 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define MG_IMPL
+#define TGL_IMPL
 #include "../tinygl/tgl.h"
 
-mgImage image;
-mgFont *font;
+tgImage image;
+tgFont *font;
 
 void display()
 {
-    mgSetWindowTitle("TinyGL Window  FPS: %d", mgFPS);
-    mgCls();
+    tgSetWindowTitle("TinyGL Window  FPS: %d", tgFPS);
+    tgCls();
 
-    mgDrawImage(image, 200, 120);
+    tgDrawImage(image, 200, 120);
 
-    mgDrawImagePortion(image, 200, 200, (mgRecf){0.0f, 0.0f, 50.0f, 50.0f});
+    tgDrawImagePortion(image, 200, 200, (tgRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
-    mgDrawText("Hello World", 200, 300);
+    tgDrawText("Hello World", 200, 300);
 
-    mgSetColor((mgColorf){1.0f, 0.5f, 0.8f, 1.0f});
-    mgDrawText("Hello Color", 200, 340);
+    tgSetColor((tgColorf){1.0f, 0.5f, 0.8f, 1.0f});
+    tgDrawText("Hello Color", 200, 340);
 
-    mgSetColor((mgColorf){1.0f, 1.0f, 0.0f, 1.0f});
-    mgDrawText("FPS: %d", 200, 370, mgFPS);
-    mgDrawText("Delta Time: %f", 200, 400, mgDT);
-    mgResetColor();
+    tgSetColor((tgColorf){1.0f, 1.0f, 0.0f, 1.0f});
+    tgDrawText("FPS: %d", 200, 370, tgFPS);
+    tgDrawText("Delta Time: %f", 200, 400, tgDT);
+    tgResetColor();
 
-    if (mgKeyHit('a'))
+    if (tgKeyHit('a'))
     {
         printf("Key 'A' was just pressed!\n");
     }
 
-    if (mgKeyDown('a'))
+    if (tgKeyDown('a'))
     {
         printf("Key 'A' is being held down!\n");
     }
 
-    if (mgKeyReleased('a'))
+    if (tgKeyReleased('a'))
     {
         printf("Key 'A' was just released!\n");
     }
 
-    if (mgMouseHit(0))
+    if (tgMouseHit(0))
     {
         printf("Left mouse button was just clicked!\n");
     }
 
-    if (mgMouseDown(0))
+    if (tgMouseDown(0))
     {
         printf("Left mouse button is being held down!\n");
     }
 
-    if (mgMouseReleased(0))
+    if (tgMouseReleased(0))
     {
         printf("Left mouse button was just released!\n");
     }
 
-    int wheelDelta = mgMouseWheelDelta();
+    int wheelDelta = tgMouseWheelDelta();
     if (wheelDelta > 0)
     {
         printf("Mouse wheel moved up!\n");
@@ -66,37 +66,37 @@ void display()
         printf("Mouse wheel moved down!\n");
     }
 
-    mgVec2 pos = mgGetMousePosition();
-    mgVec2 motionDelta = mgMouseMotionDelta();
+    tgVec2 pos = tgGetMousePosition();
+    tgVec2 motionDelta = tgMouseMotionDelta();
     if (motionDelta.x != 0 || motionDelta.y != 0)
     {
         printf("Mouse moved: %d, %d | %d, %d \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
     }
 
-    mgFlip();
+    tgFlip();
 }
 
 int main()
 {
-    bool success = mgCreateWindow("TinyGL Window", 1024, 600, true, true);
+    bool success = tgCreateWindow("TinyGL Window", 1024, 600, true, true);
     if (!success)
         return -1;
 
-    font = mgLoadFont("./assets/Roboto-Regular.ttf", 24.0f);
+    font = tgLoadFont("./assets/Roboto-Regular.ttf", 24.0f);
     if (!font)
     {
         printf("Failed to load font.\n");
         return -1;
     }
 
-    mgSetFont(font);
+    tgSetFont(font);
 
-    image = mgLoadImage("./assets/opengl.png");
+    image = tgLoadImage("./assets/opengl.png");
 
-    mgSetDisplayLoop(display);
-    mgRun();
+    tgSetDisplayLoop(display);
+    tgRun();
 
-    mgFreeFont(font);
-    mgFreeImage(image);
-    mgDestroyWindow();
+    tgFreeFont(font);
+    tgFreeImage(image);
+    tgDestroyWindow();
 }

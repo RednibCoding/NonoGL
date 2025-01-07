@@ -18,7 +18,7 @@ typedef struct
 {
     int x;
     int y;
-} mgVec2;
+} tgVec2;
 
 typedef struct
 {
@@ -26,7 +26,7 @@ typedef struct
     float y;
     float width;
     float height;
-} mgRecf;
+} tgRecf;
 
 typedef struct
 {
@@ -34,22 +34,22 @@ typedef struct
     float g;
     float b;
     float a;
-} mgColorf;
+} tgColorf;
 
 typedef struct
 {
     unsigned int textureID;
     int width;
     int height;
-} mgImage;
+} tgImage;
 
 typedef struct
 {
     unsigned int textureID; // OpenGL texture ID
     int width;              // Width of the buffer
     int height;             // Height of the buffer
-    mgColorf *pixels;       // CPU-side pixel buffer
-} mgPixmap;
+    tgColorf *pixels;       // CPU-side pixel buffer
+} tgPixmap;
 
 // Represents a font loaded with stb_truetype
 typedef struct
@@ -61,127 +61,127 @@ typedef struct
     int atlasHeight;              // Height of the font atlas
     float scale;                  // Font scaling factor
     stbtt_bakedchar charData[96]; // Holds character data for ASCII 32-127
-} mgFont;
+} tgFont;
 
-int mgFPS;
-float mgDT;
+int tgFPS;
+float tgDT;
 
 // Create a window
-bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filtered);
+bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filtered);
 
 // Release resources and free memory
-void mgDestroyWindow();
+void tgDestroyWindow();
 
 // Set the window title
-void mgSetWindowTitle(const char *format, ...);
+void tgSetWindowTitle(const char *format, ...);
 
 // Set the clear color
-void mgSetClearColor(mgColorf color);
+void tgSetClearColor(tgColorf color);
 
 // Set the draw color
-void mgSetColor(mgColorf color);
+void tgSetColor(tgColorf color);
 
 // Resets the color to default (1.0, 1.0, 1.0)
-void mgResetColor();
+void tgResetColor();
 
 // Clear the screen
-void mgCls();
+void tgCls();
 
 // End rendering and swap buffers
-void mgFlip();
+void tgFlip();
 
 // Load a file as bytes into a buffer and return the pointer to that buffer
 unsigned char *mgLoadFileBytes(const char *filepath, int *size);
 
-// Free the buffer allocated by mgLoadFileBytes
-void mgFreeFileBytes(unsigned char *buffer);
+// Free the buffer allocated by tgLoadFileBytes
+void tgFreeFileBytes(unsigned char *buffer);
 
 // Load an image from file
-mgImage mgLoadImage(const char *filepath);
+tgImage tgLoadImage(const char *filepath);
 
 // Load an image from memory
-mgImage mgLoadImageMem(const unsigned char *data, int size);
+tgImage tgLoadImageMem(const unsigned char *data, int size);
 
 // Draw an image on the screen
-void mgDrawImage(mgImage image, int x, int y);
+void tgDrawImage(tgImage image, int x, int y);
 
 // Draw a portion of an image
-void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec);
+void tgDrawImagePortion(tgImage image, int x, int y, tgRecf srcRec);
 
 // Frees the given image
-void mgFreeImage(mgImage image);
+void tgFreeImage(tgImage image);
 
 // Create a pixel buffer with the given width and height
-mgPixmap *mgCreatePixmap(int width, int height);
+tgPixmap *mgCreatePixmap(int width, int height);
 
 // Write a pixel at x, y location with the given color to the given pixel buffer
-void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color);
+void tgPutPixel(tgPixmap *buffer, int x, int y, tgColorf color);
 
 // Update pixels that have changed in the pixel buffer
-void mgUpdatePixmap(mgPixmap *buffer);
+void tgUpdatePixmap(tgPixmap *buffer);
 
 // Draw the pixel buffer to the screen
-void mgDrawPixmap(mgPixmap *buffer);
+void tgDrawPixmap(tgPixmap *buffer);
 
 // Free the given pixel buffer
-void mgFreePixmap(mgPixmap *buffer);
+void tgFreePixmap(tgPixmap *buffer);
 
 // Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
 void drawPixel(float x, float y);
 
 // Load a font from a file
-mgFont *mgLoadFont(const char *filepath, float fontSize);
+tgFont *tgLoadFont(const char *filepath, float fontSize);
 
 // Set font for text rendering, if not set, a default non-scalable font will be used
-void mgSetFont(mgFont *font);
+void tgSetFont(tgFont *font);
 
 // Render text using the font
-void mgDrawText(const char *format, int x, int y, ...);
+void tgDrawText(const char *format, int x, int y, ...);
 
 // Free the font
-void mgFreeFont(mgFont *font);
+void tgFreeFont(tgFont *font);
 
 // Check if a point overlaps with a rectangle
-bool mgVec2RecOverlaps(int x, int y, mgRecf rect);
+bool tgVec2RecOverlaps(int x, int y, tgRecf rect);
 
 // Check if two rectangles overlap
-bool mgRecsOverlap(mgRecf rec1, mgRecf rec2);
+bool tgRecsOverlap(tgRecf rec1, tgRecf rec2);
 
 // Check if a point overlaps with a circle
-bool mgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius);
+bool tgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius);
 
 // Check if a rectangle overlaps with a circle
-bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleradius);
+bool tgRecCircleOverlaps(tgRecf rec, int cx, int cy, float circleradius);
 
 // Check if two cirles overlap
-bool mgCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius);
+bool tgCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius);
 
 // Returns `true` if the specified key was pressed since the last frame.
-bool mgKeyHit(int key);
+bool tgKeyHit(int key);
 
 // Returns `true` if the specified key is currently being held down.
-bool mgKeyDown(int key);
+bool tgKeyDown(int key);
 
 // Returns `true` if the specified key was released since the last frame.
-bool mgKeyReleased(int key);
+bool tgKeyReleased(int key);
 
 // Returns `true` if the specified mouse button was clicked since the last frame.
-bool mgMouseHit(int button);
+bool tgMouseHit(int button);
 
 // Returns `true` if the specified mouse button is currently being held down.
-bool mgMouseDown(int button);
+bool tgMouseDown(int button);
 
 // Returns `true` if the specified mouse button was released since the last frame.
-bool mgMouseReleased(int button);
+bool tgMouseReleased(int button);
 
 // Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
-int mgMouseWheelDelta();
+int tgMouseWheelDelta();
 
 // Returns the current position of the mouse cursor as an `mgVec2` struct.
-mgVec2 mgGetMousePosition();
+tgVec2 tgGetMousePosition();
 
 // Returns the mouse motion delta (change in position) since the last frame.
-mgVec2 mgMouseMotionDelta();
+tgVec2 tgMouseMotionDelta();
 
 /******************************************************************************************************************************/
 /*  End of Public API */
@@ -202,7 +202,7 @@ typedef struct
     double lastTime;
     int currentFPS;
     int window;
-    mgFont *font;
+    tgFont *font;
 
     // Keyboard state
     bool keys[_MG_MAX_KEYS];
@@ -214,10 +214,10 @@ typedef struct
     bool mouseButtonsPressed[_MG_MAX_MOUSE_BUTTONS];
     bool mouseButtonsReleased[_MG_MAX_MOUSE_BUTTONS];
     int mouseWheelDelta;
-    mgVec2 mousePosition;
-    mgVec2 mouseMotionDelta;
+    tgVec2 mousePosition;
+    tgVec2 mouseMotionDelta;
 
-} _mgState;
+} _tgState;
 #endif // TINY_GL_H
 
 /******************************************************************************************************************************/
@@ -225,14 +225,14 @@ typedef struct
 /*  IMPLEMENTATION */
 
 /******************************************************************************************************************************/
-#ifdef MG_IMPL
+#ifdef TGL_IMPL
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "internal/include/stb_image.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "internal/include/stb_truetype.h"
 
-_mgState _mgstate;
+_tgState _tgstate;
 
 // Global function pointer for the display callback
 void (*gDisplayCallback)(void) = NULL;
@@ -286,8 +286,8 @@ void _mgUpdateScale(int width, int height, int shouldUpdate)
 {
     if (shouldUpdate != 0)
     {
-        float scaleX = (float)width / _mgstate.initialWidth;
-        float scaleY = (float)height / _mgstate.initialHeight;
+        float scaleX = (float)width / _tgstate.initialWidth;
+        float scaleY = (float)height / _tgstate.initialHeight;
         _mgSetScale(scaleX, scaleY);
     }
 }
@@ -296,19 +296,19 @@ void _mgFramebufferSizeCallback(int width, int height)
 {
     glViewport(0, 0, width, height);
     _mgSetupOrthoProjection(width, height);
-    _mgUpdateScale(width, height, _mgstate.scalable);
+    _mgUpdateScale(width, height, _tgstate.scalable);
 }
 
 void _mgTimerCallback(int value)
 {
     // Calculate deltaTime and currentFPS
     double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0; // Get time in seconds
-    _mgstate.deltaTime = currentTime - _mgstate.lastTime;
-    _mgstate.currentFPS = (_mgstate.deltaTime > 0) ? (1.0 / _mgstate.deltaTime) : 0;
-    _mgstate.lastTime = currentTime;
+    _tgstate.deltaTime = currentTime - _tgstate.lastTime;
+    _tgstate.currentFPS = (_tgstate.deltaTime > 0) ? (1.0 / _tgstate.deltaTime) : 0;
+    _tgstate.lastTime = currentTime;
 
-    mgFPS = _mgstate.currentFPS;
-    mgDT = _mgstate.deltaTime;
+    tgFPS = _tgstate.currentFPS;
+    tgDT = _tgstate.deltaTime;
 
     // Trigger display refresh
     glutPostRedisplay();
@@ -319,17 +319,17 @@ void _mgTimerCallback(int value)
 
 void _mgKeyDownCallback(unsigned char key, int x, int y)
 {
-    if (!_mgstate.keys[key])
+    if (!_tgstate.keys[key])
     {
-        _mgstate.keysPressed[key] = true;
+        _tgstate.keysPressed[key] = true;
     }
-    _mgstate.keys[key] = true;
+    _tgstate.keys[key] = true;
 }
 
 void _mgKeyUpCallback(unsigned char key, int x, int y)
 {
-    _mgstate.keys[key] = false;
-    _mgstate.keysReleased[key] = true;
+    _tgstate.keys[key] = false;
+    _tgstate.keysReleased[key] = true;
 }
 
 void _mgMouseButtonCallback(int button, int state, int x, int y)
@@ -338,32 +338,32 @@ void _mgMouseButtonCallback(int button, int state, int x, int y)
     {
         if (state == GLUT_DOWN)
         {
-            if (!_mgstate.mouseButtons[button])
+            if (!_tgstate.mouseButtons[button])
             {
-                _mgstate.mouseButtonsPressed[button] = true;
+                _tgstate.mouseButtonsPressed[button] = true;
             }
-            _mgstate.mouseButtons[button] = true;
+            _tgstate.mouseButtons[button] = true;
         }
         else if (state == GLUT_UP)
         {
-            _mgstate.mouseButtons[button] = false;
-            _mgstate.mouseButtonsReleased[button] = true;
+            _tgstate.mouseButtons[button] = false;
+            _tgstate.mouseButtonsReleased[button] = true;
         }
     }
 }
 
 void _mgMouseWheelFunc(int wheel, int direction, int x, int y)
 {
-    _mgstate.mouseWheelDelta = direction; // +1 for up, -1 for down
+    _tgstate.mouseWheelDelta = direction; // +1 for up, -1 for down
 }
 
 void _mgMouseMotionFunc(int x, int y)
 {
     // Motion delta
-    mgVec2 newMousePosition = {(float)x, (float)y};
-    _mgstate.mouseMotionDelta.x = newMousePosition.x - _mgstate.mousePosition.x;
-    _mgstate.mouseMotionDelta.y = newMousePosition.y - _mgstate.mousePosition.y;
-    _mgstate.mousePosition = newMousePosition;
+    tgVec2 newMousePosition = {(float)x, (float)y};
+    _tgstate.mouseMotionDelta.x = newMousePosition.x - _tgstate.mousePosition.x;
+    _tgstate.mouseMotionDelta.y = newMousePosition.y - _tgstate.mousePosition.y;
+    _tgstate.mousePosition = newMousePosition;
 }
 
 void _mgDrawTextDefaultFont(const char *format, int x, int y, ...)
@@ -389,20 +389,20 @@ void _mgDrawTextDefaultFont(const char *format, int x, int y, ...)
 // Public api function implementations
 /*******************************************************************************************************/
 
-bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)
+bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)
 {
-    _mgstate.scalable = scalable;
-    _mgstate.filtered = filtered;
+    _tgstate.scalable = scalable;
+    _tgstate.filtered = filtered;
 
-    _mgstate.title = title;
-    _mgstate.initialWidth = width;
-    _mgstate.initialHeight = height;
-    _mgstate.width = width;
-    _mgstate.height = height;
+    _tgstate.title = title;
+    _tgstate.initialWidth = width;
+    _tgstate.initialHeight = height;
+    _tgstate.width = width;
+    _tgstate.height = height;
 
-    _mgstate.deltaTime = 0.0f;
-    _mgstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    _mgstate.currentFPS = 0;
+    _tgstate.deltaTime = 0.0f;
+    _tgstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    _tgstate.currentFPS = 0;
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
@@ -411,7 +411,7 @@ bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filt
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowSize(width, height);
-    _mgstate.window = glutCreateWindow(title);
+    _tgstate.window = glutCreateWindow(title);
 
     /* Set the callbacks */
     glutKeyboardFunc(_mgKeyDownCallback);
@@ -424,8 +424,8 @@ bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filt
     glutReshapeFunc(_mgFramebufferSizeCallback);
 
     /* Set up the orthographic projection */
-    _mgSetupOrthoProjection(_mgstate.width, _mgstate.height);
-    _mgUpdateScale(_mgstate.width, _mgstate.height, _mgstate.scalable);
+    _mgSetupOrthoProjection(_tgstate.width, _tgstate.height);
+    _mgUpdateScale(_tgstate.width, _tgstate.height, _tgstate.scalable);
 
     /* Set initial scale */
     _mgSetScale(1.0f, 1.0f);
@@ -436,33 +436,33 @@ bool mgCreateWindow(char *title, int width, int height, bool scalable, bool filt
     return true;
 }
 
-void mgDestroyWindow()
+void tgDestroyWindow()
 {
-    glutDestroyWindow(_mgstate.window);
+    glutDestroyWindow(_tgstate.window);
 }
 
-void mgSetClearColor(mgColorf color)
+void tgSetClearColor(tgColorf color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
 }
 
-void mgSetColor(mgColorf color)
+void tgSetColor(tgColorf color)
 {
     glColor4f(color.r, color.g, color.b, color.a);
 }
 
-void mgResetColor()
+void tgResetColor()
 {
     glColor4f(1.0, 1.0, 1.0, 1.0);
 }
 
-void mgSetDisplayLoop(void (*callback)(void))
+void tgSetDisplayLoop(void (*callback)(void))
 {
     gDisplayCallback = callback;
     glutDisplayFunc(_mgDisplayCallbackWrapper);
 }
 
-void mgRun()
+void tgRun()
 {
     if (gDisplayCallback == NULL)
     {
@@ -472,12 +472,12 @@ void mgRun()
     glutMainLoop();
 }
 
-void mgCls()
+void tgCls()
 {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void mgSetWindowTitle(const char *format, ...)
+void tgSetWindowTitle(const char *format, ...)
 {
     char buffer[256];
 
@@ -489,7 +489,7 @@ void mgSetWindowTitle(const char *format, ...)
     glutSetWindowTitle(buffer);
 }
 
-void mgFlip()
+void tgFlip()
 {
     glutSwapBuffers();
     glutMainLoopEvent();
@@ -522,7 +522,7 @@ unsigned char *mgLoadFileBytes(const char *filepath, int *size)
     return buffer;
 }
 
-void mgFreeFileBytes(unsigned char *buffer)
+void tgFreeFileBytes(unsigned char *buffer)
 {
     if (buffer)
     {
@@ -530,9 +530,9 @@ void mgFreeFileBytes(unsigned char *buffer)
     }
 }
 
-mgImage mgLoadImage(const char *filepath)
+tgImage tgLoadImage(const char *filepath)
 {
-    mgImage image;
+    tgImage image;
     // stbi_set_flip_vertically_on_load(1);
     unsigned char *imageData = stbi_load(filepath, &image.width, &image.height, 0, 4);
     if (!imageData)
@@ -547,7 +547,7 @@ mgImage mgLoadImage(const char *filepath)
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
-    if (!_mgstate.filtered)
+    if (!_tgstate.filtered)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -566,9 +566,9 @@ mgImage mgLoadImage(const char *filepath)
     return image;
 }
 
-mgImage mgLoadImageMem(const unsigned char *data, int size)
+tgImage tgLoadImageMem(const unsigned char *data, int size)
 {
-    mgImage image;
+    tgImage image;
     unsigned char *imageData = stbi_load_from_memory(data, size, &image.width, &image.height, 0, 4);
     if (!imageData)
     {
@@ -582,7 +582,7 @@ mgImage mgLoadImageMem(const unsigned char *data, int size)
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
-    if (_mgstate.filtered)
+    if (_tgstate.filtered)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -601,7 +601,7 @@ mgImage mgLoadImageMem(const unsigned char *data, int size)
     return image;
 }
 
-void mgDrawImage(mgImage image, int x, int y)
+void tgDrawImage(tgImage image, int x, int y)
 {
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
@@ -620,7 +620,7 @@ void mgDrawImage(mgImage image, int x, int y)
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec)
+void tgDrawImagePortion(tgImage image, int x, int y, tgRecf srcRec)
 {
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
@@ -644,7 +644,7 @@ void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec)
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgFreeImage(mgImage image)
+void tgFreeImage(tgImage image)
 {
     if (!image.textureID == 0)
         return;
@@ -652,9 +652,9 @@ void mgFreeImage(mgImage image)
     glDeleteTextures(1, &image.textureID);
 }
 
-mgPixmap *mgCreatePixmap(int width, int height)
+tgPixmap *mgCreatePixmap(int width, int height)
 {
-    mgPixmap *buffer = malloc(sizeof(mgPixmap));
+    tgPixmap *buffer = malloc(sizeof(tgPixmap));
     if (!buffer)
         return NULL;
 
@@ -662,7 +662,7 @@ mgPixmap *mgCreatePixmap(int width, int height)
     buffer->height = height;
 
     // Allocate pixel memory
-    buffer->pixels = calloc(width * height, sizeof(mgColorf));
+    buffer->pixels = calloc(width * height, sizeof(tgColorf));
     if (!buffer->pixels)
     {
         free(buffer);
@@ -683,7 +683,7 @@ mgPixmap *mgCreatePixmap(int width, int height)
     return buffer;
 }
 
-void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color)
+void tgPutPixel(tgPixmap *buffer, int x, int y, tgColorf color)
 {
     if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
         return;
@@ -691,7 +691,7 @@ void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color)
     buffer->pixels[y * buffer->width + x] = color;
 }
 
-void mgUpdatePixmap(mgPixmap *buffer)
+void tgUpdatePixmap(tgPixmap *buffer)
 {
     if (!buffer || !buffer->pixels)
         return;
@@ -701,7 +701,7 @@ void mgUpdatePixmap(mgPixmap *buffer)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void mgDrawPixmap(mgPixmap *buffer)
+void tgDrawPixmap(tgPixmap *buffer)
 {
     if (!buffer)
         return;
@@ -725,7 +725,7 @@ void mgDrawPixmap(mgPixmap *buffer)
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgFreePixmap(mgPixmap *buffer)
+void tgFreePixmap(tgPixmap *buffer)
 {
     if (!buffer)
         return;
@@ -743,9 +743,9 @@ void drawPixel(float x, float y)
     glEnd();
 }
 
-mgFont *mgLoadFont(const char *filepath, float fontSize)
+tgFont *tgLoadFont(const char *filepath, float fontSize)
 {
-    mgFont *font = malloc(sizeof(mgFont));
+    tgFont *font = malloc(sizeof(tgFont));
     if (!font)
         return NULL;
 
@@ -815,20 +815,20 @@ mgFont *mgLoadFont(const char *filepath, float fontSize)
     return font;
 }
 
-void mgSetFont(mgFont *font)
+void tgSetFont(tgFont *font)
 {
     if (!font)
         return;
 
-    _mgstate.font = font;
+    _tgstate.font = font;
 }
 
-void mgDrawText(const char *format, int x, int y, ...)
+void tgDrawText(const char *format, int x, int y, ...)
 {
     if (!format)
         return;
 
-    if (!_mgstate.font)
+    if (!_tgstate.font)
     {
         _mgDrawTextDefaultFont(format, x, y);
         return;
@@ -843,7 +843,7 @@ void mgDrawText(const char *format, int x, int y, ...)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, _mgstate.font->textureID);
+    glBindTexture(GL_TEXTURE_2D, _tgstate.font->textureID);
 
     glBegin(GL_QUADS);
 
@@ -856,7 +856,7 @@ void mgDrawText(const char *format, int x, int y, ...)
             continue;
 
         stbtt_aligned_quad quad;
-        stbtt_GetBakedQuad(_mgstate.font->charData, _mgstate.font->atlasWidth, _mgstate.font->atlasHeight, *c - 32, &tx, &ty, &quad, 1);
+        stbtt_GetBakedQuad(_tgstate.font->charData, _tgstate.font->atlasWidth, _tgstate.font->atlasHeight, *c - 32, &tx, &ty, &quad, 1);
 
         glTexCoord2f(quad.s0, quad.t1);
         glVertex2f(quad.x0, quad.y1);
@@ -874,7 +874,7 @@ void mgDrawText(const char *format, int x, int y, ...)
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgFreeFont(mgFont *font)
+void tgFreeFont(tgFont *font)
 {
     if (!font)
         return;
@@ -886,24 +886,24 @@ void mgFreeFont(mgFont *font)
     free(font);
 }
 
-bool mgVec2RecOverlaps(int x, int y, mgRecf rec)
+bool tgVec2RecOverlaps(int x, int y, tgRecf rec)
 {
     return (x >= rec.x && x <= rec.x + rec.width && y >= rec.y && y <= rec.y + rec.height) ? true : false;
 }
 
-bool mgRecsOverlap(mgRecf rec1, mgRecf rec2)
+bool tgRecsOverlap(tgRecf rec1, tgRecf rec2)
 {
     return (rec1.x < rec2.x + rec2.width && rec1.x + rec1.width > rec2.x && rec1.y < rec2.y + rec2.height && rec1.y + rec1.height > rec2.y) ? true : false;
 }
 
-bool mgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleRadius)
+bool tgVec2CircleOverlaps(int x, int y, int cx, int cy, float circleRadius)
 {
     float dx = x - cx;
     float dy = y - cy;
     return (dx * dx + dy * dy <= circleRadius * circleRadius) ? true : false;
 }
 
-bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleRadius)
+bool tgRecCircleOverlaps(tgRecf rec, int cx, int cy, float circleRadius)
 {
     // Find the closest point on the rectangle to the circle center
     float closestX = (cx < rec.x) ? rec.x : (cx > rec.x + rec.width) ? rec.x + rec.width
@@ -918,7 +918,7 @@ bool mgRecCircleOverlaps(mgRecf rec, int cx, int cy, float circleRadius)
     return (dx * dx + dy * dy <= circleRadius * circleRadius) ? true : false;
 }
 
-bool mgCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, float circle2Radius)
+bool tgCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, float circle2Radius)
 {
     float dx = cx1 - cx2;
     float dy = cy1 - cy2;
@@ -927,62 +927,62 @@ bool mgCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, 
     return (distanceSquared <= radiusSum * radiusSum) ? true : false;
 }
 
-bool mgKeyHit(int key)
+bool tgKeyHit(int key)
 {
-    bool wasPressed = _mgstate.keysPressed[key];
-    _mgstate.keysPressed[key] = false; // Reset after checking
+    bool wasPressed = _tgstate.keysPressed[key];
+    _tgstate.keysPressed[key] = false; // Reset after checking
     return wasPressed;
 }
 
-bool mgKeyDown(int key)
+bool tgKeyDown(int key)
 {
-    return _mgstate.keys[key];
+    return _tgstate.keys[key];
 }
 
-bool mgKeyReleased(int key)
+bool tgKeyReleased(int key)
 {
-    bool wasReleased = _mgstate.keysReleased[key];
-    _mgstate.keysReleased[key] = false; // Reset after checking
+    bool wasReleased = _tgstate.keysReleased[key];
+    _tgstate.keysReleased[key] = false; // Reset after checking
     return wasReleased;
 }
 
-bool mgMouseHit(int button)
+bool tgMouseHit(int button)
 {
-    bool wasPressed = _mgstate.mouseButtonsPressed[button];
-    _mgstate.mouseButtonsPressed[button] = false; // Reset after checking
+    bool wasPressed = _tgstate.mouseButtonsPressed[button];
+    _tgstate.mouseButtonsPressed[button] = false; // Reset after checking
     return wasPressed;
 }
 
-bool mgMouseDown(int button)
+bool tgMouseDown(int button)
 {
-    return _mgstate.mouseButtons[button];
+    return _tgstate.mouseButtons[button];
 }
 
-bool mgMouseReleased(int button)
+bool tgMouseReleased(int button)
 {
-    bool wasReleased = _mgstate.mouseButtonsReleased[button];
-    _mgstate.mouseButtonsReleased[button] = false; // Reset after checking
+    bool wasReleased = _tgstate.mouseButtonsReleased[button];
+    _tgstate.mouseButtonsReleased[button] = false; // Reset after checking
     return wasReleased;
 }
 
-int mgMouseWheelDelta()
+int tgMouseWheelDelta()
 {
-    int delta = _mgstate.mouseWheelDelta;
-    _mgstate.mouseWheelDelta = 0; // Reset after checking
+    int delta = _tgstate.mouseWheelDelta;
+    _tgstate.mouseWheelDelta = 0; // Reset after checking
     return delta;
 }
 
-mgVec2 mgGetMousePosition()
+tgVec2 tgGetMousePosition()
 {
-    return _mgstate.mousePosition;
+    return _tgstate.mousePosition;
 }
 
-mgVec2 mgMouseMotionDelta()
+tgVec2 tgMouseMotionDelta()
 {
-    mgVec2 delta = _mgstate.mouseMotionDelta;
-    _mgstate.mouseMotionDelta.x = 0; // Reset after checking
-    _mgstate.mouseMotionDelta.y = 0;
+    tgVec2 delta = _tgstate.mouseMotionDelta;
+    _tgstate.mouseMotionDelta.x = 0; // Reset after checking
+    _tgstate.mouseMotionDelta.y = 0;
     return delta;
 }
 
-#endif // MG_IMPL
+#endif // TGL_IMPL
