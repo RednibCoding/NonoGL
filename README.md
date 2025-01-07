@@ -118,7 +118,7 @@ int main()
   Clears the screen with the current clear color.
 
 - **`void mgFlip()`**
-  Swaps the front and back buffers.
+  Swaps the front- and backbuffer.
 
 - **`void mgSetDisplayLoop(void (*callback)(void))`**
   Sets the display loop function to handle rendering.
@@ -143,25 +143,25 @@ int main()
 - **`void mgFreeImage(mgImage image)`**
   Frees the given image
 
-### Pixelbuffer Management and Drawing
+### Pixmap (pixel buffer) Management and Drawing
 
-- **`mgPixelBuffer *mgCreatePixelBuffer(int width, int height)`**
-  Creates a pixel buffer with the given width and height.
+- **`mgPixmap *mgCreatePixmap(int width, int height)`**
+  Creates a Pixmap with the given width and height.
 
-- **`void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color)`**
-  Writes a pixel at x, y location with the given color to the given pixel buffer.
+- **`void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color)`**
+  Writes a pixel at x, y location with the given color to the given Pixmap.
 
-- **`void mgUpdatePixelBuffer(mgPixelBuffer *buffer)`**
-  Update pixels that have changed in the given pixel buffer.
+- **`void mgUpdatePixmap(mgPixmap *buffer)`**
+  Update pixels that have changed in the given Pixmap.
 
-- **`void mgDrawPixelBuffer(mgPixelBuffer *buffer)`**
-  Draws the pixel buffer to the screen.
+- **`void mgDrawPixmap(mgPixmap *buffer)`**
+  Draws the Pixmap to the screen.
 
-- **`void mgFreePixelBuffer(mgPixelBuffer *buffer)`**
-  Frees the given pixel buffer.
+- **`void mgFreePixmap(mgPixmap *buffer)`**
+  Frees the given Pixmap.
 
 - **`void drawPixel(float x, float y, mgColorf color)`**
-  Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
+  Draw an individual pixel to the screen (use a Pixmap (pixel buffer) for large chunks of pixels instead)
 
 ### Text Rendering
 
@@ -288,7 +288,7 @@ int main()
   } mgImage;
   ```
 
-- **`mgPixelBuffer`**
+- **`mgPixmap`**
   Represents a 2D buffer of colors (`mgColorf`)
   ```c
   typedef struct
@@ -297,7 +297,7 @@ int main()
     int width;              // Width of the buffer
     int height;             // Height of the buffer
     mgColorf *pixels;       // CPU-side pixel buffer
-  } mgPixelBuffer;
+  } mgPixmap;
   ```
 
 ## License

@@ -49,7 +49,7 @@ typedef struct
     int width;              // Width of the buffer
     int height;             // Height of the buffer
     mgColorf *pixels;       // CPU-side pixel buffer
-} mgPixelBuffer;
+} mgPixmap;
 
 // Represents a font loaded with stb_truetype
 typedef struct
@@ -112,19 +112,19 @@ void mgDrawImagePortion(mgImage image, int x, int y, mgRecf srcRec);
 void mgFreeImage(mgImage image);
 
 // Create a pixel buffer with the given width and height
-mgPixelBuffer *mgCreatePixelBuffer(int width, int height);
+mgPixmap *mgCreatePixmap(int width, int height);
 
 // Write a pixel at x, y location with the given color to the given pixel buffer
-void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color);
+void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color);
 
 // Update pixels that have changed in the pixel buffer
-void mgUpdatePixelBuffer(mgPixelBuffer *buffer);
+void mgUpdatePixmap(mgPixmap *buffer);
 
 // Draw the pixel buffer to the screen
-void mgDrawPixelBuffer(mgPixelBuffer *buffer);
+void mgDrawPixmap(mgPixmap *buffer);
 
 // Free the given pixel buffer
-void mgFreePixelBuffer(mgPixelBuffer *buffer);
+void mgFreePixmap(mgPixmap *buffer);
 
 // Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
 void drawPixel(float x, float y);
@@ -652,9 +652,9 @@ void mgFreeImage(mgImage image)
     glDeleteTextures(1, &image.textureID);
 }
 
-mgPixelBuffer *mgCreatePixelBuffer(int width, int height)
+mgPixmap *mgCreatePixmap(int width, int height)
 {
-    mgPixelBuffer *buffer = malloc(sizeof(mgPixelBuffer));
+    mgPixmap *buffer = malloc(sizeof(mgPixmap));
     if (!buffer)
         return NULL;
 
@@ -683,7 +683,7 @@ mgPixelBuffer *mgCreatePixelBuffer(int width, int height)
     return buffer;
 }
 
-void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color)
+void mgPutPixel(mgPixmap *buffer, int x, int y, mgColorf color)
 {
     if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
         return;
@@ -691,7 +691,7 @@ void mgPutPixel(mgPixelBuffer *buffer, int x, int y, mgColorf color)
     buffer->pixels[y * buffer->width + x] = color;
 }
 
-void mgUpdatePixelBuffer(mgPixelBuffer *buffer)
+void mgUpdatePixmap(mgPixmap *buffer)
 {
     if (!buffer || !buffer->pixels)
         return;
@@ -701,7 +701,7 @@ void mgUpdatePixelBuffer(mgPixelBuffer *buffer)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void mgDrawPixelBuffer(mgPixelBuffer *buffer)
+void mgDrawPixmap(mgPixmap *buffer)
 {
     if (!buffer)
         return;
@@ -725,7 +725,7 @@ void mgDrawPixelBuffer(mgPixelBuffer *buffer)
     glDisable(GL_TEXTURE_2D);
 }
 
-void mgFreePixelBuffer(mgPixelBuffer *buffer)
+void mgFreePixmap(mgPixmap *buffer)
 {
     if (!buffer)
         return;
