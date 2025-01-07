@@ -161,7 +161,8 @@ int main()
   Frees the given Pixmap.
 
 - **`void drawPixel(float x, float y, mgColorf color)`**
-  Draw an individual pixel to the screen (when dealing with large chunks of pixels, use a Pixmap (pixel buffer) instead).
+  Draws an individual pixel to the screen.
+  > Note: When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons.
 
 ### Text Rendering
 
