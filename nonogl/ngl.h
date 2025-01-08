@@ -356,12 +356,34 @@ void _nnFramebufferSizeCallback(int width, int height)
 
 void _nnTimerCallback(int value)
 {
-    // Calculate deltaTime and currentFPS
+    // Parameters for FPS averaging
+#define _NN_FPS_BUFFER_SIZE 20                          // Number of frames to average over
+    static double fpsBuffer[_NN_FPS_BUFFER_SIZE] = {0}; // Circular buffer for FPS values
+    static int fpsIndex = 0;                            // Current index in the buffer
+    static double fpsSum = 0;                           // Sum of all FPS values in the buffer
+    static int fpsCount = 0;                            // Number of frames added to the buffer
+
+    // Calculate deltaTime and instantaneous FPS
     double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0; // Get time in seconds
     _nnstate.deltaTime = currentTime - _nnstate.lastTime;
-    _nnstate.currentFPS = (_nnstate.deltaTime > 0) ? (1.0 / _nnstate.deltaTime) : 0;
+    double instantaneousFPS = (_nnstate.deltaTime > 0) ? (1.0 / _nnstate.deltaTime) : 0;
     _nnstate.lastTime = currentTime;
 
+    // Update the FPS buffer
+    fpsSum -= fpsBuffer[fpsIndex];          // Remove the old value from the sum
+    fpsBuffer[fpsIndex] = instantaneousFPS; // Add the new value to the buffer
+    fpsSum += instantaneousFPS;             // Add the new value to the sum
+
+    fpsIndex = (fpsIndex + 1) % _NN_FPS_BUFFER_SIZE; // Move to the next index
+    if (fpsCount < _NN_FPS_BUFFER_SIZE)
+    {
+        fpsCount++; // Increase the count until the buffer is full
+    }
+
+    // Calculate the average FPS
+    _nnstate.currentFPS = fpsSum / fpsCount;
+
+    // Update global variables
     nnFPS = _nnstate.currentFPS;
     nnDT = _nnstate.deltaTime;
 
