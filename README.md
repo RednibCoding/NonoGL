@@ -94,6 +94,7 @@ int main()
     nnSetDisplayFunc(displayFunc);
     nnRun();
 
+    nnFreeImage(image);
     nnDestroyWindow();
     return 0;
 }
