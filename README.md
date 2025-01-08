@@ -295,7 +295,7 @@ int main()
   Load a font from a .ttf file.
 
 - **`void nnSetFont(nnFont *font)`**
-  Set font for text rendering, if not set, a default non-scalable font will be used.
+  Set font for text rendering.
 
 - **`void nnDrawText(const char *format, int x, int y, ...)`**
   Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the default non-scalable font will be used.
