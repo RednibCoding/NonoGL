@@ -242,7 +242,7 @@ int main()
   Read a pixel from the given pixmap.
 
 - **`void nnUpdatePixmap(nnPixmap *buffer)`**
-  Update pixels that have changed in the given Pixmap.
+  Update pixels that have changed in the given Pixmap. Only updates pixels that have actually changed.
 
 - **`void nnDrawPixmap(nnPixmap *buffer, int x, int y)`**
   Draws the Pixmap to the screen at the given coordinates.

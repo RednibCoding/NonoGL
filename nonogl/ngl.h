@@ -138,7 +138,7 @@ void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color);
 // Read a pixel from the given Pixmap.
 nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);
 
-// Update pixels that have changed in the Pixmap.
+// Update pixels that have changed in the Pixmap. Only updates pixels that have actually changed.
 void nnUpdatePixmap(nnPixmap *pixmap);
 
 // Draw the Pixmap to the screen.
@@ -444,6 +444,9 @@ void _nnDrawTextDefaultFont(const char *format, int x, int y, ...)
 // Public api function implementations
 /*******************************************************************************************************/
 
+/*
+ * Window Management
+ */
 bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filtered)
 {
     _nnstate.displayCallback = NULL;
@@ -493,9 +496,27 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     return true;
 }
 
+void nnSetDisplayFunc(void (*callback)(void))
+{
+    _nnstate.displayCallback = callback;
+    glutDisplayFunc(_nnDisplayCallbackWrapper);
+}
+
 void nnDestroyWindow()
 {
     glutDestroyWindow(_nnstate.window);
+}
+
+void nnSetWindowTitle(const char *format, ...)
+{
+    char buffer[256];
+
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    glutSetWindowTitle(buffer);
 }
 
 void nnSetClearColor(nnColorf color)
@@ -513,10 +534,15 @@ void nnResetColor()
     glColor4f(1.0, 1.0, 1.0, 1.0);
 }
 
-void nnSetDisplayFunc(void (*callback)(void))
+void nnCls()
 {
-    _nnstate.displayCallback = callback;
-    glutDisplayFunc(_nnDisplayCallbackWrapper);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void nnFlip()
+{
+    glutSwapBuffers();
+    glutMainLoopEvent();
 }
 
 void nnRun()
@@ -529,63 +555,9 @@ void nnRun()
     glutMainLoop();
 }
 
-void nnCls()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
-void nnSetWindowTitle(const char *format, ...)
-{
-    char buffer[256];
-
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-
-    glutSetWindowTitle(buffer);
-}
-
-void nnFlip()
-{
-    glutSwapBuffers();
-    glutMainLoopEvent();
-}
-
-unsigned char *nnLoadFileBytes(const char *filepath, int *size)
-{
-    FILE *file = fopen(filepath, "rb");
-    if (!file)
-    {
-        printf("Failed to open file:\n%s\n", filepath);
-        return NULL;
-    }
-
-    fseek(file, 0, SEEK_END);
-    *size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    unsigned char *buffer = (unsigned char *)malloc(*size);
-    if (!buffer)
-    {
-        printf("Failed to allocate memory for file: %s\n", filepath);
-        fclose(file);
-        return NULL;
-    }
-
-    fread(buffer, 1, *size, file);
-    fclose(file);
-
-    return buffer;
-}
-
-void nnFreeFileBytes(unsigned char *buffer)
-{
-    if (buffer)
-    {
-        free(buffer);
-    }
-}
+/*
+ * Image Loading and Drawing
+ */
 
 nnImage nnLoadImage(const char *filepath)
 {
@@ -711,6 +683,10 @@ void nnFreeImage(nnImage image)
 
     glDeleteTextures(1, &image.textureID);
 }
+
+/*
+ * Pixmap Management and Drawing
+ */
 
 nnPixmap *nnCreatePixmap(int width, int height)
 {
@@ -873,6 +849,10 @@ void drawPixel(float x, float y)
     glEnd();
 }
 
+/*
+ * Text Rendering
+ */
+
 nnFont *nnLoadFont(const char *filepath, float fontSize)
 {
     nnFont *font = malloc(sizeof(nnFont));
@@ -1025,6 +1005,10 @@ void nnFreeFont(nnFont *font)
     free(font);
 }
 
+/*
+ * Collision Handling
+ */
+
 bool nnVec2RecOverlaps(int x, int y, nnRecf rec)
 {
     return (x >= rec.x && x <= rec.x + rec.width && y >= rec.y && y <= rec.y + rec.height) ? true : false;
@@ -1066,6 +1050,10 @@ bool nnCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, 
     return (distanceSquared <= radiusSum * radiusSum) ? true : false;
 }
 
+/*
+ * Input Handling
+ */
+//// Keyboard Input
 bool nnKeyHit(int key)
 {
     bool wasPressed = _nnstate.keysPressed[key];
@@ -1084,6 +1072,8 @@ bool nnKeyReleased(int key)
     _nnstate.keysReleased[key] = false; // Reset after checking
     return wasReleased;
 }
+
+//// Mouse Input
 
 bool nnMouseHit(int button)
 {
@@ -1124,4 +1114,42 @@ nnVec2 nnMouseMotionDelta()
     return delta;
 }
 
+/*
+ * Utility
+ */
+
+unsigned char *nnLoadFileBytes(const char *filepath, int *size)
+{
+    FILE *file = fopen(filepath, "rb");
+    if (!file)
+    {
+        printf("Failed to open file:\n%s\n", filepath);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    *size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    unsigned char *buffer = (unsigned char *)malloc(*size);
+    if (!buffer)
+    {
+        printf("Failed to allocate memory for file: %s\n", filepath);
+        fclose(file);
+        return NULL;
+    }
+
+    fread(buffer, 1, *size, file);
+    fclose(file);
+
+    return buffer;
+}
+
+void nnFreeFileBytes(unsigned char *buffer)
+{
+    if (buffer)
+    {
+        free(buffer);
+    }
+}
 #endif // NONOGL_IMPLEMENTATION
