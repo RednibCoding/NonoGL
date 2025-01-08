@@ -181,7 +181,7 @@ int main()
 
 ### Text Rendering
 
-- **`nnFont *mgLoadFont(const char *filepath, float fontSize)`**
+- **`nnFont *nnLoadFont(const char *filepath, float fontSize)`**
   Load a font from a file.
 
 - **`void nnSetFont(nnFont *font)`**
