@@ -235,7 +235,7 @@ int main()
 - **`nnPixmap *nnCreatePixmapFromImage(nnImage image);`**
   Creates a Pixmap from an image.
 
-- **`void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
+- **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
   Writes a pixel at x, y location with the given color to the given Pixmap.
 
 - **`nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);`**
@@ -250,7 +250,7 @@ int main()
 - **`void nnFreePixmap(nnPixmap *buffer)`**
   Frees the given Pixmap.
 
-- **`void drawPixel(float x, float y, nnColorf color)`**
+- **`void nnPutPixel(float x, float y)`**
   Draws an individual pixel to the screen.
   > Note: When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons.
 

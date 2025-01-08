@@ -133,7 +133,7 @@ nnPixmap *nnCreatePixmap(int width, int height);
 nnPixmap *nnCreatePixmapFromImage(nnImage image);
 
 // Writes a pixel at x, y location with the given color to the given Pixmap.
-void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color);
+void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color);
 
 // Read a pixel from the given Pixmap.
 nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);
@@ -148,7 +148,7 @@ void nnDrawPixmap(nnPixmap *pixmap, int x, int y);
 void nnFreePixmap(nnPixmap *pixmap);
 
 // Draw an individual pixel to the screen (When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons)
-void drawPixel(float x, float y);
+void putPixel(float x, float y);
 
 /*
  * Text Rendering
@@ -800,7 +800,7 @@ nnPixmap *nnCreatePixmapFromImage(nnImage image)
     return pixmap;
 }
 
-void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color)
+void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)
 {
     if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
         return;
@@ -864,7 +864,7 @@ void nnFreePixmap(nnPixmap *buffer)
     free(buffer);
 }
 
-void drawPixel(float x, float y)
+void putPixel(float x, float y)
 {
     glBegin(GL_POINTS);
     glVertex2f(x, y);
