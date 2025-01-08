@@ -101,6 +101,9 @@ void nnSetClearColor(nnColorf color);
 // Set the draw color.
 void nnSetColor(nnColorf color);
 
+// Get the current draw color.
+nnColorf nnGetColor();
+
 // Resets the color to default (1.0, 1.0, 1.0).
 void nnResetColor();
 
@@ -322,6 +325,7 @@ typedef struct
     int currentFPS;
     int window;
     nnFont *font;
+    nnColorf currentDrawColor;
 
     // Keyboard state
     bool keys[_NN_MAX_KEYS];
@@ -543,7 +547,7 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     nnDT = 0.0f;
     nnMS = 0.0f;
 
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     int argc = 1;
     char *argv[1] = {(char *)"Something"};
@@ -571,6 +575,8 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
 
     /* Start the timer for limiting FPS */
     glutTimerFunc(1000 / 60, _nnTimerCallback, 0);
+
+    nnResetColor();
 
     return true;
 }
@@ -605,12 +611,19 @@ void nnSetClearColor(nnColorf color)
 
 void nnSetColor(nnColorf color)
 {
+    _nnstate.currentDrawColor = color;
     glColor4f(color.r, color.g, color.b, color.a);
+}
+
+nnColorf nnGetColor()
+{
+    return _nnstate.currentDrawColor;
 }
 
 void nnResetColor()
 {
-    glColor4f(1.0, 1.0, 1.0, 1.0);
+    _nnstate.currentDrawColor = (nnColorf){1.0f, 1.0f, 1.0f, 1.0f};
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void nnCls()

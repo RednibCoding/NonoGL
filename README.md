@@ -197,8 +197,11 @@ int main()
 - **`void nnSetColor(nnColorf color)`**
   Sets the current drawing color.
 
+- **`nnColorf nnGetColor()`**
+  Get the current draw color.
+
 - **`void nnResetColor()`**
-  // Resets the color to default (1.0, 1.0, 1.0)
+  Resets the color to default (1.0, 1.0, 1.0)
 
 - **`void nnCls()`**
   Clears the screen with the current clear color.
