@@ -104,14 +104,14 @@ int main()
 
 ### Structs
 
-- **`nnVec2`**
+- **`nnPos`**
   Represents a 2D position.
 
   ```c
   typedef struct {
       int x; // X-coordinate
       int y; // Y-coordinate
-  } nnVec2;
+  } nnPos;
   ```
 
 - **`nnRecf`**
@@ -270,13 +270,13 @@ int main()
 
 ### Collision Handling
 
-- **`bool nnVec2RecOverlaps(int x, int y, nnRecf rect)`**
+- **`bool nnPosRecOverlaps(int x, int y, nnRecf rect)`**
   Checks if a point overlaps with a rectangle.
 
 - **`bool nnRecsOverlap(nnRecf rec1, nnRecf rec2)`**
   Checks if two rectangles overlap.
 
-- **`bool nnVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius)`**
+- **`bool nnPosCircleOverlaps(int x, int y, int cx, int cy, float circleradius)`**
   Checks if a point overlaps with a circle.
 
 - **`bool nnRecCircleOverlaps(nnRecf rec, int cx, int cy, float circleradius)`**
@@ -312,10 +312,10 @@ int main()
   - **`int nnMouseWheelDelta()`**
     Returns the direction of the mouse wheel movement: `positive number` means up, `negative number` means down, and `0` if no movement occurred.
 
-  - **`nnVec2 nnGetMousePosition()`**
-    Returns the current position of the mouse cursor as an `nnVec2` struct.
+  - **`nnPos nnGetMousePosition()`**
+    Returns the current position of the mouse cursor as an `nnPos` struct.
 
-  - **`nnVec2 nnMouseMotionDelta()`**
+  - **`nnPos nnMouseMotionDelta()`**
     Returns the mouse motion delta (change in position) since the last frame.
 
 ### Utility

@@ -19,7 +19,7 @@ typedef struct
 {
     int x;
     int y;
-} nnVec2;
+} nnPos;
 
 // Represents a 2D rectangle.
 typedef struct
@@ -171,13 +171,13 @@ void nnFreeFont(nnFont *font);
  */
 
 // Checks if a point overlaps with a rectangle.
-bool nnVec2RecOverlaps(int x, int y, nnRecf rect);
+bool nnPosRecOverlaps(int x, int y, nnRecf rect);
 
 // Checks if two rectangles overlap.
 bool nnRecsOverlap(nnRecf rec1, nnRecf rec2);
 
 // Check if a point overlaps with a circle.
-bool nnVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius);
+bool nnPosCircleOverlaps(int x, int y, int cx, int cy, float circleradius);
 
 // Check if a rectangle overlaps with a circle.
 bool nnRecCircleOverlaps(nnRecf rec, int cx, int cy, float circleradius);
@@ -214,11 +214,11 @@ bool nnMouseReleased(int button);
 // Returns the direction of the mouse wheel movement: `positive number` means up, `negative number` means down, and `0` if no movement occurred.
 int nnMouseWheelDelta();
 
-// Returns the current position of the mouse cursor as an `nnVec2` struct.
-nnVec2 nnGetMousePosition();
+// Returns the current position of the mouse cursor as an `nnPos` struct.
+nnPos nnGetMousePosition();
 
 // Returns the mouse motion delta (change in position) since the last frame.
-nnVec2 nnMouseMotionDelta();
+nnPos nnMouseMotionDelta();
 
 /*
  * Utility
@@ -282,8 +282,8 @@ typedef struct
     bool mouseButtonsPressed[_NN_MAX_MOUSE_BUTTONS];
     bool mouseButtonsReleased[_NN_MAX_MOUSE_BUTTONS];
     int mouseWheelDelta;
-    nnVec2 mousePosition;
-    nnVec2 mouseMotionDelta;
+    nnPos mousePosition;
+    nnPos mouseMotionDelta;
 
     // Function pointer for the display callback
     void (*displayCallback)(void);
@@ -415,7 +415,7 @@ void _nnMouseWheelFunc(int wheel, int direction, int x, int y)
 void _nnMouseMotionFunc(int x, int y)
 {
     // Motion delta
-    nnVec2 newMousePosition = {(float)x, (float)y};
+    nnPos newMousePosition = {(float)x, (float)y};
     _nnstate.mouseMotionDelta.x = newMousePosition.x - _nnstate.mousePosition.x;
     _nnstate.mouseMotionDelta.y = newMousePosition.y - _nnstate.mousePosition.y;
     _nnstate.mousePosition = newMousePosition;
@@ -1009,7 +1009,7 @@ void nnFreeFont(nnFont *font)
  * Collision Handling
  */
 
-bool nnVec2RecOverlaps(int x, int y, nnRecf rec)
+bool nnPosRecOverlaps(int x, int y, nnRecf rec)
 {
     return (x >= rec.x && x <= rec.x + rec.width && y >= rec.y && y <= rec.y + rec.height) ? true : false;
 }
@@ -1019,7 +1019,7 @@ bool nnRecsOverlap(nnRecf rec1, nnRecf rec2)
     return (rec1.x < rec2.x + rec2.width && rec1.x + rec1.width > rec2.x && rec1.y < rec2.y + rec2.height && rec1.y + rec1.height > rec2.y) ? true : false;
 }
 
-bool nnVec2CircleOverlaps(int x, int y, int cx, int cy, float circleRadius)
+bool nnPosCircleOverlaps(int x, int y, int cx, int cy, float circleRadius)
 {
     float dx = x - cx;
     float dy = y - cy;
@@ -1101,14 +1101,14 @@ int nnMouseWheelDelta()
     return delta;
 }
 
-nnVec2 nnGetMousePosition()
+nnPos nnGetMousePosition()
 {
     return _nnstate.mousePosition;
 }
 
-nnVec2 nnMouseMotionDelta()
+nnPos nnMouseMotionDelta()
 {
-    nnVec2 delta = _nnstate.mouseMotionDelta;
+    nnPos delta = _nnstate.mouseMotionDelta;
     _nnstate.mouseMotionDelta.x = 0; // Reset after checking
     _nnstate.mouseMotionDelta.y = 0;
     return delta;

@@ -69,8 +69,8 @@ void display()
         printf("Mouse wheel moved down!\n");
     }
 
-    nnVec2 pos = nnGetMousePosition();
-    nnVec2 motionDelta = nnMouseMotionDelta();
+    nnPos pos = nnGetMousePosition();
+    nnPos motionDelta = nnMouseMotionDelta();
     if (motionDelta.x != 0 || motionDelta.y != 0)
     {
         printf("Mouse moved: %d, %d | %d, %d \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
