@@ -69,6 +69,9 @@ float tgDT;
 // Create a window
 bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filtered);
 
+// Set the display/render callback function
+void tgSetDisplayFunc(void (*callback)(void));
+
 // Release resources and free memory
 void tgDestroyWindow();
 
@@ -232,12 +235,12 @@ typedef struct
     tgVec2 mousePosition;
     tgVec2 mouseMotionDelta;
 
+    // Function pointer for the display callback
+    void (*displayCallback)(void);
+
 } _tgState;
 
 _tgState _tgstate;
-
-// Global function pointer for the display callback
-void (*gDisplayCallback)(void) = NULL;
 
 // Define custom exit handlers
 void _customExitFunction(int status)
@@ -248,9 +251,9 @@ void _customExitFunction(int status)
 // Wrapper display function that calls the function pointer
 void _tgDisplayCallbackWrapper()
 {
-    if (gDisplayCallback != NULL)
+    if (_tgstate.displayCallback != NULL)
     {
-        gDisplayCallback();
+        _tgstate.displayCallback();
     }
 }
 
@@ -393,6 +396,8 @@ void _tgDrawTextDefaultFont(const char *format, int x, int y, ...)
 
 bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filtered)
 {
+    _tgstate.displayCallback = NULL;
+
     _tgstate.scalable = scalable;
     _tgstate.filtered = filtered;
 
@@ -458,15 +463,15 @@ void tgResetColor()
     glColor4f(1.0, 1.0, 1.0, 1.0);
 }
 
-void tgSetDisplayLoop(void (*callback)(void))
+void tgSetDisplayFunc(void (*callback)(void))
 {
-    gDisplayCallback = callback;
+    _tgstate.displayCallback = callback;
     glutDisplayFunc(_tgDisplayCallbackWrapper);
 }
 
 void tgRun()
 {
-    if (gDisplayCallback == NULL)
+    if (_tgstate.displayCallback == NULL)
     {
         printf("DisplayCallback not set, shutting down...");
         exit(-1);

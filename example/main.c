@@ -93,7 +93,7 @@ int main()
 
     image = tgLoadImage("./assets/opengl.png");
 
-    tgSetDisplayLoop(display);
+    tgSetDisplayFunc(display);
     tgRun();
 
     tgFreeFont(font);
