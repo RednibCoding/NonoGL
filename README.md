@@ -62,7 +62,7 @@ Here is a basic example of using NonoGL to create a window and render images and
 
 nnImage image;
 
-void display()
+void displayFunc()
 {
     nnCls();
 
@@ -71,14 +71,14 @@ void display()
     nnDrawImagePortion(image, 200, 200}, (nnRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
     nnSetColor((nnColorf){0.5f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("Hello World", 200, 300});
+    nnDrawText("Hello World", 200, 300);
 
     nnSetColor((nnColorf){1.5f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("Hello Color", 200, 340});
+    nnDrawText("Hello Color", 200, 340);
 
     nnSetColor((nnColorf){1.0f, 1.0f, 1.0f, 1.0f});
-    nnDrawText("FPS: %d", 200, 360}, nnFPS);
-    nnDrawText("Delta Time: %f", 200, 400}, nnDT);
+    nnDrawText("FPS: %d", 200, 360, nnFPS);
+    nnDrawText("Delta Time: %f", 200, 400, nnDT);
 
     nnFlip();
 }
@@ -91,7 +91,7 @@ int main()
 
     image = nnLoadImage("./assets/opengl.png");
 
-    nnSetDisplayLoop(display);
+    nnSetDisplayFunc(displayFunc);
     nnRun();
 
     nnDestroyWindow();
