@@ -81,7 +81,7 @@ int main()
     }
 
     nnSetRenderFunc(render); // Set the render callback
-    nnRun();                  // Start the rendering loop
+    nnRun();                 // Start the rendering loop
 
     nnDestroyWindow(); // Cleanup resources
     return 0;
