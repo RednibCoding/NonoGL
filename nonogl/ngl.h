@@ -1337,7 +1337,10 @@ nnFont *nnLoadFont(const char *filepath, float fontSize)
 {
     nnFont *font = malloc(sizeof(nnFont));
     if (!font)
+    {
+        printf("Failed to allocate memory for font file: %s\n", filepath);
         return NULL;
+    }
 
     // Load the font file into memory
     FILE *file = fopen(filepath, "rb");
