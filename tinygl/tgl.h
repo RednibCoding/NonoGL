@@ -91,7 +91,7 @@ void tgCls();
 void tgFlip();
 
 // Load a file as bytes into a buffer and return the pointer to that buffer
-unsigned char *mgLoadFileBytes(const char *filepath, int *size);
+unsigned char *tgLoadFileBytes(const char *filepath, int *size);
 
 // Free the buffer allocated by tgLoadFileBytes
 void tgFreeFileBytes(unsigned char *buffer);
@@ -177,7 +177,7 @@ bool tgMouseReleased(int button);
 // Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
 int tgMouseWheelDelta();
 
-// Returns the current position of the mouse cursor as an `mgVec2` struct.
+// Returns the current position of the mouse cursor as an `tgVec2` struct.
 tgVec2 tgGetMousePosition();
 
 // Returns the mouse motion delta (change in position) since the last frame.
@@ -201,8 +201,8 @@ tgVec2 tgMouseMotionDelta();
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "internal/include/stb_truetype.h"
 
-#define _MG_MAX_KEYS 256
-#define _MG_MAX_MOUSE_BUTTONS 3
+#define _TG_MAX_KEYS 256
+#define _TG_MAX_MOUSE_BUTTONS 3
 
 typedef struct
 {
@@ -220,14 +220,14 @@ typedef struct
     tgFont *font;
 
     // Keyboard state
-    bool keys[_MG_MAX_KEYS];
-    bool keysPressed[_MG_MAX_KEYS];
-    bool keysReleased[_MG_MAX_KEYS];
+    bool keys[_TG_MAX_KEYS];
+    bool keysPressed[_TG_MAX_KEYS];
+    bool keysReleased[_TG_MAX_KEYS];
 
     // Mouse state
-    bool mouseButtons[_MG_MAX_MOUSE_BUTTONS];
-    bool mouseButtonsPressed[_MG_MAX_MOUSE_BUTTONS];
-    bool mouseButtonsReleased[_MG_MAX_MOUSE_BUTTONS];
+    bool mouseButtons[_TG_MAX_MOUSE_BUTTONS];
+    bool mouseButtonsPressed[_TG_MAX_MOUSE_BUTTONS];
+    bool mouseButtonsReleased[_TG_MAX_MOUSE_BUTTONS];
     int mouseWheelDelta;
     tgVec2 mousePosition;
     tgVec2 mouseMotionDelta;
@@ -246,7 +246,7 @@ void _customExitFunction(int status)
 }
 
 // Wrapper display function that calls the function pointer
-void _mgDisplayCallbackWrapper()
+void _tgDisplayCallbackWrapper()
 {
     if (gDisplayCallback != NULL)
     {
@@ -263,12 +263,12 @@ void _customExitFunctionWithMessage(const char *msg, int status)
     exit(status);
 }
 
-void _mgSpecialKeyCallback(int key, int x, int y)
+void _tgSpecialKeyCallback(int key, int x, int y)
 {
     // Handle special keys here
 }
 
-void _mgSetupOrthoProjection(int width, int height)
+void _tgSetupOrthoProjection(int width, int height)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -277,31 +277,31 @@ void _mgSetupOrthoProjection(int width, int height)
     glLoadIdentity();
 }
 
-void _mgSetScale(float scaleX, float scaleY)
+void _tgSetScale(float scaleX, float scaleY)
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glScalef(scaleX, scaleY, 1.0f);
 }
 
-void _mgUpdateScale(int width, int height, int shouldUpdate)
+void _tgUpdateScale(int width, int height, int shouldUpdate)
 {
     if (shouldUpdate != 0)
     {
         float scaleX = (float)width / _tgstate.initialWidth;
         float scaleY = (float)height / _tgstate.initialHeight;
-        _mgSetScale(scaleX, scaleY);
+        _tgSetScale(scaleX, scaleY);
     }
 }
 
-void _mgFramebufferSizeCallback(int width, int height)
+void _tgFramebufferSizeCallback(int width, int height)
 {
     glViewport(0, 0, width, height);
-    _mgSetupOrthoProjection(width, height);
-    _mgUpdateScale(width, height, _tgstate.scalable);
+    _tgSetupOrthoProjection(width, height);
+    _tgUpdateScale(width, height, _tgstate.scalable);
 }
 
-void _mgTimerCallback(int value)
+void _tgTimerCallback(int value)
 {
     // Calculate deltaTime and currentFPS
     double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0; // Get time in seconds
@@ -316,10 +316,10 @@ void _mgTimerCallback(int value)
     glutPostRedisplay();
 
     // Re-register the timer callback for 60 FPS
-    glutTimerFunc(1000 / 60, _mgTimerCallback, 0);
+    glutTimerFunc(1000 / 60, _tgTimerCallback, 0);
 }
 
-void _mgKeyDownCallback(unsigned char key, int x, int y)
+void _tgKeyDownCallback(unsigned char key, int x, int y)
 {
     if (!_tgstate.keys[key])
     {
@@ -328,15 +328,15 @@ void _mgKeyDownCallback(unsigned char key, int x, int y)
     _tgstate.keys[key] = true;
 }
 
-void _mgKeyUpCallback(unsigned char key, int x, int y)
+void _tgKeyUpCallback(unsigned char key, int x, int y)
 {
     _tgstate.keys[key] = false;
     _tgstate.keysReleased[key] = true;
 }
 
-void _mgMouseButtonCallback(int button, int state, int x, int y)
+void _tgMouseButtonCallback(int button, int state, int x, int y)
 {
-    if (button < _MG_MAX_MOUSE_BUTTONS)
+    if (button < _TG_MAX_MOUSE_BUTTONS)
     {
         if (state == GLUT_DOWN)
         {
@@ -354,12 +354,12 @@ void _mgMouseButtonCallback(int button, int state, int x, int y)
     }
 }
 
-void _mgMouseWheelFunc(int wheel, int direction, int x, int y)
+void _tgMouseWheelFunc(int wheel, int direction, int x, int y)
 {
     _tgstate.mouseWheelDelta = direction; // +1 for up, -1 for down
 }
 
-void _mgMouseMotionFunc(int x, int y)
+void _tgMouseMotionFunc(int x, int y)
 {
     // Motion delta
     tgVec2 newMousePosition = {(float)x, (float)y};
@@ -368,7 +368,7 @@ void _mgMouseMotionFunc(int x, int y)
     _tgstate.mousePosition = newMousePosition;
 }
 
-void _mgDrawTextDefaultFont(const char *format, int x, int y, ...)
+void _tgDrawTextDefaultFont(const char *format, int x, int y, ...)
 {
     if (!format)
         return;
@@ -416,24 +416,24 @@ bool tgCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _tgstate.window = glutCreateWindow(title);
 
     /* Set the callbacks */
-    glutKeyboardFunc(_mgKeyDownCallback);
-    glutKeyboardUpFunc(_mgKeyUpCallback);
-    glutMouseFunc(_mgMouseButtonCallback);
-    glutMouseWheelFunc(_mgMouseWheelFunc);
-    glutMotionFunc(_mgMouseMotionFunc);
-    glutPassiveMotionFunc(_mgMouseMotionFunc);
-    glutSpecialFunc(_mgSpecialKeyCallback);
-    glutReshapeFunc(_mgFramebufferSizeCallback);
+    glutKeyboardFunc(_tgKeyDownCallback);
+    glutKeyboardUpFunc(_tgKeyUpCallback);
+    glutMouseFunc(_tgMouseButtonCallback);
+    glutMouseWheelFunc(_tgMouseWheelFunc);
+    glutMotionFunc(_tgMouseMotionFunc);
+    glutPassiveMotionFunc(_tgMouseMotionFunc);
+    glutSpecialFunc(_tgSpecialKeyCallback);
+    glutReshapeFunc(_tgFramebufferSizeCallback);
 
     /* Set up the orthographic projection */
-    _mgSetupOrthoProjection(_tgstate.width, _tgstate.height);
-    _mgUpdateScale(_tgstate.width, _tgstate.height, _tgstate.scalable);
+    _tgSetupOrthoProjection(_tgstate.width, _tgstate.height);
+    _tgUpdateScale(_tgstate.width, _tgstate.height, _tgstate.scalable);
 
     /* Set initial scale */
-    _mgSetScale(1.0f, 1.0f);
+    _tgSetScale(1.0f, 1.0f);
 
     /* Start the timer for limiting FPS */
-    glutTimerFunc(1000 / 60, _mgTimerCallback, 0);
+    glutTimerFunc(1000 / 60, _tgTimerCallback, 0);
 
     return true;
 }
@@ -461,7 +461,7 @@ void tgResetColor()
 void tgSetDisplayLoop(void (*callback)(void))
 {
     gDisplayCallback = callback;
-    glutDisplayFunc(_mgDisplayCallbackWrapper);
+    glutDisplayFunc(_tgDisplayCallbackWrapper);
 }
 
 void tgRun()
@@ -497,7 +497,7 @@ void tgFlip()
     glutMainLoopEvent();
 }
 
-unsigned char *mgLoadFileBytes(const char *filepath, int *size)
+unsigned char *tgLoadFileBytes(const char *filepath, int *size)
 {
     FILE *file = fopen(filepath, "rb");
     if (!file)
@@ -841,7 +841,7 @@ void tgDrawText(const char *format, int x, int y, ...)
 
     if (!_tgstate.font)
     {
-        _mgDrawTextDefaultFont(format, x, y);
+        _tgDrawTextDefaultFont(format, x, y);
         return;
     }
 
