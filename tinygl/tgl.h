@@ -112,7 +112,7 @@ void tgDrawImagePortion(tgImage image, int x, int y, tgRecf srcRec);
 void tgFreeImage(tgImage image);
 
 // Create a pixel buffer with the given width and height
-tgPixmap *mgCreatePixmap(int width, int height);
+tgPixmap *tgCreatePixmap(int width, int height);
 
 // Write a pixel at x, y location with the given color to the given pixel buffer
 void tgPutPixel(tgPixmap *buffer, int x, int y, tgColorf color);
@@ -654,7 +654,7 @@ void tgFreeImage(tgImage image)
     glDeleteTextures(1, &image.textureID);
 }
 
-tgPixmap *mgCreatePixmap(int width, int height)
+tgPixmap *tgCreatePixmap(int width, int height)
 {
     tgPixmap *buffer = malloc(sizeof(tgPixmap));
     if (!buffer)
