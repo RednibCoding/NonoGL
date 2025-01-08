@@ -277,8 +277,8 @@ int main()
 - **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
   Writes a pixel at x, y location with the given color to the given Pixmap.
 
-- **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
-  Writes a pixel at x, y location with the given color to the given Pixmap.
+- **`void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color)`**
+  Draws a line from x0, y0 to x1, y1
 
 - **`void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)`**
   Draws an oval with its center at x, y.
