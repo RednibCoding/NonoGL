@@ -17,26 +17,26 @@
 // Represents a 2D position.
 typedef struct
 {
-    int x;
-    int y;
+    int x; // X-coordinate
+    int y; // Y-coordinate
 } nnPos;
 
 // Represents a 2D rectangle.
 typedef struct
 {
-    float x;
-    float y;
-    float width;
-    float height;
+    float x;      // X-coordinate of the rectangle's top-left corner
+    float y;      // Y-coordinate of the rectangle's top-left corner
+    float width;  // Width of the rectangle
+    float height; // Height of the rectangle
 } nnRecf;
 
 // Represents an RGBA color.
 typedef struct
 {
-    float r;
-    float g;
-    float b;
-    float a;
+    float r; // Red component (0.0 to 1.0)
+    float g; // Green component (0.0 to 1.0)
+    float b; // Blue component (0.0 to 1.0)
+    float a; // Alpha (transparency) component (0.0 to 1.0)
 } nnColorf;
 
 // Represents an image loaded into OpenGL.
