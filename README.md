@@ -168,8 +168,8 @@ int main()
 - **`void nnUpdatePixmap(nnPixmap *buffer)`**
   Update pixels that have changed in the given Pixmap.
 
-- **`void nnDrawPixmap(nnPixmap *buffer)`**
-  Draws the Pixmap to the screen.
+- **`void nnDrawPixmap(nnPixmap *buffer, int x, int y)`**
+  Draws the Pixmap to the screen at the given coordinates.
 
 - **`void nnFreePixmap(nnPixmap *buffer)`**
   Frees the given Pixmap.
