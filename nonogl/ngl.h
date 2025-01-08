@@ -77,7 +77,7 @@ typedef struct
 bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filtered);
 
 // Set the display/render callback function that NonoGL will call every frame.
-void nnSetDisplayFunc(void (*callback)(void));
+void nnSetRenderFunc(void (*callback)(void));
 
 // Release resources and free memory.
 void nnDestroyWindow();
@@ -132,9 +132,6 @@ nnPixmap *nnCreatePixmap(int width, int height);
 // Creates a Pixmap from an image.
 nnPixmap *nnCreatePixmapFromImage(nnImage image);
 
-// Writes a pixel at x, y location with the given color to the given Pixmap.
-void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color);
-
 // Read a pixel from the given Pixmap.
 nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);
 
@@ -147,8 +144,25 @@ void nnDrawPixmap(nnPixmap *pixmap, int x, int y);
 // Free the given Pixmap
 void nnFreePixmap(nnPixmap *pixmap);
 
+//// Primitives Drawing
+
 // Draw an individual pixel to the screen (When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons)
-void putPixel(float x, float y);
+void nnPutPixel(float x, float y);
+
+// Writes a pixel at x, y location with the given color to the given Pixmap.
+void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color);
+
+// Draws a line from x0, y0 to x1, y1
+void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color);
+
+// Draws an oval with its center at x, y.
+void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled);
+
+// Draws a triangle.
+void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled);
+
+// Draws a rectangle where x and y is the top left corner.
+void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled);
 
 /*
  * Text Rendering
@@ -518,7 +532,7 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     return true;
 }
 
-void nnSetDisplayFunc(void (*callback)(void))
+void nnSetRenderFunc(void (*callback)(void))
 {
     _nnstate.displayCallback = callback;
     glutDisplayFunc(_nnDisplayCallbackWrapper);
@@ -654,8 +668,11 @@ nnImage nnLoadImageMem(const unsigned char *data, int size)
 
 void nnDrawImage(nnImage image, int x, int y)
 {
-    if (!image.textureID == 0)
+    if (image.textureID == 0)
+    {
+        printf("Failed to draw image\n");
         return;
+    }
 
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
@@ -676,6 +693,12 @@ void nnDrawImage(nnImage image, int x, int y)
 
 void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)
 {
+    if (image.textureID == 0)
+    {
+        printf("Failed to draw image portion\n");
+        return;
+    }
+
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
 
@@ -787,7 +810,7 @@ nnPixmap *nnCreatePixmapFromImage(nnImage image)
                 pixelData[index + 1] / 255.0f,
                 pixelData[index + 2] / 255.0f,
                 pixelData[index + 3] / 255.0f};
-            nnPutPixel(pixmap, x, y, color);
+            nnDrawPixel(pixmap, x, y, color);
         }
     }
 
@@ -798,24 +821,6 @@ nnPixmap *nnCreatePixmapFromImage(nnImage image)
     free(pixelData);
 
     return pixmap;
-}
-
-void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)
-{
-    if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
-        return;
-
-    buffer->pixels[y * buffer->width + x] = color;
-}
-
-nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y)
-{
-    if (!pixmap || x < 0 || y < 0 || x >= pixmap->width || y >= pixmap->height)
-    {
-        return (nnColorf){0, 0, 0, 0}; // Return transparent color for out-of-bounds or invalid pixmap
-    }
-
-    return pixmap->pixels[y * pixmap->width + x];
 }
 
 void nnUpdatePixmap(nnPixmap *buffer)
@@ -864,11 +869,235 @@ void nnFreePixmap(nnPixmap *buffer)
     free(buffer);
 }
 
-void putPixel(float x, float y)
+//// Primitives
+
+void nnPutPixel(float x, float y)
 {
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
+}
+
+void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)
+{
+    if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
+        return;
+
+    buffer->pixels[y * buffer->width + x] = color;
+}
+
+void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color)
+{
+    if (!buffer)
+        return;
+
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    while (true)
+    {
+        nnDrawPixel(buffer, x0, y0, color);
+        if (x0 == x1 && y0 == y1)
+            break;
+        e2 = 2 * err;
+        if (e2 >= dy)
+        {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx)
+        {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)
+{
+    if (!buffer)
+        return;
+
+    int a = width / 2;
+    int b = height / 2;
+    int x0 = x - a, y0 = y - b;
+
+    if (filled)
+    {
+        for (int i = 0; i <= height; i++)
+        {
+            for (int j = 0; j <= width; j++)
+            {
+                int px = x0 + j;
+                int py = y0 + i;
+                if (((j - a) * (j - a)) * b * b + ((i - b) * (i - b)) * a * a <= a * a * b * b)
+                {
+                    nnDrawPixel(buffer, px, py, color);
+                }
+            }
+        }
+    }
+    else
+    {
+        int x1 = 0, y1 = b;
+        int a2 = a * a, b2 = b * b;
+        int fa2 = 4 * a2, fb2 = 4 * b2;
+        int sigma = 2 * b2 + a2 * (1 - 2 * b);
+
+        while (b2 * x1 <= a2 * y1)
+        {
+            nnDrawPixel(buffer, x + x1, y + y1, color);
+            nnDrawPixel(buffer, x - x1, y + y1, color);
+            nnDrawPixel(buffer, x + x1, y - y1, color);
+            nnDrawPixel(buffer, x - x1, y - y1, color);
+
+            if (sigma >= 0)
+            {
+                sigma += fa2 * (1 - y1);
+                y1--;
+            }
+            sigma += b2 * ((4 * x1) + 6);
+            x1++;
+        }
+
+        x1 = a;
+        y1 = 0;
+        sigma = 2 * a2 + b2 * (1 - 2 * a);
+
+        while (a2 * y1 <= b2 * x1)
+        {
+            nnDrawPixel(buffer, x + x1, y + y1, color);
+            nnDrawPixel(buffer, x - x1, y + y1, color);
+            nnDrawPixel(buffer, x + x1, y - y1, color);
+            nnDrawPixel(buffer, x - x1, y - y1, color);
+
+            if (sigma >= 0)
+            {
+                sigma += fb2 * (1 - x1);
+                x1--;
+            }
+            sigma += a2 * ((4 * y1) + 6);
+            y1++;
+        }
+    }
+}
+
+void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)
+{
+    if (!buffer)
+        return;
+
+    if (filled)
+    {
+        // Sorting vertices by y-coordinate
+        if (y1 > y2)
+        {
+            int tmp;
+            tmp = y1;
+            y1 = y2;
+            y2 = tmp;
+            tmp = x1;
+            x1 = x2;
+            x2 = tmp;
+        }
+        if (y1 > y3)
+        {
+            int tmp;
+            tmp = y1;
+            y1 = y3;
+            y3 = tmp;
+            tmp = x1;
+            x1 = x3;
+            x3 = tmp;
+        }
+        if (y2 > y3)
+        {
+            int tmp;
+            tmp = y2;
+            y2 = y3;
+            y3 = tmp;
+            tmp = x2;
+            x2 = x3;
+            x3 = tmp;
+        }
+
+        int dx1 = x2 - x1, dy1 = y2 - y1, dx2 = x3 - x1, dy2 = y3 - y1, dx3 = x3 - x2, dy3 = y3 - y2;
+        float slope1 = dy1 ? (float)dx1 / dy1 : 0;
+        float slope2 = dy2 ? (float)dx2 / dy2 : 0;
+        float slope3 = dy3 ? (float)dx3 / dy3 : 0;
+
+        for (int y = y1; y <= y2; y++)
+        {
+            int x_start = x1 + (y - y1) * slope1;
+            int x_end = x1 + (y - y1) * slope2;
+            if (x_start > x_end)
+            {
+                int tmp = x_start;
+                x_start = x_end;
+                x_end = tmp;
+            }
+            for (int x = x_start; x <= x_end; x++)
+            {
+                nnDrawPixel(buffer, x, y, color);
+            }
+        }
+        for (int y = y2; y <= y3; y++)
+        {
+            int x_start = x2 + (y - y2) * slope3;
+            int x_end = x1 + (y - y1) * slope2;
+            if (x_start > x_end)
+            {
+                int tmp = x_start;
+                x_start = x_end;
+                x_end = tmp;
+            }
+            for (int x = x_start; x <= x_end; x++)
+            {
+                nnDrawPixel(buffer, x, y, color);
+            }
+        }
+    }
+    else
+    {
+        nnDrawLine(buffer, x1, y1, x2, y2, color);
+        nnDrawLine(buffer, x2, y2, x3, y3, color);
+        nnDrawLine(buffer, x3, y3, x1, y1, color);
+    }
+}
+
+void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)
+{
+    if (!buffer)
+        return;
+
+    if (filled)
+    {
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                nnDrawPixel(buffer, x + j, y + i, color);
+            }
+        }
+    }
+    else
+    {
+        nnDrawLine(buffer, x, y, x + width, y, color);                   // Top
+        nnDrawLine(buffer, x, y + height, x + width, y + height, color); // Bottom
+        nnDrawLine(buffer, x, y, x, y + height, color);                  // Left
+        nnDrawLine(buffer, x + width, y, x + width, y + height, color);  // Right
+    }
+}
+
+nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y)
+{
+    if (!pixmap || x < 0 || y < 0 || x >= pixmap->width || y >= pixmap->height)
+    {
+        return (nnColorf){0, 0, 0, 0}; // Return transparent color for out-of-bounds or invalid pixmap
+    }
+
+    return pixmap->pixels[y * pixmap->width + x];
 }
 
 /*

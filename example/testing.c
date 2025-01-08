@@ -5,8 +5,8 @@
 #include "../nonogl/ngl.h"
 
 nnImage image;
-nnFont *font;
 nnPixmap *pixmap;
+nnFont *font;
 
 void display()
 {
@@ -17,10 +17,7 @@ void display()
 
     nnDrawImagePortion(image, 200, 200, (nnRecf){0.0f, 0.0f, 50.0f, 50.0f});
 
-    nnDrawText("Hello World", 200, 300);
-
     nnSetColor((nnColorf){1.0f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("Hello Color", 200, 340);
 
     nnSetColor((nnColorf){1.0f, 1.0f, 0.0f, 1.0f});
     nnDrawText("FPS: %d", 200, 370, nnFPS);
@@ -102,7 +99,7 @@ int main()
     printf("pixmap pixel: %.2f, %.2f, %.2f, %.2f\n", pixel.r, pixel.g, pixel.b, pixel.a);
     printf("pixmap size: %d x %d\n", pixmap->width, pixmap->height);
 
-    nnSetDisplayFunc(display);
+    nnSetRenderFunc(display);
     nnRun();
 
     nnFreeFont(font);

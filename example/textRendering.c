@@ -1,0 +1,50 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define NONOGL_IMPLEMENTATION
+#include "../nonogl/ngl.h"
+
+nnFont *font;
+
+void render()
+{
+    nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
+
+    nnCls();
+
+    nnSetColor((nnColorf){1.0f, 0.5f, 0.8f, 1.0f});
+    nnDrawText("NonoGL", 200, 200);
+
+    nnSetColor((nnColorf){1.0f, 1.0f, 0.0f, 1.0f});
+    nnDrawText("FPS: %d", 200, 370, nnFPS);
+    nnDrawText("Delta Time: %f", 200, 400, nnDT);
+    nnResetColor();
+
+    nnFlip(); // Swap buffers to display the scene
+}
+
+int main()
+{
+    // Create a window
+    if (!nnCreateWindow("NonoGL Example", 800, 600, false, false))
+    {
+        printf("Failed to create window.\n");
+        return -1;
+    }
+
+    font = nnLoadFont("./assets/Roboto-Regular.ttf", 24.0f);
+    if (!font)
+    {
+        printf("Failed to load font.\n");
+        return -1;
+    }
+
+    nnSetFont(font);
+
+    nnSetRenderFunc(render); // Set the render callback
+    nnRun();                 // Start the rendering loop
+
+    nnFreeFont(font);
+    nnDestroyWindow(); // Cleanup resources
+    return 0;
+}

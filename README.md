@@ -51,7 +51,7 @@ NonoGL is a lightweight and simple 2D graphics library for C, designed for easy 
 
 ## Example Usage
 
-Here is a basic example of using NonoGL to create a window and render images and text:
+Here is a minimal example of using NonoGL to create a window and a render function:
 
 ```c
 #include <stdio.h>
@@ -60,42 +60,30 @@ Here is a basic example of using NonoGL to create a window and render images and
 #define NONOGL_IMPLEMENTATION // Also create the implementations
 #include "nonogl/ngl.h"
 
-nnImage image;
-
-void displayFunc()
+void render()
 {
+    nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
+
     nnCls();
 
-    nnDrawImage(image, 20, 20);
+    // Draw stuff here
 
-    nnDrawImagePortion(image, 200, 200}, (nnRecf){0.0f, 0.0f, 50.0f, 50.0f});
-
-    nnSetColor((nnColorf){0.5f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("Hello World", 200, 300);
-
-    nnSetColor((nnColorf){1.5f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("Hello Color", 200, 340);
-
-    nnSetColor((nnColorf){1.0f, 1.0f, 1.0f, 1.0f});
-    nnDrawText("FPS: %d", 200, 360, nnFPS);
-    nnDrawText("Delta Time: %f", 200, 400, nnDT);
-
-    nnFlip();
+    nnFlip(); // Swap buffers to display the scene
 }
 
 int main()
 {
-    bool success = nnCreateWindow("NonoGL Window", 1024, 600, true, true);
-    if (!success)
+    // Create a window
+    if (!nnCreateWindow("NonoGL Example", 800, 600, false, false))
+    {
+        printf("Failed to create window.\n");
         return -1;
+    }
 
-    image = nnLoadImage("./assets/opengl.png");
+    nnSetRenderFunc(render); // Set the render callback
+    nnRun();                  // Start the rendering loop
 
-    nnSetDisplayFunc(displayFunc);
-    nnRun();
-
-    nnFreeImage(image);
-    nnDestroyWindow();
+    nnDestroyWindow(); // Cleanup resources
     return 0;
 }
 ```
@@ -183,8 +171,8 @@ int main()
   Creates a window with the specified title, width and height. Scalable determines wether the drawn content on the screen should be resized when the window resizes.
   Filterd determines wether a smoothing filter should be applied to images and text. Otherwise they stay pixelated (good for pixel art).
 
-- **`void nnSetDisplayFunc(void (*callback)(void));`**
-  Set the display/render callback function that NonoGL will call every frame
+- **`void nnSetRenderFunc(void (*callback)(void));`**
+  Set the render callback function that NonoGL will call every frame
 
 - **`void nnDestroyWindow()`**
   Destroys the created window and cleans up resources.
@@ -235,9 +223,6 @@ int main()
 - **`nnPixmap *nnCreatePixmapFromImage(nnImage image);`**
   Creates a Pixmap from an image.
 
-- **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
-  Writes a pixel at x, y location with the given color to the given Pixmap.
-
 - **`nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);`**
   Read a pixel from the given pixmap.
 
@@ -250,9 +235,27 @@ int main()
 - **`void nnFreePixmap(nnPixmap *buffer)`**
   Frees the given Pixmap.
 
+### Primitives drawing
+
 - **`void nnPutPixel(float x, float y)`**
   Draws an individual pixel to the screen.
+
   > Note: When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons.
+
+- **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
+  Writes a pixel at x, y location with the given color to the given Pixmap.
+
+- **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
+  Writes a pixel at x, y location with the given color to the given Pixmap.
+
+- **`void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)`**
+  Draws an oval with its center at x, y.
+
+- **`void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)`**
+  Draws a triangle.
+
+- **`void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)`**
+  Draws a rectangle where x and y is the top left corner.
 
 ### Text Rendering
 
