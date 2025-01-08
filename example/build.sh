@@ -22,7 +22,7 @@ SRC_FILES="main.c"
 CFLAGS=""
 
 # Define additional linker flags to use (static linking)
-LDFLAGS="-L../tinygl/internal/lib/linux/x64 -l:libfreeglut_static.a -l:libGL.a -l:libGLU.a -lm -lpthread -ldl"
+LDFLAGS="-L../nonogl/internal/lib/linux/x64 -l:libfreeglut_static.a -l:libGL.a -l:libGLU.a -lm -lpthread -ldl"
 
 # Set the C standard
 CSTD="-std=c99"
