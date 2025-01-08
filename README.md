@@ -102,11 +102,89 @@ int main()
 
 ## API Reference
 
+### Structs
+
+- **`nnVec2`**
+  Represents a 2D position.
+
+  ```c
+  typedef struct {
+      int x; // X-coordinate
+      int y; // Y-coordinate
+  } nnVec2;
+  ```
+
+- **`nnRecf`**
+  Represents a 2D rectangle.
+
+  ```c
+  typedef struct {
+      float x;      // X-coordinate of the rectangle's top-left corner
+      float y;      // Y-coordinate of the rectangle's top-left corner
+      float width;  // Width of the rectangle
+      float height; // Height of the rectangle
+  } nnRecf;
+  ```
+
+- **`nnColorf`**
+  Represents an RGBA color.
+
+  ```c
+  typedef struct {
+      float r; // Red component (0.0 to 1.0)
+      float g; // Green component (0.0 to 1.0)
+      float b; // Blue component (0.0 to 1.0)
+      float a; // Alpha (transparency) component (0.0 to 1.0)
+  } nnColorf;
+  ```
+
+- **`nnImage`**
+  Represents an image loaded into OpenGL.
+
+  ```c
+  typedef struct {
+      unsigned int textureID; // OpenGL texture ID
+      int width;              // Width of the image
+      int height;             // Height of the image
+  } nnImage;
+  ```
+
+- **`nnPixmap`**
+  Represents a 2D buffer of colors (`nnColorf`).
+
+  ```c
+  typedef struct
+  {
+    unsigned int textureID; // OpenGL texture ID
+    int width;              // Width of the buffer
+    int height;             // Height of the buffer
+    nnColorf *pixels;       // CPU-side pixel buffer
+  } nnPixmap;
+  ```
+
+- **`nnFont`**
+  Represents a font loaded with stb_truetype.
+  ```c
+  typedef struct
+  {
+      stbtt_fontinfo fontInfo;
+      unsigned char *fontBuffer;    // Holds the font file data
+      unsigned int textureID;       // OpenGL texture for the font atlas
+      int atlasWidth;               // Width of the font atlas
+      int atlasHeight;              // Height of the font atlas
+      float scale;                  // Font scaling factor
+      stbtt_bakedchar charData[96]; // Holds character data for ASCII 32-127
+  } nnFont;
+  ```
+
 ### Window Management
 
 - **`bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filtered)`**
   Creates a window with the specified title, width and height. Scalable determines wether the drawn content on the screen should be resized when the window resizes.
   Filterd determines wether a smoothing filter should be applied to images and text. Otherwise they stay pixelated (good for pixel art).
+
+- **`void nnSetDisplayFunc(void (*callback)(void));`**
+  Set the display/render callback function that NonoGL will call every frame
 
 - **`void nnDestroyWindow()`**
   Destroys the created window and cleans up resources.
@@ -129,9 +207,6 @@ int main()
 - **`void nnFlip()`**
   Swaps the front- and backbuffer.
 
-- **`void nnSetDisplayLoop(void (*callback)(void))`**
-  Sets the display loop function to handle rendering.
-
 - **`void nnRun()`**
   Starts the main rendering loop.
 
@@ -152,7 +227,7 @@ int main()
 - **`void nnFreeImage(nnImage image)`**
   Frees the given image
 
-### Pixmap (pixel buffer) Management and Drawing
+### Pixmap Management and Drawing
 
 - **`nnPixmap *nnCreatePixmap(int width, int height)`**
   Creates a Pixmap with the given width and height.
@@ -182,18 +257,18 @@ int main()
 ### Text Rendering
 
 - **`nnFont *nnLoadFont(const char *filepath, float fontSize)`**
-  Load a font from a file.
+  Load a font from a .ttf file.
 
 - **`void nnSetFont(nnFont *font)`**
   Set font for text rendering, if not set, a default non-scalable font will be used.
 
 - **`void nnDrawText(const char *format, int x, int y, ...)`**
-  Renders formatted text at the specified position.
+  Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the default non-scalable font will be used.
 
 - **`void nnFreeFont(nnFont *font)`**
-  Free the font
+  Free the given font.
 
-### Collision Detection
+### Collision Handling
 
 - **`bool nnVec2RecOverlaps(int x, int y, nnRecf rect)`**
   Checks if a point overlaps with a rectangle.
@@ -243,7 +318,7 @@ int main()
   - **`nnVec2 nnMouseMotionDelta()`**
     Returns the mouse motion delta (change in position) since the last frame.
 
-### Utility Functions
+### Utility
 
 - **`unsigned char *nnLoadFileBytes(const char *filepath, int *size)`**
   Loads a file into a buffer and returns its pointer.
@@ -256,65 +331,6 @@ int main()
 
 - **`float nnDT`**
   Holds the delta time (time elapsed since the last frame).
-
-### Structs
-
-- **`nnVec2`**
-  Represents a 2D point.
-
-  ```c
-  typedef struct {
-      int x; // X-coordinate
-      int y; // Y-coordinate
-  } nnVec2;
-  ```
-
-- **`nnRecf`**
-  Represents a 2D rectangle.
-
-  ```c
-  typedef struct {
-      float x;      // X-coordinate of the rectangle's top-left corner
-      float y;      // Y-coordinate of the rectangle's top-left corner
-      float width;  // Width of the rectangle
-      float height; // Height of the rectangle
-  } nnRecf;
-  ```
-
-- **`nnColorf`**
-  Represents an RGBA color.
-
-  ```c
-  typedef struct {
-      float r; // Red component (0.0 to 1.0)
-      float g; // Green component (0.0 to 1.0)
-      float b; // Blue component (0.0 to 1.0)
-      float a; // Alpha (transparency) component (0.0 to 1.0)
-  } nnColorf;
-  ```
-
-- **`nnImage`**
-  Represents an image loaded into OpenGL.
-
-  ```c
-  typedef struct {
-      unsigned int textureID; // OpenGL texture ID
-      int width;              // Width of the image
-      int height;             // Height of the image
-  } nnImage;
-  ```
-
-- **`nnPixmap`**
-  Represents a 2D buffer of colors (`nnColorf`)
-  ```c
-  typedef struct
-  {
-    unsigned int textureID; // OpenGL texture ID
-    int width;              // Width of the buffer
-    int height;             // Height of the buffer
-    nnColorf *pixels;       // CPU-side pixel buffer
-  } nnPixmap;
-  ```
 
 ## License
 

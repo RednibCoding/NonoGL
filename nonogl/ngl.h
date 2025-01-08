@@ -14,12 +14,14 @@
 
 /******************************************************************************************************************************/
 
+// Represents a 2D position.
 typedef struct
 {
     int x;
     int y;
 } nnVec2;
 
+// Represents a 2D rectangle.
 typedef struct
 {
     float x;
@@ -28,6 +30,7 @@ typedef struct
     float height;
 } nnRecf;
 
+// Represents an RGBA color.
 typedef struct
 {
     float r;
@@ -36,6 +39,7 @@ typedef struct
     float a;
 } nnColorf;
 
+// Represents an image loaded into OpenGL.
 typedef struct
 {
     unsigned int textureID;
@@ -43,6 +47,7 @@ typedef struct
     int height;
 } nnImage;
 
+// Represents a 2D buffer of colors (`nnColorf`)
 typedef struct
 {
     unsigned int textureID; // OpenGL texture ID
@@ -51,7 +56,7 @@ typedef struct
     nnColorf *pixels;       // CPU-side pixel buffer
 } nnPixmap;
 
-// Represents a font loaded with stb_truetype
+// Represents a font loaded with stb_truetype.
 typedef struct
 {
     stbtt_fontinfo fontInfo;
@@ -63,107 +68,128 @@ typedef struct
     stbtt_bakedchar charData[96]; // Holds character data for ASCII 32-127
 } nnFont;
 
-int nnFPS;
-float nnDT;
+/*
+ * Window Management
+ */
 
-// Create a window
+// Creates a window with the specified title, width and height. Scalable: determines wether the drawn content on the screen should be resized when the window resizes.
+// Filterd: determines wether a smoothing filter should be applied to images and text. Otherwise they stay pixelated (good for pixel art).
 bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filtered);
 
-// Set the display/render callback function
+// Set the display/render callback function that NonoGL will call every frame.
 void nnSetDisplayFunc(void (*callback)(void));
 
-// Release resources and free memory
+// Release resources and free memory.
 void nnDestroyWindow();
 
-// Set the window title
+// Set the window title.
 void nnSetWindowTitle(const char *format, ...);
 
-// Set the clear color
+// Set the clear color.
 void nnSetClearColor(nnColorf color);
 
-// Set the draw color
+// Set the draw color.
 void nnSetColor(nnColorf color);
 
-// Resets the color to default (1.0, 1.0, 1.0)
+// Resets the color to default (1.0, 1.0, 1.0).
 void nnResetColor();
 
-// Clear the screen
+// Clears the screen.
 void nnCls();
 
-// End rendering and swap buffers
+// End rendering and swap buffers.
 void nnFlip();
 
-// Load a file as bytes into a buffer and return the pointer to that buffer
-unsigned char *nnLoadFileBytes(const char *filepath, int *size);
+// Starts the main rendering loop.
+void nnRun();
 
-// Free the buffer allocated by nnLoadFileBytes
-void nnFreeFileBytes(unsigned char *buffer);
+/*
+ * Image Loading and Drawing
+ */
 
-// Load an image from file
+// Loads an image from the specified file path.
 nnImage nnLoadImage(const char *filepath);
 
-// Load an image from memory
+// Load an image from memory.
 nnImage nnLoadImageMem(const unsigned char *data, int size);
 
-// Draw an image on the screen
+// Draw an image on the screen.
 void nnDrawImage(nnImage image, int x, int y);
 
-// Draw a portion of an image
+// Draw a portion of an image.
 void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec);
 
-// Frees the given image
+// Frees the given image.
 void nnFreeImage(nnImage image);
 
-// Create a pixel buffer with the given width and height
+/*
+ * Pixmap Management and Drawing
+ */
+
+// Create a pixel buffer with the given width and height.
 nnPixmap *nnCreatePixmap(int width, int height);
 
-// Creates a Pixmap from an image
+// Creates a Pixmap from an image.
 nnPixmap *nnCreatePixmapFromImage(nnImage image);
 
-// Write a pixel at x, y location with the given color to the given pixel buffer
+// Writes a pixel at x, y location with the given color to the given Pixmap.
 void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color);
 
-// Read a pixel from the given pixmap.
+// Read a pixel from the given Pixmap.
 nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);
 
-// Update pixels that have changed in the Pixmap
-void nnUpdatePixmap(nnPixmap *buffer);
+// Update pixels that have changed in the Pixmap.
+void nnUpdatePixmap(nnPixmap *pixmap);
 
-// Draw the Pixmap to the screen
+// Draw the Pixmap to the screen.
 void nnDrawPixmap(nnPixmap *pixmap, int x, int y);
 
-// Free the given pixel buffer
-void nnFreePixmap(nnPixmap *buffer);
+// Free the given Pixmap
+void nnFreePixmap(nnPixmap *pixmap);
 
-// Draw an individual pixel to the screen (use a pixel buffer for large chunks of pixels instead)
+// Draw an individual pixel to the screen (When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons)
 void drawPixel(float x, float y);
 
-// Load a font from a file
+/*
+ * Text Rendering
+ */
+
+// Load a font from a .ttf file
 nnFont *nnLoadFont(const char *filepath, float fontSize);
 
-// Set font for text rendering, if not set, a default non-scalable font will be used
+// Set font for text rendering.
 void nnSetFont(nnFont *font);
 
-// Render text using the font
+// Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the default non-scalable font will be used.
 void nnDrawText(const char *format, int x, int y, ...);
 
-// Free the font
+// Free the given font.
 void nnFreeFont(nnFont *font);
 
-// Check if a point overlaps with a rectangle
+/*
+ * Collision Handling
+ */
+
+// Checks if a point overlaps with a rectangle.
 bool nnVec2RecOverlaps(int x, int y, nnRecf rect);
 
-// Check if two rectangles overlap
+// Checks if two rectangles overlap.
 bool nnRecsOverlap(nnRecf rec1, nnRecf rec2);
 
-// Check if a point overlaps with a circle
+// Check if a point overlaps with a circle.
 bool nnVec2CircleOverlaps(int x, int y, int cx, int cy, float circleradius);
 
-// Check if a rectangle overlaps with a circle
+// Check if a rectangle overlaps with a circle.
 bool nnRecCircleOverlaps(nnRecf rec, int cx, int cy, float circleradius);
 
-// Check if two cirles overlap
+// Check if two cirles overlap.
 bool nnCirclesOverlaps(int cx1, int cy1, float circle1radius, int cx2, int cy2, float circle2radius);
+
+/*
+ * Input Handling
+ */
+
+//// Keyboard Input
 
 // Returns `true` if the specified key was pressed since the last frame.
 bool nnKeyHit(int key);
@@ -174,6 +200,8 @@ bool nnKeyDown(int key);
 // Returns `true` if the specified key was released since the last frame.
 bool nnKeyReleased(int key);
 
+//// Mouse Input
+
 // Returns `true` if the specified mouse button was clicked since the last frame.
 bool nnMouseHit(int button);
 
@@ -183,7 +211,7 @@ bool nnMouseDown(int button);
 // Returns `true` if the specified mouse button was released since the last frame.
 bool nnMouseReleased(int button);
 
-// Returns the direction of the mouse wheel movement: `1` for up, `-1` for down, and `0` if no movement occurred.
+// Returns the direction of the mouse wheel movement: `positive number` means up, `negative number` means down, and `0` if no movement occurred.
 int nnMouseWheelDelta();
 
 // Returns the current position of the mouse cursor as an `nnVec2` struct.
@@ -191,6 +219,22 @@ nnVec2 nnGetMousePosition();
 
 // Returns the mouse motion delta (change in position) since the last frame.
 nnVec2 nnMouseMotionDelta();
+
+/*
+ * Utility
+ */
+
+// Load a file as bytes into a buffer and return the pointer to that buffer.
+unsigned char *nnLoadFileBytes(const char *filepath, int *size);
+
+// Free the buffer allocated by nnLoadFileBytes.
+void nnFreeFileBytes(unsigned char *buffer);
+
+// Holds the current frames per second.
+int nnFPS;
+
+// Holds the delta time (time elapsed since the last frame).
+float nnDT;
 
 /******************************************************************************************************************************/
 /*  End of Public API */
