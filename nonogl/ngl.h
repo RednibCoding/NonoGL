@@ -42,18 +42,28 @@ typedef struct
 // Represents an image loaded into OpenGL.
 typedef struct
 {
-    unsigned int textureID;
-    int width;
-    int height;
+    unsigned int textureID; // OpenGL texture ID
+    int width;              // Width of the image
+    int height;             // Height of the buffer
+    float scaleX;           // Scale in x axies
+    float scaleY;           // Scale in x axies
+    bool isFlippedX;        // Is x-axies flipped
+    bool isFlippedY;        // Is y-axies flipped
+    float angle;            // Rotation angle in degrees
 } nnImage;
 
-// Represents a 2D buffer of colors (`nnColorf`)
+// Represents a 2D buffer of colors (`nnColorf`), for fast pixel manipulations.
 typedef struct
 {
     unsigned int textureID; // OpenGL texture ID
-    int width;              // Width of the buffer
-    int height;             // Height of the buffer
-    nnColorf *pixels;       // CPU-side pixel buffer
+    int width;              // Width of the pixmap
+    int height;             // Height of the pixmap
+    float scaleX;           // Scale in x axies
+    float scaleY;           // Scale in x axies
+    bool isFlippedX;        // Is x-axies flipped
+    bool isFlippedY;        // Is y-axies flipped
+    float angle;            // Rotation angle in degrees
+    nnColorf *pixels;       // CPU-side pixel pixmap
 } nnPixmap;
 
 // Represents a font loaded with stb_truetype.
@@ -119,6 +129,15 @@ void nnDrawImage(nnImage image, int x, int y);
 // Draw a portion of an image.
 void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec);
 
+// Flips the given image on the given axies.
+void nnFlipImage(nnImage *image, bool flipX, bool flipY);
+
+// Sets the rotateation of the given image to the given degrees.
+void nnRotateImage(nnImage *image, float degrees);
+
+// Sets the scale of the given image to the given scale values.
+void nnScaleImage(nnImage *image, float scaleX, float scaleY);
+
 // Frees the given image.
 void nnFreeImage(nnImage image);
 
@@ -140,6 +159,18 @@ void nnUpdatePixmap(nnPixmap *pixmap);
 
 // Draw the Pixmap to the screen.
 void nnDrawPixmap(nnPixmap *pixmap, int x, int y);
+
+// Flips the given pixmap on the given axies.
+void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY);
+
+// Rotates the given pixmap by the amount of given degrees.
+void nnRotatePixmap(nnPixmap *pixmap, float angle);
+
+// Scales the given pixmap by the given amount.
+void nnScalePixmap(nnPixmap *pixmap, float scaleX, float scaleY);
+
+// Returns a copy of the given pixmap.
+nnPixmap *nnCopyPixmap(nnPixmap *pixmap);
 
 // Free the given Pixmap
 void nnFreePixmap(nnPixmap *pixmap);
@@ -244,11 +275,17 @@ unsigned char *nnLoadFileBytes(const char *filepath, int *size);
 // Free the buffer allocated by nnLoadFileBytes.
 void nnFreeFileBytes(unsigned char *buffer);
 
+// Lerps between min and max by the given speed. Use ease to define a smooth transition when changing direction.
+float nnLerp(float min, float max, float speed, float ease);
+
 // Holds the current frames per second.
 int nnFPS;
 
 // Holds the delta time (time elapsed since the last frame).
 float nnDT;
+
+// Time in milliseconds since the application started
+unsigned int nnMS;
 
 /******************************************************************************************************************************/
 /*  End of Public API */
@@ -378,7 +415,8 @@ void _nnTimerCallback(int value)
     static int fpsCount = 0;                            // Number of frames added to the buffer
 
     // Calculate deltaTime and instantaneous FPS
-    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0; // Get time in seconds
+    double elapsedTime = glutGet(GLUT_ELAPSED_TIME);
+    double currentTime = elapsedTime / 1000.0; // Get time in seconds
     _nnstate.deltaTime = currentTime - _nnstate.lastTime;
     double instantaneousFPS = (_nnstate.deltaTime > 0) ? (1.0 / _nnstate.deltaTime) : 0;
     _nnstate.lastTime = currentTime;
@@ -400,6 +438,7 @@ void _nnTimerCallback(int value)
     // Update global variables
     nnFPS = _nnstate.currentFPS;
     nnDT = _nnstate.deltaTime;
+    nnMS = (unsigned int)elapsedTime;
 
     // Trigger display refresh
     glutPostRedisplay();
@@ -500,6 +539,10 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _nnstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
     _nnstate.currentFPS = 0;
 
+    nnFPS = 0;
+    nnDT = 0.0f;
+    nnMS = 0.0f;
+
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
     int argc = 1;
@@ -598,6 +641,12 @@ void nnRun()
 nnImage nnLoadImage(const char *filepath)
 {
     nnImage image;
+    image.isFlippedX = false;
+    image.isFlippedY = false;
+    image.scaleX = 1.0f;
+    image.scaleY = 1.0f;
+    image.angle = 0.0f;
+
     // stbi_set_flip_vertically_on_load(1);
     unsigned char *imageData = stbi_load(filepath, &image.width, &image.height, 0, 4);
     if (!imageData)
@@ -634,6 +683,12 @@ nnImage nnLoadImage(const char *filepath)
 nnImage nnLoadImageMem(const unsigned char *data, int size)
 {
     nnImage image;
+    image.isFlippedX = false;
+    image.isFlippedX = false;
+    image.scaleX = 1.0f;
+    image.scaleY = 1.0f;
+    image.angle = 0.0f;
+
     unsigned char *imageData = stbi_load_from_memory(data, size, &image.width, &image.height, 0, 4);
     if (!imageData)
     {
@@ -674,20 +729,42 @@ void nnDrawImage(nnImage image, int x, int y)
         return;
     }
 
-    glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
 
+    glPushMatrix();
+
+    // Translate to position
+    glTranslatef(x + image.width / 2.0f, y + image.height / 2.0f, 0);
+
+    // Apply rotation if any
+    if (image.angle != 0.0f)
+    {
+        glRotatef(image.angle, 0, 0, 1);
+    }
+
+    // Apply flipping
+    float flipX = image.isFlippedX ? -1.0f : 1.0f;
+    float flipY = image.isFlippedY ? -1.0f : 1.0f;
+
+    // Apply scaling
+    glScalef(image.scaleX * flipX, image.scaleY * flipY, 1.0f);
+
+    // Render the quad centered at the origin
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(x, y);
+    glVertex2f(-image.width / 2.0f, -image.height / 2.0f);
     glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(x + image.width, y);
+    glVertex2f(image.width / 2.0f, -image.height / 2.0f);
     glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(x + image.width, y + image.height);
+    glVertex2f(image.width / 2.0f, image.height / 2.0f);
     glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(x, y + image.height);
+    glVertex2f(-image.width / 2.0f, image.height / 2.0f);
     glEnd();
 
+    glPopMatrix();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -699,26 +776,88 @@ void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)
         return;
     }
 
-    glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
 
+    glPushMatrix();
+
+    // Translate to position
+    glTranslatef(x + srcRec.width / 2.0f, y + srcRec.height / 2.0f, 0);
+
+    // Apply rotation if any
+    if (image.angle != 0.0f)
+    {
+        glRotatef(image.angle, 0, 0, 1);
+    }
+
+    // Scale for flipping
+    float scaleX = image.isFlippedX ? -1.0f : 1.0f;
+    float scaleY = image.isFlippedY ? -1.0f : 1.0f;
+    glScalef(scaleX, scaleY, 1.0f);
+
+    // Adjust texture coordinates for the specified portion
     float texLeft = srcRec.x / image.width;
     float texRight = (srcRec.x + srcRec.width) / image.width;
     float texTop = srcRec.y / image.height;
     float texBottom = (srcRec.y + srcRec.height) / image.height;
 
+    // Render the portion centered at the origin
     glBegin(GL_QUADS);
     glTexCoord2f(texLeft, texTop);
-    glVertex2f(x, y);
+    glVertex2f(-srcRec.width / 2.0f, -srcRec.height / 2.0f);
     glTexCoord2f(texRight, texTop);
-    glVertex2f(x + srcRec.width, y);
+    glVertex2f(srcRec.width / 2.0f, -srcRec.height / 2.0f);
     glTexCoord2f(texRight, texBottom);
-    glVertex2f(x + srcRec.width, y + srcRec.height);
+    glVertex2f(srcRec.width / 2.0f, srcRec.height / 2.0f);
     glTexCoord2f(texLeft, texBottom);
-    glVertex2f(x, y + srcRec.height);
+    glVertex2f(-srcRec.width / 2.0f, srcRec.height / 2.0f);
     glEnd();
 
+    glPopMatrix();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+}
+
+void nnFlipImage(nnImage *image, bool flipX, bool flipY)
+{
+    if (image->textureID == 0)
+    {
+        printf("Failed to flip image\n");
+        return;
+    }
+    if (flipX)
+        image->isFlippedX = !image->isFlippedX;
+
+    if (flipY)
+        image->isFlippedX = !image->isFlippedY;
+}
+
+void nnRotateImage(nnImage *image, float angle)
+{
+    if (image->textureID == 0)
+    {
+        printf("Failed to rotate image\n");
+        return;
+    }
+
+    image->angle = fmod(angle, 360.0f);
+    if (image->angle < 0.0f)
+    {
+        image->angle += 360.0f;
+    }
+}
+
+void nnScaleImage(nnImage *image, float scaleX, float scaleY)
+{
+    if (image->textureID == 0)
+    {
+        printf("Failed to scale image\n");
+        return;
+    }
+
+    image->scaleX = scaleX;
+    image->scaleY = scaleY;
 }
 
 void nnFreeImage(nnImage image)
@@ -735,25 +874,35 @@ void nnFreeImage(nnImage image)
 
 nnPixmap *nnCreatePixmap(int width, int height)
 {
-    nnPixmap *buffer = malloc(sizeof(nnPixmap));
-    if (!buffer)
-        return NULL;
+    nnPixmap *pixmap = malloc(sizeof(nnPixmap));
+    pixmap->isFlippedX = false;
+    pixmap->isFlippedY = false;
+    pixmap->scaleX = 1.0f;
+    pixmap->scaleY = 1.0f;
+    pixmap->angle = 0.0f;
 
-    buffer->width = width;
-    buffer->height = height;
+    if (!pixmap)
+    {
+        printf("Failed to create pixmap");
+        return NULL;
+    }
+
+    pixmap->width = width;
+    pixmap->height = height;
 
     // Allocate pixel memory
-    buffer->pixels = calloc(width * height, sizeof(nnColorf));
-    if (!buffer->pixels)
+    pixmap->pixels = calloc(width * height, sizeof(nnColorf));
+    if (!pixmap->pixels)
     {
-        free(buffer);
+        printf("Failed to create pixmap pixel buffer");
+        free(pixmap);
         return NULL;
     }
 
     // Create OpenGL texture
-    glGenTextures(1, &buffer->textureID);
-    glBindTexture(GL_TEXTURE_2D, buffer->textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, buffer->pixels);
+    glGenTextures(1, &pixmap->textureID);
+    glBindTexture(GL_TEXTURE_2D, pixmap->textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, pixmap->pixels);
 
     // Set texture parameters
     if (!_nnstate.filtered)
@@ -769,13 +918,14 @@ nnPixmap *nnCreatePixmap(int width, int height)
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return buffer;
+    return pixmap;
 }
 
 nnPixmap *nnCreatePixmapFromImage(nnImage image)
 {
     if (image.textureID == 0 || image.width <= 0 || image.height <= 0)
     {
+        printf("Failed to create pixmap from image");
         return NULL; // Invalid image
     }
 
@@ -835,27 +985,106 @@ void nnUpdatePixmap(nnPixmap *buffer)
 
 void nnDrawPixmap(nnPixmap *pixmap, int x, int y)
 {
+    if (!pixmap || !pixmap->pixels)
+        return;
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, pixmap->textureID);
+
+    glPushMatrix();
+
+    // Translate to position
+    glTranslatef(x + pixmap->width / 2.0f, y + pixmap->height / 2.0f, 0);
+
+    // Apply rotation if any
+    if (pixmap->angle != 0.0f)
+    {
+        glRotatef(pixmap->angle, 0, 0, 1);
+    }
+
+    // Apply flipping
+    float flipX = pixmap->isFlippedX ? -1.0f : 1.0f;
+    float flipY = pixmap->isFlippedY ? -1.0f : 1.0f;
+
+    // Apply scaling
+    glScalef(pixmap->scaleX * flipX, pixmap->scaleY * flipY, 1.0f);
+
+    // Render the quad centered at the origin
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(-pixmap->width / 2.0f, -pixmap->height / 2.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(pixmap->width / 2.0f, -pixmap->height / 2.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(pixmap->width / 2.0f, pixmap->height / 2.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(-pixmap->width / 2.0f, pixmap->height / 2.0f);
+    glEnd();
+
+    glPopMatrix();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+}
+
+void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY)
+{
     if (pixmap->textureID == 0)
     {
-        printf("Failed to draw pixmap\n");
+        printf("Failed to flip pixmap\n");
+        return;
+    }
+    if (flipX)
+        pixmap->isFlippedX = !pixmap->isFlippedX;
+
+    if (flipY)
+        pixmap->isFlippedY = !pixmap->isFlippedY;
+}
+
+void nnRotatePixmap(nnPixmap *pixmap, float angle)
+{
+    if (pixmap->textureID == 0)
+    {
+        printf("Failed to rotate pixmap\n");
         return;
     }
 
-    glBindTexture(GL_TEXTURE_2D, pixmap->textureID);
-    glEnable(GL_TEXTURE_2D);
+    pixmap->angle = fmod(angle, 360.0f);
+    if (pixmap->angle < 0.0f)
+    {
+        pixmap->angle += 360.0f;
+    }
+}
 
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(x, y);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(x + pixmap->width, y);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(x + pixmap->width, y + pixmap->height);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(x, y + pixmap->height);
-    glEnd();
+void nnScalePixmap(nnPixmap *pixmap, float scaleX, float scaleY)
+{
+    if (pixmap->textureID == 0)
+    {
+        printf("Failed to scale pixmap\n");
+        return;
+    }
 
-    glDisable(GL_TEXTURE_2D);
+    pixmap->scaleX = scaleX;
+    pixmap->scaleY = scaleY;
+}
+
+nnPixmap *nnCopyPixmap(nnPixmap *pixmap)
+{
+    if (!pixmap || !pixmap->pixels)
+        return NULL;
+
+    // Allocate a new pixmap
+    nnPixmap *newPixmap = nnCreatePixmap(pixmap->width, pixmap->height);
+    if (!newPixmap)
+        return NULL;
+
+    // Copy pixel data from the original pixmap
+    memcpy(newPixmap->pixels, pixmap->pixels, pixmap->width * pixmap->height * sizeof(nnColorf));
+
+    // Update the texture on the GPU
+    nnUpdatePixmap(newPixmap);
+
+    return newPixmap;
 }
 
 void nnFreePixmap(nnPixmap *buffer)
@@ -1403,4 +1632,40 @@ void nnFreeFileBytes(unsigned char *buffer)
         free(buffer);
     }
 }
+
+float nnLerp(float min, float max, float speed, float ease)
+{
+    // Static variables to maintain state between calls
+    static float currentValue = 0.0f;
+    static float direction = 1.0f; // 1.0f for increasing, -1.0f for decreasing
+
+    // Initialize currentValue on the first call
+    if (currentValue == 0.0f)
+    {
+        currentValue = min;
+    }
+
+    // Calculate the change per frame
+    float delta = speed * direction;
+
+    // Update the current value
+    currentValue += delta;
+
+    // Check bounds and reverse direction if necessary
+    if (currentValue > max)
+    {
+        currentValue = max;
+        direction = -1.0f;
+        currentValue -= delta * ease; // Smooth transition when changing direction
+    }
+    else if (currentValue < min)
+    {
+        currentValue = min;
+        direction = 1.0f;
+        currentValue += delta * 0.5f; // Smooth transition when changing direction
+    }
+
+    return currentValue;
+}
+
 #endif // NONOGL_IMPLEMENTATION

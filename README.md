@@ -130,23 +130,34 @@ int main()
   Represents an image loaded into OpenGL.
 
   ```c
-  typedef struct {
-      unsigned int textureID; // OpenGL texture ID
-      int width;              // Width of the image
-      int height;             // Height of the image
+  typedef struct
+  {
+    unsigned int textureID; // OpenGL texture ID
+    int width;              // Width of the image
+    int height;             // Height of the buffer
+    float scaleX;           // Scale in x axies
+    float scaleY;           // Scale in x axies
+    bool isFlippedX;        // Is x-axies flipped
+    bool isFlippedY;        // Is y-axies flipped
+    float angle;            // Rotation angle in degrees
   } nnImage;
   ```
 
 - **`nnPixmap`**
-  Represents a 2D buffer of colors (`nnColorf`).
+  Represents a 2D buffer of colors (`nnColorf`), for fast pixel manipulations.
 
   ```c
   typedef struct
   {
     unsigned int textureID; // OpenGL texture ID
-    int width;              // Width of the buffer
-    int height;             // Height of the buffer
-    nnColorf *pixels;       // CPU-side pixel buffer
+    int width;              // Width of the pixmap
+    int height;             // Height of the pixmap
+    float scaleX;           // Scale in x axies
+    float scaleY;           // Scale in x axies
+    bool isFlippedX;        // Is x-axies flipped
+    bool isFlippedY;        // Is y-axies flipped
+    float angle;            // Rotation angle in degrees
+    nnColorf *pixels;       // CPU-side pixel pixmap
   } nnPixmap;
   ```
 
@@ -212,6 +223,15 @@ int main()
 - **`void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)`**
   Draws a portion of the loaded image.
 
+- **`void nnFlipImage(nnImage image, bool flipX, bool flipY)`**
+  Flips the given image on the given axies.
+
+- **`void nnRotateImage(nnImage *image, float degrees)`**
+  Sets the rotateation of the given image to the given degrees.
+
+- **`void nnScaleImage(nnImage *image, float scaleX, float scaleY)`**
+  Sets the scale of the given image to the given scale values.
+
 - **`void nnFreeImage(nnImage image)`**
   Frees the given image
 
@@ -231,6 +251,18 @@ int main()
 
 - **`void nnDrawPixmap(nnPixmap *buffer, int x, int y)`**
   Draws the Pixmap to the screen at the given coordinates.
+
+- **`void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY)`**
+  Flips the given pixmap on the given axies.
+
+- **`void nnRotatePixmap(nnPixmap *pixmap, float angle)`**
+  Sets the rotateation of the given pixmap to the given degrees.
+
+- **`void nnScalePixmap(nnPixmap *pixmap, float scaleX, float scaleY)`**
+  Sets the scale of the given pixmap to the given scale values.
+
+- **`nnPixmap *nnCopyPixmap(nnPixmap *pixmap)`**
+  Returns a copy of the given pixmap.
 
 - **`void nnFreePixmap(nnPixmap *buffer)`**
   Frees the given Pixmap.
@@ -328,6 +360,9 @@ int main()
 
 - **`void nnFreeFileBytes(unsigned char *buffer)`**
   Frees the memory allocated by `nnLoadFileBytes`.
+
+- **`float nnLerp(float min, float max, float speed, float ease)`**
+  Lerps between min and max by the given speed. Use ease to define a smooth transition when changing direction.
 
 - **`int nnFPS`**
   Holds the current frames per second.
