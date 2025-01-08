@@ -117,14 +117,20 @@ void nnFreeImage(nnImage image);
 // Create a pixel buffer with the given width and height
 nnPixmap *nnCreatePixmap(int width, int height);
 
+// Creates a Pixmap from an image
+nnPixmap *nnCreatePixmapFromImage(nnImage image);
+
 // Write a pixel at x, y location with the given color to the given pixel buffer
 void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color);
 
-// Update pixels that have changed in the pixel buffer
+// Read a pixel from the given pixmap.
+nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);
+
+// Update pixels that have changed in the Pixmap
 void nnUpdatePixmap(nnPixmap *buffer);
 
-// Draw the pixel buffer to the screen
-void nnDrawPixmap(nnPixmap *buffer);
+// Draw the Pixmap to the screen
+void nnDrawPixmap(nnPixmap *pixmap, int x, int y);
 
 // Free the given pixel buffer
 void nnFreePixmap(nnPixmap *buffer);
@@ -610,6 +616,9 @@ nnImage nnLoadImageMem(const unsigned char *data, int size)
 
 void nnDrawImage(nnImage image, int x, int y)
 {
+    if (!image.textureID == 0)
+        return;
+
     glBindTexture(GL_TEXTURE_2D, image.textureID);
     glEnable(GL_TEXTURE_2D);
 
@@ -682,12 +691,71 @@ nnPixmap *nnCreatePixmap(int width, int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, buffer->pixels);
 
     // Set texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    if (!_nnstate.filtered)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return buffer;
+}
+
+nnPixmap *nnCreatePixmapFromImage(nnImage image)
+{
+    if (image.textureID == 0 || image.width <= 0 || image.height <= 0)
+    {
+        return NULL; // Invalid image
+    }
+
+    // Allocate a new pixmap
+    nnPixmap *pixmap = nnCreatePixmap(image.width, image.height);
+    if (!pixmap)
+    {
+        return NULL; // Failed to allocate pixmap
+    }
+
+    // Allocate a buffer to read the image data from the GPU
+    unsigned char *pixelData = malloc(image.width * image.height * 4); // 4 bytes per pixel (RGBA)
+    if (!pixelData)
+    {
+        nnFreePixmap(pixmap);
+        return NULL; // Memory allocation failed
+    }
+
+    // Read the image data from the GPU
+    glBindTexture(GL_TEXTURE_2D, image.textureID);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Copy the pixel data into the pixmap
+    for (int y = 0; y < image.height; y++)
+    {
+        for (int x = 0; x < image.width; x++)
+        {
+            int index = (y * image.width + x) * 4; // Calculate the pixel index
+            nnColorf color = {
+                pixelData[index] / 255.0f,
+                pixelData[index + 1] / 255.0f,
+                pixelData[index + 2] / 255.0f,
+                pixelData[index + 3] / 255.0f};
+            nnPutPixel(pixmap, x, y, color);
+        }
+    }
+
+    // Upload the pixel data to the pixmap's GPU texture
+    nnUpdatePixmap(pixmap);
+
+    // Free the temporary pixel data buffer
+    free(pixelData);
+
+    return pixmap;
 }
 
 void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color)
@@ -696,6 +764,16 @@ void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color)
         return;
 
     buffer->pixels[y * buffer->width + x] = color;
+}
+
+nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y)
+{
+    if (!pixmap || x < 0 || y < 0 || x >= pixmap->width || y >= pixmap->height)
+    {
+        return (nnColorf){0, 0, 0, 0}; // Return transparent color for out-of-bounds or invalid pixmap
+    }
+
+    return pixmap->pixels[y * pixmap->width + x];
 }
 
 void nnUpdatePixmap(nnPixmap *buffer)
@@ -708,27 +786,28 @@ void nnUpdatePixmap(nnPixmap *buffer)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void nnDrawPixmap(nnPixmap *buffer)
+void nnDrawPixmap(nnPixmap *pixmap, int x, int y)
 {
-    if (!buffer)
+    if (pixmap->textureID == 0)
+    {
+        printf("Failed to draw pixmap\n");
         return;
+    }
 
+    glBindTexture(GL_TEXTURE_2D, pixmap->textureID);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, buffer->textureID);
 
-    // Draw a full-screen quad
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0.0f, 0.0f); // Bottom-left
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(buffer->width, 0.0f); // Bottom-right
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(buffer->width, buffer->height); // Top-right
     glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0.0f, buffer->height); // Top-left
+    glVertex2f(x, y);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(x + pixmap->width, y);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(x + pixmap->width, y + pixmap->height);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(x, y + pixmap->height);
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
 }
 

@@ -6,6 +6,7 @@
 
 nnImage image;
 nnFont *font;
+nnPixmap *pixmap;
 
 void display()
 {
@@ -25,6 +26,8 @@ void display()
     nnDrawText("FPS: %d", 200, 370, nnFPS);
     nnDrawText("Delta Time: %f", 200, 400, nnDT);
     nnResetColor();
+
+    nnDrawPixmap(pixmap, 10, 10);
 
     if (nnKeyHit('a'))
     {
@@ -92,6 +95,12 @@ int main()
     nnSetFont(font);
 
     image = nnLoadImage("./assets/opengl.png");
+    pixmap = nnCreatePixmapFromImage(image);
+
+    nnColorf pixel = nnReadPixel(pixmap, 18, 14);
+
+    printf("pixmap pixel: %.2f, %.2f, %.2f, %.2f\n", pixel.r, pixel.g, pixel.b, pixel.a);
+    printf("pixmap size: %d x %d\n", pixmap->width, pixmap->height);
 
     nnSetDisplayFunc(display);
     nnRun();

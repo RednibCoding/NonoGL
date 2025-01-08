@@ -156,8 +156,14 @@ int main()
 - **`nnPixmap *nnCreatePixmap(int width, int height)`**
   Creates a Pixmap with the given width and height.
 
+- **`nnPixmap *nnCreatePixmapFromImage(nnImage image);`**
+  Creates a Pixmap from an image.
+
 - **`void nnPutPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
   Writes a pixel at x, y location with the given color to the given Pixmap.
+
+- **`nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);`**
+  Read a pixel from the given pixmap.
 
 - **`void nnUpdatePixmap(nnPixmap *buffer)`**
   Update pixels that have changed in the given Pixmap.
