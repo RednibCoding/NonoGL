@@ -92,6 +92,9 @@ void nnSetRenderFunc(void (*callback)(void));
 // Release resources and free memory.
 void nnDestroyWindow();
 
+// Sets the target FPS.
+void nnSetTargetFPS(int fps);
+
 // Set the window title.
 void nnSetWindowTitle(const char *format, ...);
 
@@ -323,6 +326,7 @@ typedef struct
     float deltaTime;
     double lastTime;
     int currentFPS;
+    int targetFPS;
     int window;
     nnFont *font;
     nnColorf currentDrawColor;
@@ -447,8 +451,8 @@ void _nnTimerCallback(int value)
     // Trigger display refresh
     glutPostRedisplay();
 
-    // Re-register the timer callback for 60 FPS
-    glutTimerFunc(1000 / 60, _nnTimerCallback, 0);
+    // Re-register the timer callback to get targetFPS
+    glutTimerFunc(1000 / _nnstate.targetFPS, _nnTimerCallback, 0);
 }
 
 void _nnKeyDownCallback(unsigned char key, int x, int y)
@@ -543,6 +547,12 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _nnstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
     _nnstate.currentFPS = 0;
 
+    // Set default FPS if not already set
+    if (_nnstate.targetFPS <= 0)
+    {
+        _nnstate.targetFPS = 60;
+    }
+
     nnFPS = 0;
     nnDT = 0.0f;
     nnMS = 0.0f;
@@ -574,7 +584,7 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _nnSetScale(1.0f, 1.0f);
 
     /* Start the timer for limiting FPS */
-    glutTimerFunc(1000 / 60, _nnTimerCallback, 0);
+    glutTimerFunc(1000 / _nnstate.targetFPS, _nnTimerCallback, 0);
 
     nnResetColor();
 
@@ -590,6 +600,16 @@ void nnSetRenderFunc(void (*callback)(void))
 void nnDestroyWindow()
 {
     glutDestroyWindow(_nnstate.window);
+}
+
+void nnSetTargetFPS(int fps)
+{
+    if (fps <= 0)
+    {
+        printf("Invalid FPS value. FPS must be greater than 0.\n");
+        return;
+    }
+    _nnstate.targetFPS = fps;
 }
 
 void nnSetWindowTitle(const char *format, ...)

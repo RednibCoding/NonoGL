@@ -36,6 +36,8 @@ int main()
         return -1;
     }
 
+    nnSetTargetFPS(30);
+
     image = nnLoadImage("./assets/opengl.png");
 
     nnSetRenderFunc(render); // Set the render callback

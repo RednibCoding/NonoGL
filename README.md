@@ -188,6 +188,9 @@ int main()
 - **`void nnDestroyWindow()`**
   Destroys the created window and cleans up resources.
 
+- **`void nnSetTargetFPS(int fps)`**
+  Sets the target FPS.
+
 - **`void nnSetWindowTitle(const char *format, ...)`**
   Sets the window title with formatted text.
 

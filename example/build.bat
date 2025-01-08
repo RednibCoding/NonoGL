@@ -17,7 +17,7 @@ REM Define resource files to include
 set RES_FILES=
 
 REM Define the source files to include
-set SRC_FILES=pixmap.c
+set SRC_FILES=image.c
 
 REM Define additional compiler flags to use
 set CFLAGS=
