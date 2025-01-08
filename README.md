@@ -298,7 +298,7 @@ int main()
   Set font for text rendering.
 
 - **`void nnDrawText(const char *format, int x, int y, ...)`**
-  Render the given formatted text using the font set with `nnSetFont`. If no font has been set, an internal non-scalable font will be used.
+  Render the given formatted text using the font that has been set with `nnSetFont`. If no font has been set, an internal non-scalable font will be used.
 
 - **`void nnFreeFont(nnFont *font)`**
   Free the given font.
