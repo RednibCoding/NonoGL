@@ -292,8 +292,8 @@ int main()
   ```c
   typedef struct {
       unsigned int textureID; // OpenGL texture ID
-      int width;       // Width of the image
-      int height;      // Height of the image
+      int width;              // Width of the image
+      int height;             // Height of the image
   } tgImage;
   ```
 
