@@ -187,19 +187,19 @@ void nnFreePixmap(nnPixmap *pixmap);
 void nnPutPixel(float x, float y);
 
 // Writes a pixel at x, y location with the given color to the given Pixmap.
-void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color);
+void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color);
 
 // Draws a line from x0, y0 to x1, y1
-void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color);
+void nnDrawLine(nnPixmap *pixmap, int x0, int y0, int x1, int y1, nnColorf color);
 
 // Draws an oval with its center at x, y.
-void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled);
+void nnDrawOval(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled);
 
 // Draws a triangle.
-void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled);
+void nnDrawTriangle(nnPixmap *pixmap, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled);
 
 // Draws a rectangle where x and y is the top left corner.
-void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled);
+void nnDrawRect(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled);
 
 /*
  * Text Rendering
@@ -1140,17 +1140,17 @@ void nnPutPixel(float x, float y)
     glEnd();
 }
 
-void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)
+void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color)
 {
-    if (!buffer || x < 0 || y < 0 || x >= buffer->width || y >= buffer->height)
+    if (!pixmap || x < 0 || y < 0 || x >= pixmap->width || y >= pixmap->height)
         return;
 
-    buffer->pixels[y * buffer->width + x] = color;
+    pixmap->pixels[y * pixmap->width + x] = color;
 }
 
-void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color)
+void nnDrawLine(nnPixmap *pixmap, int x0, int y0, int x1, int y1, nnColorf color)
 {
-    if (!buffer)
+    if (!pixmap)
         return;
 
     int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
@@ -1159,7 +1159,7 @@ void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color
 
     while (true)
     {
-        nnDrawPixel(buffer, x0, y0, color);
+        nnDrawPixel(pixmap, x0, y0, color);
         if (x0 == x1 && y0 == y1)
             break;
         e2 = 2 * err;
@@ -1176,9 +1176,9 @@ void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color
     }
 }
 
-void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)
+void nnDrawOval(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled)
 {
-    if (!buffer)
+    if (!pixmap)
         return;
 
     int a = width / 2;
@@ -1195,7 +1195,7 @@ void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf 
                 int py = y0 + i;
                 if (((j - a) * (j - a)) * b * b + ((i - b) * (i - b)) * a * a <= a * a * b * b)
                 {
-                    nnDrawPixel(buffer, px, py, color);
+                    nnDrawPixel(pixmap, px, py, color);
                 }
             }
         }
@@ -1209,10 +1209,10 @@ void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf 
 
         while (b2 * x1 <= a2 * y1)
         {
-            nnDrawPixel(buffer, x + x1, y + y1, color);
-            nnDrawPixel(buffer, x - x1, y + y1, color);
-            nnDrawPixel(buffer, x + x1, y - y1, color);
-            nnDrawPixel(buffer, x - x1, y - y1, color);
+            nnDrawPixel(pixmap, x + x1, y + y1, color);
+            nnDrawPixel(pixmap, x - x1, y + y1, color);
+            nnDrawPixel(pixmap, x + x1, y - y1, color);
+            nnDrawPixel(pixmap, x - x1, y - y1, color);
 
             if (sigma >= 0)
             {
@@ -1229,10 +1229,10 @@ void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf 
 
         while (a2 * y1 <= b2 * x1)
         {
-            nnDrawPixel(buffer, x + x1, y + y1, color);
-            nnDrawPixel(buffer, x - x1, y + y1, color);
-            nnDrawPixel(buffer, x + x1, y - y1, color);
-            nnDrawPixel(buffer, x - x1, y - y1, color);
+            nnDrawPixel(pixmap, x + x1, y + y1, color);
+            nnDrawPixel(pixmap, x - x1, y + y1, color);
+            nnDrawPixel(pixmap, x + x1, y - y1, color);
+            nnDrawPixel(pixmap, x - x1, y - y1, color);
 
             if (sigma >= 0)
             {
@@ -1245,9 +1245,9 @@ void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf 
     }
 }
 
-void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)
+void nnDrawTriangle(nnPixmap *pixmap, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)
 {
-    if (!buffer)
+    if (!pixmap)
         return;
 
     if (filled)
@@ -1301,7 +1301,7 @@ void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, in
             }
             for (int x = x_start; x <= x_end; x++)
             {
-                nnDrawPixel(buffer, x, y, color);
+                nnDrawPixel(pixmap, x, y, color);
             }
         }
         for (int y = y2; y <= y3; y++)
@@ -1316,21 +1316,21 @@ void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, in
             }
             for (int x = x_start; x <= x_end; x++)
             {
-                nnDrawPixel(buffer, x, y, color);
+                nnDrawPixel(pixmap, x, y, color);
             }
         }
     }
     else
     {
-        nnDrawLine(buffer, x1, y1, x2, y2, color);
-        nnDrawLine(buffer, x2, y2, x3, y3, color);
-        nnDrawLine(buffer, x3, y3, x1, y1, color);
+        nnDrawLine(pixmap, x1, y1, x2, y2, color);
+        nnDrawLine(pixmap, x2, y2, x3, y3, color);
+        nnDrawLine(pixmap, x3, y3, x1, y1, color);
     }
 }
 
-void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)
+void nnDrawRect(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled)
 {
-    if (!buffer)
+    if (!pixmap)
         return;
 
     if (filled)
@@ -1339,16 +1339,16 @@ void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf 
         {
             for (int j = 0; j < width; j++)
             {
-                nnDrawPixel(buffer, x + j, y + i, color);
+                nnDrawPixel(pixmap, x + j, y + i, color);
             }
         }
     }
     else
     {
-        nnDrawLine(buffer, x, y, x + width, y, color);                   // Top
-        nnDrawLine(buffer, x, y + height, x + width, y + height, color); // Bottom
-        nnDrawLine(buffer, x, y, x, y + height, color);                  // Left
-        nnDrawLine(buffer, x + width, y, x + width, y + height, color);  // Right
+        nnDrawLine(pixmap, x, y, x + width, y, color);                   // Top
+        nnDrawLine(pixmap, x, y + height, x + width, y + height, color); // Bottom
+        nnDrawLine(pixmap, x, y, x, y + height, color);                  // Left
+        nnDrawLine(pixmap, x + width, y, x + width, y + height, color);  // Right
     }
 }
 

@@ -252,10 +252,10 @@ int main()
 - **`nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);`**
   Read a pixel from the given pixmap.
 
-- **`void nnUpdatePixmap(nnPixmap *buffer)`**
+- **`void nnUpdatePixmap(nnPixmap *pixmap)`**
   Update pixels that have changed in the given Pixmap. Only updates pixels that have actually changed.
 
-- **`void nnDrawPixmap(nnPixmap *buffer, int x, int y)`**
+- **`void nnDrawPixmap(nnPixmap *pixmap, int x, int y)`**
   Draws the Pixmap to the screen at the given coordinates.
 
 - **`void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY)`**
@@ -270,7 +270,7 @@ int main()
 - **`nnPixmap *nnCopyPixmap(nnPixmap *pixmap)`**
   Returns a copy of the given pixmap.
 
-- **`void nnFreePixmap(nnPixmap *buffer)`**
+- **`void nnFreePixmap(nnPixmap *pixmap)`**
   Frees the given Pixmap.
 
 ### Primitives drawing
@@ -280,19 +280,19 @@ int main()
 
   > Note: When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons.
 
-- **`void nnDrawPixel(nnPixmap *buffer, int x, int y, nnColorf color)`**
+- **`void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color)`**
   Writes a pixel at x, y location with the given color to the given Pixmap.
 
-- **`void nnDrawLine(nnPixmap *buffer, int x0, int y0, int x1, int y1, nnColorf color)`**
+- **`void nnDrawLine(nnPixmap *pixmap, int x0, int y0, int x1, int y1, nnColorf color)`**
   Draws a line from x0, y0 to x1, y1
 
-- **`void nnDrawOval(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)`**
+- **`void nnDrawOval(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled)`**
   Draws an oval with its center at x, y.
 
-- **`void nnDrawTriangle(nnPixmap *buffer, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)`**
+- **`void nnDrawTriangle(nnPixmap *pixmap, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)`**
   Draws a triangle.
 
-- **`void nnDrawRect(nnPixmap *buffer, int x, int y, int width, int height, nnColorf color, bool filled)`**
+- **`void nnDrawRect(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled)`**
   Draws a rectangle where x and y is the top left corner.
 
 ### Text Rendering
