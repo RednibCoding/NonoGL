@@ -228,6 +228,9 @@ nnFont *nnGetFont();
 // Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the internal default font will be used.
 void nnDrawText(const char *format, int x, int y, ...);
 
+// Render the given formatted text using the font set with `nnSetFont` and a custom z-index (-1.0 to 1.0). If no font has been set, the internal default font will be used.
+void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...);
+
 // Returns the width in pixels of the given string regarding the current font.
 float nnTextWidth(const char *format, ...);
 
@@ -743,7 +746,7 @@ static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, f
     return font;
 }
 
-static void _nnDrawTextZIndexed(const char *format, int x, int y, float zIndex, ...)
+static void _nnDrawTextVA(const char *format, int x, int y, float zIndex, va_list args)
 {
     if (!format)
         return;
@@ -755,10 +758,7 @@ static void _nnDrawTextZIndexed(const char *format, int x, int y, float zIndex, 
     }
 
     char buffer[1024];
-    va_list args;
-    va_start(args, zIndex);
     vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
 
     nnFont *font = _nnstate.font;
     if (!font)
@@ -1742,12 +1742,21 @@ void nnDrawText(const char *format, int x, int y, ...)
     if (!format)
         return;
 
-    char buffer[1024];
     va_list args;
     va_start(args, y);
-    vsnprintf(buffer, sizeof(buffer), format, args);
+    _nnDrawTextVA(format, x, y, 0.0f, args);
     va_end(args);
-    _nnDrawTextZIndexed(buffer, x, y, 0.0f);
+}
+
+void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...)
+{
+    if (!format)
+        return;
+
+    va_list args;
+    va_start(args, zIndex);
+    _nnDrawTextVA(format, x, y, zIndex, args);
+    va_end(args);
 }
 
 float nnTextWidth(const char *format, ...)
@@ -2651,7 +2660,6 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     // Toggle dropdown open/close on button click
     if (hoveringButton && nnMouseReleased(0))
     {
-        printf("Clicked! ID: %d\n", state->id);
         state->isOpen = !state->isOpen;
     }
 
@@ -2835,7 +2843,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             int optionTextX = x + 10; // Left-aligned with a margin of 10 pixels
             int optionTextY = optionY + (height - nnTextHeight()) / 2;
             glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
-            _nnDrawTextZIndexed(optionText, optionTextX, optionTextY, _NN_Z_INDEX_POPUP_TEXT);
+            nnDrawTextZ(optionText, optionTextX, optionTextY, _NN_Z_INDEX_POPUP_TEXT);
 
             // Handle option click
             if (hoveringOption && nnMouseReleased(0))

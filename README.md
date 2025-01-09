@@ -320,6 +320,9 @@ int main()
 - **`void nnDrawText(const char *format, int x, int y, ...)`**
   Render the given formatted text using the font that has been set with `nnSetFont`. If no font has been set, the internal default font will be used.
 
+- **`void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...)`**
+  Render the given formatted text using the font set with `nnSetFont` and a custom z-index (-1.0 to 1.0). If no font has been set, the internal default font will be used.
+
 - **`float nnTextWidth(const char *format, ...)`**
   Returns the width in pixels of the given formatted text regarding the current font.
 
