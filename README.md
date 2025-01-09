@@ -217,7 +217,7 @@ int main()
   Get the current draw color.
 
 - **`void nnResetColor()`**
-  Resets the color to default (1.0, 1.0, 1.0)
+  Resets the color to default (1.0, 1.0, 1.0, 1.0)
 
 - **`void nnRun()`**
   Starts the main rendering loop.
@@ -234,36 +234,36 @@ int main()
   Draws the loaded image at the specified position.
 
 - **`void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)`**
-  Draws a portion of the loaded image.
+  Draws a portion of the loaded image at the specified position.
 
 - **`void nnFlipImage(nnImage image, bool flipX, bool flipY)`**
   Flips the given image on the given axies.
 
 - **`void nnRotateImage(nnImage *image, float degrees)`**
-  Sets the rotateation of the given image to the given degrees.
+  Sets the rotation of the given image to the given degrees.
 
 - **`void nnScaleImage(nnImage *image, float scaleX, float scaleY)`**
   Sets the scale of the given image to the given scale values.
 
 - **`void nnFreeImage(nnImage image)`**
-  Frees the given image
+  Frees the given image.
 
 ### Pixmap Management and Drawing
 
 - **`nnPixmap *nnCreatePixmap(int width, int height)`**
-  Creates a Pixmap with the given width and height.
+  Creates a pixmap with the given width and height.
 
 - **`nnPixmap *nnCreatePixmapFromImage(nnImage image);`**
-  Creates a Pixmap from an image.
+  Creates a pixmap from an image.
 
 - **`nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);`**
   Read a pixel from the given pixmap.
 
 - **`void nnUpdatePixmap(nnPixmap *pixmap)`**
-  Update pixels that have changed in the given Pixmap. Only updates pixels that have actually changed.
+  Update pixels that have changed in the given pixmap. Only updates pixels that have actually changed.
 
 - **`void nnDrawPixmap(nnPixmap *pixmap, int x, int y)`**
-  Draws the Pixmap to the screen at the given coordinates.
+  Draws the pixmap to the screen at the given coordinates.
 
 - **`void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY)`**
   Flips the given pixmap on the given axies.
@@ -278,17 +278,17 @@ int main()
   Returns a copy of the given pixmap.
 
 - **`void nnFreePixmap(nnPixmap *pixmap)`**
-  Frees the given Pixmap.
+  Frees the given pixmap.
 
-### Primitives drawing
+### Primitives Drawing
 
 - **`void nnPutPixel(float x, float y)`**
   Draws an individual pixel to the screen.
 
-  > Note: When drawing large chunks of pixels, it is recommended to use a Pixmap instead for performance reasons.
+  > Note: When drawing large chunks of pixels, it is recommended to use a pixmap instead for performance reasons.
 
 - **`void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color)`**
-  Writes a pixel at x, y location with the given color to the given Pixmap.
+  Writes a pixel at x, y location with the given color to the given pixmap.
 
 - **`void nnDrawLine(nnPixmap *pixmap, int x0, int y0, int x1, int y1, nnColorf color)`**
   Draws a line from x0, y0 to x1, y1
@@ -398,7 +398,7 @@ int main()
 ### GUI
 
 - **`bool nnButton(const char *format, int x, int y, int width, int height, ...)`**
-  Button that returns true when the button has been clicked.
+  Button that returns `true` when the it has been clicked.
 
 ## License
 
