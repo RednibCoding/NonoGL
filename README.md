@@ -359,6 +359,9 @@ int main()
   - **`bool nnKeyReleased(int key)`**
     Returns `true` if the specified key was released since the last frame.
 
+  - **`void nnFlushKeys()`**
+    Resets all key and mouse states.
+
 - **Mouse Input**
 
   - **`bool nnMouseHit(int button)`**
@@ -379,11 +382,8 @@ int main()
   - **`nnPos nnMouseMotionDelta()`**
     Returns the mouse motion delta (change in position) since the last frame.
 
-- **`void nnFlushKeys()`**
-  Resets all key and mouse states.
-
-- **`void nnFlushMouse()`**
-  Resets all mouse button states.
+  - **`void nnFlushMouse()`**
+    Resets all mouse button states.
 
 ### Utility
 
@@ -428,7 +428,7 @@ int main()
   `deltaFillState` determines how much the fillstate should increase/decrease on the next call.
 
 - **`int nnDropdown(const char \*buttonText, const char \*\*options, int numOptions, int x, int y, int width, int height)`**
-  A dropdown with a list of options to choose from. Returns the selected index.
+  A dropdown that accepts a list of options to choose from. Returns the selected index.
 
 ## License
 
