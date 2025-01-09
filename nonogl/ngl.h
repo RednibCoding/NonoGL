@@ -641,10 +641,19 @@ static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, f
     // Calculate font scale
     font->scale = stbtt_ScaleForPixelHeight(&font->fontInfo, fontSize);
 
-    // Calculate height from actual glyphs
-    int minY, maxY;
-    stbtt_GetCodepointBox(&font->fontInfo, 'A', NULL, &minY, NULL, &maxY); // Example for 'A' glyph
-    font->glyphHeight = font->scale * (maxY - minY);
+    // Calculate height from actual glyphs (averaging between capital and lowercase letters)
+    int minYCap, maxYCap, minYLower, maxYLower;
+
+    // Get bounding box for a capital letter (e.g., 'A')
+    stbtt_GetCodepointBox(&font->fontInfo, 'A', NULL, &minYCap, NULL, &maxYCap);
+
+    // Get bounding box for a lowercase letter (e.g., 'x')
+    stbtt_GetCodepointBox(&font->fontInfo, 'x', NULL, &minYLower, NULL, &maxYLower);
+
+    // Scale and average the heights
+    float capHeight = font->scale * (maxYCap - minYCap);
+    float lowerHeight = font->scale * (maxYLower - minYLower);
+    font->glyphHeight = (capHeight + lowerHeight) / 2.0f;
 
     // Create the font atlas
     font->atlasWidth = 512;
