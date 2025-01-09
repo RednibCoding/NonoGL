@@ -421,7 +421,7 @@ int main()
   Vertical progress bar that returns the current fill state in percentage.-
   `deltaFillState` determines how much the fillstate should increase/decrease.
 
-- **`int nnDropdown(const char \*buttonText, const char **options, int numOptions, int x, int y, int width, int height)`\*\*
+- **`int nnDropdown(const char \*buttonText, const char \*\*options, int numOptions, int x, int y, int width, int height)`**
   A dropdown with a list of options to choose from. Returns the selected index.
 
 ## License
