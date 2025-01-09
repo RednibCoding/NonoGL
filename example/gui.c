@@ -40,7 +40,7 @@ void render()
 int main()
 {
     // Create a window
-    if (!nnCreateWindow("NonoGL Example", 800, 600, false, false))
+    if (!nnCreateWindow("NonoGL Example", 800, 600, true, false))
     {
         printf("Failed to create window.\n");
         return -1;

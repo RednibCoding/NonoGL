@@ -374,6 +374,8 @@ typedef struct
     int currentFPS;
     int targetFPS;
     int window;
+    float windowScaleX;
+    float windowScaleY;
     nnFont *font;
     nnColorf currentDrawColor;
 
@@ -480,9 +482,9 @@ void _nnUpdateScale(int width, int height, int shouldUpdate)
 {
     if (shouldUpdate != 0)
     {
-        float scaleX = (float)width / _nnstate.initialWidth;
-        float scaleY = (float)height / _nnstate.initialHeight;
-        _nnSetScale(scaleX, scaleY);
+        _nnstate.windowScaleX = (float)width / _nnstate.initialWidth;
+        _nnstate.windowScaleY = (float)height / _nnstate.initialHeight;
+        _nnSetScale(_nnstate.windowScaleX, _nnstate.windowScaleY);
     }
 }
 
@@ -578,7 +580,7 @@ void _nnMouseWheelFunc(int wheel, int direction, int x, int y)
 void _nnMouseMotionFunc(int x, int y)
 {
     // Motion delta
-    nnPos newMousePosition = {(float)x, (float)y};
+    nnPos newMousePosition = {(float)x / _nnstate.windowScaleX, (float)y / _nnstate.windowScaleY};
     _nnstate.mouseMotionDelta.x = newMousePosition.x - _nnstate.mousePosition.x;
     _nnstate.mouseMotionDelta.y = newMousePosition.y - _nnstate.mousePosition.y;
     _nnstate.mousePosition = newMousePosition;
@@ -697,6 +699,8 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _nnstate.initialHeight = height;
     _nnstate.width = width;
     _nnstate.height = height;
+    _nnstate.windowScaleX = 1.0f;
+    _nnstate.windowScaleY = 1.0f;
 
     _nnstate.deltaTime = 0.0f;
     _nnstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
@@ -739,7 +743,7 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     _nnUpdateScale(_nnstate.width, _nnstate.height, _nnstate.scalable);
 
     /* Set initial scale */
-    _nnSetScale(1.0f, 1.0f);
+    _nnSetScale(_nnstate.windowScaleX, _nnstate.windowScaleY);
 
     /* Start the timer for limiting FPS */
     glutTimerFunc(1000 / _nnstate.targetFPS, _nnTimerCallback, 0);
