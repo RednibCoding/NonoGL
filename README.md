@@ -320,7 +320,7 @@ int main()
   Render the given formatted text using the font that has been set with `nnSetFont`. If no font has been set, the internal default font will be used.
 
 - **`float nnTextWidth(const char *format, ...)`**
-  Returns the width in pixels of the given string regarding the current font.
+  Returns the width in pixels of the given formatted text regarding the current font.
 
 - **`float nnTextHeight()`**
   Returns the height in pixels of the current font.
