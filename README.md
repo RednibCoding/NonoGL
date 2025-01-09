@@ -219,12 +219,6 @@ int main()
 - **`void nnResetColor()`**
   Resets the color to default (1.0, 1.0, 1.0)
 
-- **`void nnCls()`**
-  Clears the screen with the current clear color.
-
-- **`void nnFlip()`**
-  Swaps the front- and backbuffer.
-
 - **`void nnRun()`**
   Starts the main rendering loop.
 
