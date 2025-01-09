@@ -324,18 +324,21 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...);
 bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...);
 
 // Horizontal slider that returns the current set value.
-float nnVSlider(float min, float max, float initial, float step, int x, int y, int height);
+float nnHSlider(float min, float max, float initial, float step, int x, int y, int height);
 
 // Vertical slider that returns the current set value.
 float nnVSlider(float min, float max, float initial, float step, int x, int y, int height);
 
 // Horizontal progress bar that returns the current fill state in percentage.
 // `deltaFillState` determines how much the fillstate should increase/decrease.
-int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width);
+int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
 
 // Vertical progress bar that returns the current fill state in percentage.
 // `deltaFillState` determines how much the fillstate should increase/decrease.
-int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width);
+int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
+
+// A dropdown with a list of options to choose from. Returns the selected index.
+int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height);
 
 /******************************************************************************************************************************/
 /*  End of Public API */
@@ -681,7 +684,9 @@ static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, f
 }
 
 /*******************************************************************************************************/
+/*******************************************************************************************************/
 // Public api function implementations
+/*******************************************************************************************************/
 /*******************************************************************************************************/
 
 /*
@@ -815,6 +820,26 @@ void nnRun()
         exit(-1);
     }
     glutMainLoop();
+}
+
+int nnWindowWidth()
+{
+    return _nnstate.width;
+}
+
+int nnWindowHeight()
+{
+    return _nnstate.height;
+}
+
+int nnScreenWidth()
+{
+    return _nnstate.width / _nnstate.windowScaleX;
+}
+
+int nnScreenHeight()
+{
+    return _nnstate.height / _nnstate.windowScaleY;
 }
 
 /*
@@ -2239,7 +2264,7 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
     return value;
 }
 
-int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width)
+int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width)
 {
     if (min >= max)
     {
@@ -2315,7 +2340,7 @@ int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int
     return (int)(percentage * 100);
 }
 
-int nnVProgressBar(float min, float max, float deltaFillState, int x, int y, int height)
+int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int height)
 {
     if (min >= max)
     {
@@ -2389,6 +2414,234 @@ int nnVProgressBar(float min, float max, float deltaFillState, int x, int y, int
     nnSetColor(nnGetColor());
 
     return (int)(percentage * 100);
+}
+
+int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height)
+{
+    // Static variables to manage state
+    static bool isOpen = false;      // Whether the dropdown list is open
+    static int selectedIndex = -1;   // Selected option index (-1 means no selection)
+    static bool initialized = false; // Track initialization of the button text
+    static int scrollOffset = 0;     // Tracks the scroll offset in terms of options
+    const int maxVisibleOptions = 10;
+
+    // Initialize the button text with the first option if not initialized
+    static char selectedText[256] = {0};
+    if (!initialized)
+    {
+        if (buttonText)
+        {
+            strncpy(selectedText, buttonText, sizeof(selectedText) - 1);
+        }
+        else if (numOptions > 0 && options[0])
+        {
+            strncpy(selectedText, options[0], sizeof(selectedText) - 1);
+        }
+        initialized = true;
+    }
+
+    // Get mouse position
+    nnPos mousePos = nnGetMousePosition();
+
+    // Determine if the mouse is hovering over the dropdown button
+    bool hoveringButton = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
+
+    // Calculate the actual height of the visible list
+    int actualVisibleOptions = (numOptions < maxVisibleOptions) ? numOptions : maxVisibleOptions;
+    int visibleListHeight = actualVisibleOptions * height;
+
+    // Check if the list fits below or above the button
+    int screenHeight = nnScreenHeight();
+    bool drawAbove = (y + height + visibleListHeight > screenHeight);
+
+    // Adjust Y position for the list if drawing above
+    int listY = drawAbove ? (y - visibleListHeight) : (y + height);
+
+    // Toggle dropdown open/close on button click
+    if (hoveringButton && nnMouseReleased(0))
+    {
+        isOpen = !isOpen;
+    }
+
+    // Close dropdown if mouse is not hovering over button or list
+    bool hoveringList = false;
+    if (isOpen)
+    {
+        int visibleListHeight = maxVisibleOptions * height;
+        hoveringList = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, drawAbove ? listY : y, width, drawAbove ? visibleListHeight : visibleListHeight + height});
+    }
+    if (!hoveringButton && !hoveringList && nnMouseReleased(0))
+    {
+        isOpen = false;
+    }
+
+    // Handle scrolling using nnMouseWheelDelta
+    if (isOpen)
+    {
+        int wheelDelta = nnMouseWheelDelta();
+        if (wheelDelta > 0)
+        {
+            scrollOffset = (scrollOffset > 0) ? scrollOffset - 1 : 0;
+        }
+        else if (wheelDelta < 0)
+        {
+            scrollOffset = (scrollOffset < numOptions - maxVisibleOptions) ? scrollOffset + 1 : scrollOffset;
+        }
+    }
+
+    // Draw dropdown button
+    nnColorf bgColor = isOpen ? _nnCurrentTheme.primaryColorAccent
+                              : (hoveringButton ? _nnCurrentTheme.primaryColorAccent : _nnCurrentTheme.primaryColor);
+    nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+
+    // Draw button background
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw button border
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw triangle indicator (direction depends on list position: above or below)
+    int triangleSize = height / 4;
+    int triangleX = x + width - triangleSize * 2; // Position triangle on the right side
+    int triangleY = drawAbove ? (y + height / 2) + triangleSize / 2 : (y + height / 2) - triangleSize / 2;
+
+    glBegin(GL_TRIANGLES);
+    glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+    if (drawAbove)
+    {
+        glVertex2f(triangleX, triangleY);
+        glVertex2f(triangleX + triangleSize, triangleY);
+        glVertex2f(triangleX + triangleSize / 2, triangleY - triangleSize);
+    }
+    else
+    {
+        glVertex2f(triangleX, triangleY);
+        glVertex2f(triangleX + triangleSize, triangleY);
+        glVertex2f(triangleX + triangleSize / 2, triangleY + triangleSize);
+    }
+    glEnd();
+
+    // Draw button text (truncate if necessary)
+    char truncatedText[256];
+    strncpy(truncatedText, selectedText, sizeof(truncatedText) - 1);
+    truncatedText[sizeof(truncatedText) - 1] = '\0';
+
+    float textWidth = nnTextWidth(truncatedText);
+    if (textWidth > width - triangleSize * 3)
+    {
+        for (int i = strlen(truncatedText) - 1; i > 0; i--)
+        {
+            truncatedText[i] = '\0';
+            textWidth = nnTextWidth(truncatedText);
+            if (textWidth <= width - triangleSize * 3 - nnTextWidth("..."))
+            {
+                strcat(truncatedText, "...");
+                break;
+            }
+        }
+    }
+
+    int textX = x + 8; // Left-align with a margin of 8 pixels
+    int textY = y + (height - nnTextHeight()) / 2;
+    glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+    nnDrawText(truncatedText, textX, textY);
+
+    // Draw dropdown list if open
+    if (isOpen)
+    {
+        for (int i = 0; i < numOptions; i++)
+        {
+            // Calculate the visible range of options considering the scroll offset
+            int visibleStart = scrollOffset;
+            int visibleEnd = scrollOffset + actualVisibleOptions;
+            if (i < visibleStart || i >= visibleEnd)
+                continue;
+
+            // Calculate option position
+            int visibleIndex = i - scrollOffset;
+            int optionY = drawAbove
+                              ? (listY + (actualVisibleOptions - 1 - visibleIndex) * height) // Adjust for drawing above
+                              : (listY + visibleIndex * height);                             // Default when drawing below
+
+            // Determine if mouse is hovering over the option
+            bool hoveringOption = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, optionY, width, height});
+
+            // Background color for the option
+            nnColorf optionBgColor = hoveringOption ? _nnCurrentTheme.secondaryColorAccent : _nnCurrentTheme.secondaryColor;
+
+            // Draw option background
+            glBegin(GL_QUADS);
+            glColor4f(optionBgColor.r, optionBgColor.g, optionBgColor.b, optionBgColor.a);
+            glVertex2f(x, optionY);
+            glVertex2f(x + width, optionY);
+            glVertex2f(x + width, optionY + height);
+            glVertex2f(x, optionY + height);
+            glEnd();
+
+            // Draw option border
+            glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+            glBegin(GL_LINE_LOOP);
+            glVertex2f(x, optionY);
+            glVertex2f(x + width, optionY);
+            glVertex2f(x + width, optionY + height);
+            glVertex2f(x, optionY + height);
+            glEnd();
+
+            // Draw option text (truncate if necessary)
+            char optionText[256];
+            strncpy(optionText, options[i], sizeof(optionText) - 1);
+            optionText[sizeof(optionText) - 1] = '\0';
+
+            float optionTextWidth = nnTextWidth(optionText);
+            float rightMargin = 20;
+            if (optionTextWidth > width - rightMargin)
+            {
+                for (int j = strlen(optionText) - 1; j > 0; j--)
+                {
+                    optionText[j] = '\0';
+                    optionTextWidth = nnTextWidth(optionText);
+                    if (optionTextWidth <= width - rightMargin - nnTextWidth("..."))
+                    {
+                        strcat(optionText, "...");
+                        break;
+                    }
+                }
+            }
+
+            int optionTextX = x + 10; // Left-aligned with a margin of 10 pixels
+            int optionTextY = optionY + (height - nnTextHeight()) / 2;
+            glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+            nnDrawText(optionText, optionTextX, optionTextY);
+
+            // Handle option click
+            if (hoveringOption && nnMouseReleased(0))
+            {
+                selectedIndex = i;
+                strncpy(selectedText, options[i], sizeof(selectedText) - 1);
+                isOpen = false; // Close dropdown after selection
+            }
+        }
+    }
+
+    glDisable(GL_BLEND);
+
+    // Return the selected index
+    return selectedIndex;
 }
 
 #endif // NONOGL_IMPLEMENTATION
