@@ -8,8 +8,6 @@ void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
 
-    nnCls();
-
     if (nnKeyHit('a'))
     {
         printf("Key 'A' was just pressed!\n");
@@ -56,8 +54,6 @@ void render()
     {
         printf("Mouse moved: %d, %d | %d, %d \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
     }
-
-    nnFlip(); // Swap buffers to display the scene
 }
 
 int main()

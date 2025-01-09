@@ -11,7 +11,6 @@ nnFont *font;
 void display()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
-    nnCls();
 
     nnDrawImage(image, 200, 120);
 
@@ -72,8 +71,6 @@ void display()
     {
         printf("Mouse moved: %d, %d | %d, %d \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
     }
-
-    nnFlip();
 }
 
 int main()

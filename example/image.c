@@ -10,8 +10,6 @@ void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
 
-    nnCls();
-
     nnDrawImage(image, 200, 120);
     nnDrawImagePortion(image, 200, 200, (nnRecf){0.0f, 0.0f, image.width / 2, image.height});
 
@@ -23,8 +21,6 @@ void render()
     }
 
     nnRotateImage(&image, image.angle + 20.0f * nnDT);
-
-    nnFlip(); // Swap buffers to display the scene
 }
 
 int main()

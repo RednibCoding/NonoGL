@@ -8,11 +8,7 @@ void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
 
-    nnCls();
-
     // Draw stuff here
-
-    nnFlip(); // Swap buffers to display the scene
 }
 
 int main()

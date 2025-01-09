@@ -15,7 +15,7 @@ void sanitizeFilename(char *filename)
 {
     for (int i = 0; filename[i]; i++)
     {
-        if (filename[i] == '.')
+        if (filename[i] == '.' || filename[i] == '-')
             filename[i] = '_';
     }
 }
@@ -51,9 +51,20 @@ void convertFileToCArray(const char *inputFilePath)
     int firstLine = 1;
     unsigned int totalBytes = 0;
 
-    if (inputFile == NULL || outputFile == NULL || headerFile == NULL)
+    if (inputFile == NULL)
     {
-        fprintf(stderr, "Error opening files.\n");
+        fprintf(stderr, "Error opening %s\n", inputFilePath);
+        exit(1);
+    }
+    if (outputFile == NULL)
+    {
+        fprintf(stderr, "Error creating %s\n", outputFilePath);
+        exit(1);
+    }
+
+    if (headerFile == NULL)
+    {
+        fprintf(stderr, "Error creating %s\n", headerFilePath);
         exit(1);
     }
 
@@ -109,7 +120,7 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        fprintf(stderr, "Usage: %s <input.png>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <input file>\n", argv[0]);
         return 1;
     }
 

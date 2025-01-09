@@ -29,13 +29,13 @@ NonoGL is a lightweight and simple 2D graphics library for C, designed for easy 
    Example for Linux:
 
    ```sh
-   gcc main.c -o main -nonogl/internal/lib/linux/x64 -l:libfreeglut_static.a -lGL -lGLU -lm -lpthread
+   gcc main.c -o main -lnonogl/internal/lib/linux/x64 -llibfreeglut_static -lGL -lGLU -lm -lpthread
    ```
 
    Example for Windows:
 
    ```sh
-   gcc main.c -o main.exe -Lnonogl/internal/lib/win32/x64 -l:libfreeglut_static.a -lopengl32 -lwinmm -lgdi32 -lglu32
+   gcc gui.c -o main.exe -Lnonogl/internal/lib/win32/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
    ```
 
 4. **Include the NonoGL header**:
@@ -163,10 +163,12 @@ int main()
 
 - **`nnFont`**
   Represents a font loaded with stb_truetype.
+
   ```c
   typedef struct
   {
       stbtt_fontinfo fontInfo;
+      float glyphHeight;            // Height of the loaded font
       unsigned char *fontBuffer;    // Holds the font file data
       unsigned int textureID;       // OpenGL texture for the font atlas
       int atlasWidth;               // Width of the font atlas
@@ -174,6 +176,23 @@ int main()
       float scale;                  // Font scaling factor
       stbtt_bakedchar charData[96]; // Holds character data for ASCII 32-127
   } nnFont;
+  ```
+
+  - **`nnTheme`**
+    Theme used by gui elements
+
+  ```c
+  typedef struct
+  {
+      nnColorf primaryColor;         // Main color for elements
+      nnColorf primaryColorAccent;   // Accent color for primary elements
+      nnColorf secondaryColor;       // Secondary elements (e.g., backgrounds)
+      nnColorf secondaryColorAccent; // Accent color for secondary elements
+      nnColorf borderColor;          // Border color
+      nnColorf borderColorAccent;    // Accent border color
+      nnColorf textPrimaryColor;     // Primary text color
+      nnColorf textSecondaryColor;   // Secondary text color
+  } nnTheme;
   ```
 
 ### Window Management
@@ -298,13 +317,25 @@ int main()
 ### Text Rendering
 
 - **`nnFont *nnLoadFont(const char *filepath, float fontSize)`**
-  Load a font from a .ttf file.
+  Load a ttf font from a .ttf file.
+
+- **`nnFont *nnLoadFontMem(const unsigned char *data, size_t dataSize, float fontSize);`**
+  Load a ttf font from memory.
 
 - **`void nnSetFont(nnFont *font)`**
   Set font for text rendering.
 
+- **`nnFont *nnGetFont()`**
+  Get the font that is currently set.
+
 - **`void nnDrawText(const char *format, int x, int y, ...)`**
   Render the given formatted text using the font that has been set with `nnSetFont`. If no font has been set, an internal non-scalable font will be used.
+
+- **`float nnTextWidth(const char *format, ...)`**
+  Returns the width in pixels of the given string regarding the current font.
+
+- **`float nnTextHeight()`**
+  Returns the height in pixels of the current font.
 
 - **`void nnFreeFont(nnFont *font)`**
   Free the given font.
@@ -375,6 +406,11 @@ int main()
 
 - **`float nnDT`**
   Holds the delta time (time elapsed since the last frame).
+
+### GUI
+
+- **`bool nnButton(const char *format, int x, int y, int width, int height, ...)`**
+  Button that returns true when the button has been clicked.
 
 ## License
 

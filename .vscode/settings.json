@@ -1,7 +1,7 @@
 {
   "files.associations": {
-    "glfw3.h": "c",
     "stb_truetype.h": "c",
-    "ngl.h": "c"
+    "ngl.h": "c",
+    "nn_default_font.h": "c",
   }
 }

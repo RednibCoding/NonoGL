@@ -10,13 +10,10 @@ void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
 
-    nnSetColor((nnColorf){1.0f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("NonoGL", 200, 200);
-
-    nnSetColor((nnColorf){1.0f, 1.0f, 0.0f, 1.0f});
-    nnDrawText("FPS: %d", 200, 370, nnFPS);
-    nnDrawText("Delta Time: %f", 200, 400, nnDT);
+    nnSetColor((nnColorf){0.8, 0.2, 0.6, 1.0});
+    nnDrawText("Hello NonoGL!", 200, 200);
     nnResetColor();
+    nnDrawText("Hello World!", 200, 240);
 }
 
 int main()

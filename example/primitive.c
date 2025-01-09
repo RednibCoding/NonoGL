@@ -4,14 +4,11 @@
 #define NONOGL_IMPLEMENTATION
 #include "../nonogl/ngl.h"
 
+nnPixmap *pixmap;
+
 void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
-
-    nnCls();
-
-    // Create a pixmap
-    nnPixmap *pixmap = nnCreatePixmap(800, 600);
 
     if (!pixmap)
     {
@@ -31,7 +28,7 @@ void render()
 
     // Draw a red line
     nnColorf red = {1.0f, 0.0f, 0.0f, 1.0f};
-    nnDrawLine(pixmap, 50, 50, 300, 200, red);
+    nnDrawLine(pixmap, 0, 0, 400, 400, red);
 
     // Draw a green rectangle (filled)
     nnColorf green = {0.0f, 1.0f, 0.0f, 1.0f};
@@ -62,11 +59,6 @@ void render()
 
     // Draw the pixmap on the screen
     nnDrawPixmap(pixmap, 0, 0);
-
-    // Free the pixmap
-    nnFreePixmap(pixmap);
-
-    nnFlip(); // Swap buffers to display the scene
 }
 
 int main()
@@ -77,6 +69,8 @@ int main()
         printf("Failed to create window.\n");
         return -1;
     }
+
+    pixmap = nnCreatePixmap(800, 600);
 
     nnSetRenderFunc(render); // Set the render callback
     nnRun();                 // Start the rendering loop

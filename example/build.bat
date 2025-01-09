@@ -17,13 +17,13 @@ REM Define resource files to include
 set RES_FILES=
 
 REM Define the source files to include
-set SRC_FILES=image.c
+set SRC_FILES=testing.c
 
 REM Define additional compiler flags to use
 set CFLAGS=
 
 REM Define additional linker flags to use (add -mwindows to hide the console)
-set LDFLAGS=-L../nonogl/internal/lib/win32/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
+set LDFLAGS=-L../nonogl/internal/lib/win32/x64 -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32 
 
 REM Set the c standard
 set CSTD=-std=c99

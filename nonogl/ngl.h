@@ -70,6 +70,7 @@ typedef struct
 typedef struct
 {
     stbtt_fontinfo fontInfo;
+    float glyphHeight;            // Height of the loaded font
     unsigned char *fontBuffer;    // Holds the font file data
     unsigned int textureID;       // OpenGL texture for the font atlas
     int atlasWidth;               // Width of the font atlas
@@ -77,6 +78,19 @@ typedef struct
     float scale;                  // Font scaling factor
     stbtt_bakedchar charData[96]; // Holds character data for ASCII 32-127
 } nnFont;
+
+// Theme used by gui elements
+typedef struct
+{
+    nnColorf primaryColor;         // Main color for elements
+    nnColorf primaryColorAccent;   // Accent color for primary elements
+    nnColorf secondaryColor;       // Secondary elements (e.g., backgrounds)
+    nnColorf secondaryColorAccent; // Accent color for secondary elements
+    nnColorf borderColor;          // Border color
+    nnColorf borderColorAccent;    // Accent border color
+    nnColorf textPrimaryColor;     // Primary text color
+    nnColorf textSecondaryColor;   // Secondary text color
+} nnTheme;
 
 /*
  * Window Management
@@ -109,12 +123,6 @@ nnColorf nnGetColor();
 
 // Resets the color to default (1.0, 1.0, 1.0).
 void nnResetColor();
-
-// Clears the screen.
-void nnCls();
-
-// End rendering and swap buffers.
-void nnFlip();
 
 // Starts the main rendering loop.
 void nnRun();
@@ -208,11 +216,23 @@ void nnDrawRect(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf 
 // Load a font from a .ttf file
 nnFont *nnLoadFont(const char *filepath, float fontSize);
 
+// Load a font from a .ttf file
+nnFont *nnLoadFontMem(const unsigned char *data, size_t dataSize, float fontSize);
+
 // Set font for text rendering.
 void nnSetFont(nnFont *font);
 
+// Get the font that is currently set.
+nnFont *nnGetFont();
+
 // Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the default non-scalable font will be used.
 void nnDrawText(const char *format, int x, int y, ...);
+
+// Returns the width in pixels of the given string regarding the current font.
+float nnTextWidth(const char *format, ...);
+
+// Returns the height in pixels of the the current font.
+float nnTextHeight();
 
 // Free the given font.
 void nnFreeFont(nnFont *font);
@@ -271,10 +291,6 @@ nnPos nnGetMousePosition();
 // Returns the mouse motion delta (change in position) since the last frame.
 nnPos nnMouseMotionDelta();
 
-/*
- * Utility
- */
-
 // Load a file as bytes into a buffer and return the pointer to that buffer.
 unsigned char *nnLoadFileBytes(const char *filepath, int *size);
 
@@ -310,6 +326,8 @@ unsigned int nnMS;
 #include "internal/include/stb_image.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "internal/include/stb_truetype.h"
+
+#include "internal/include/default_font.h"
 
 #define _NN_MAX_KEYS 256
 #define _NN_MAX_MOUSE_BUTTONS 3
@@ -349,6 +367,17 @@ typedef struct
 
 } _nnState;
 
+static nnTheme _nnCurrentTheme = {
+    .primaryColor = {0.2f, 0.5f, 0.8f, 1.0f},         // Blue
+    .primaryColorAccent = {0.3f, 0.6f, 0.9f, 1.0f},   // Light Blue
+    .secondaryColor = {0.1f, 0.1f, 0.1f, 1.0f},       // Dark Gray
+    .secondaryColorAccent = {0.2f, 0.2f, 0.2f, 1.0f}, // Gray
+    .borderColor = {0.5f, 0.5f, 0.5f, 1.0f},          // Medium Gray
+    .borderColorAccent = {0.7f, 0.7f, 0.7f, 1.0f},    // Light Gray
+    .textPrimaryColor = {1.0f, 1.0f, 1.0f, 1.0f},     // White
+    .textSecondaryColor = {0.8f, 0.8f, 0.8f, 1.0f},   // Light Gray
+};
+
 _nnState _nnstate;
 
 // Define custom exit handlers
@@ -360,10 +389,15 @@ void _customExitFunction(int status)
 // Wrapper display function that calls the function pointer
 void _nnDisplayCallbackWrapper()
 {
+    glClear(GL_COLOR_BUFFER_BIT);
+
     if (_nnstate.displayCallback != NULL)
     {
         _nnstate.displayCallback();
     }
+
+    glutSwapBuffers();
+    glutMainLoopEvent();
 }
 
 void _customExitFunctionWithMessage(const char *msg, int status)
@@ -504,7 +538,7 @@ void _nnMouseMotionFunc(int x, int y)
     _nnstate.mousePosition = newMousePosition;
 }
 
-void _nnDrawTextDefaultFont(const char *format, int x, int y, ...)
+void _nnDrawTextFallback(const char *format, int x, int y, ...)
 {
     if (!format)
         return;
@@ -521,6 +555,81 @@ void _nnDrawTextDefaultFont(const char *format, int x, int y, ...)
     {
         glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *c);
     }
+}
+
+static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, float fontSize)
+{
+    nnFont *font = malloc(sizeof(nnFont));
+    if (!font)
+    {
+        printf("Failed to allocate memory for font.\n");
+        return NULL;
+    }
+
+    // Allocate and copy the font data into font buffer
+    font->fontBuffer = malloc(bufferSize);
+    if (!font->fontBuffer)
+    {
+        printf("Failed to allocate memory for font buffer.\n");
+        free(font);
+        return NULL;
+    }
+    memcpy(font->fontBuffer, fontBuffer, bufferSize);
+
+    // Initialize font info
+    if (!stbtt_InitFont(&font->fontInfo, font->fontBuffer, 0))
+    {
+        printf("Failed to initialize font.\n");
+        free(font->fontBuffer);
+        free(font);
+        return NULL;
+    }
+
+    // Calculate font scale
+    font->scale = stbtt_ScaleForPixelHeight(&font->fontInfo, fontSize);
+
+    // Calculate height from actual glyphs
+    int minY, maxY;
+    stbtt_GetCodepointBox(&font->fontInfo, 'A', NULL, &minY, NULL, &maxY); // Example for 'A' glyph
+    font->glyphHeight = font->scale * (maxY - minY);
+
+    // Create the font atlas
+    font->atlasWidth = 512;
+    font->atlasHeight = 512;
+
+    unsigned char *bitmap = calloc(1, font->atlasWidth * font->atlasHeight);
+    if (!bitmap)
+    {
+        printf("Failed to allocate memory for font atlas.\n");
+        free(font->fontBuffer);
+        free(font);
+        return NULL;
+    }
+
+    // Bake the font
+    stbtt_BakeFontBitmap(font->fontBuffer, 0, fontSize, bitmap, font->atlasWidth, font->atlasHeight, 32, 96, font->charData);
+
+    // Upload the atlas to OpenGL
+    glGenTextures(1, &font->textureID);
+    glBindTexture(GL_TEXTURE_2D, font->textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, font->atlasWidth, font->atlasHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap);
+
+    if (!_nnstate.filtered)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    free(bitmap);
+
+    return font;
 }
 
 /*******************************************************************************************************/
@@ -565,6 +674,9 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowSize(width, height);
     _nnstate.window = glutCreateWindow(title);
+
+    // Load a default font
+    _nnstate.font = _nnLoadFont(_nnRoboto_Regular_ttf_arr, _nnRoboto_Regular_ttf_arr_len, 24);
 
     /* Set the callbacks */
     glutKeyboardFunc(_nnKeyDownCallback);
@@ -644,17 +756,6 @@ void nnResetColor()
 {
     _nnstate.currentDrawColor = (nnColorf){1.0f, 1.0f, 1.0f, 1.0f};
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-}
-
-void nnCls()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
-void nnFlip()
-{
-    glutSwapBuffers();
-    glutMainLoopEvent();
 }
 
 void nnRun()
@@ -765,6 +866,10 @@ void nnDrawImage(nnImage image, int x, int y)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, image.textureID);
 
+    // Enable alpha blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glPushMatrix();
 
     // Translate to position
@@ -799,6 +904,7 @@ void nnDrawImage(nnImage image, int x, int y)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
 }
 
 void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)
@@ -811,6 +917,10 @@ void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, image.textureID);
+
+    // Enable alpha blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glPushMatrix();
 
@@ -850,6 +960,7 @@ void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
 }
 
 void nnFlipImage(nnImage *image, bool flipX, bool flipY)
@@ -1024,6 +1135,10 @@ void nnDrawPixmap(nnPixmap *pixmap, int x, int y)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, pixmap->textureID);
 
+    // Enable alpha blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glPushMatrix();
 
     // Translate to position
@@ -1058,6 +1173,7 @@ void nnDrawPixmap(nnPixmap *pixmap, int x, int y)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
 }
 
 void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY)
@@ -1145,6 +1261,7 @@ void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color)
     if (!pixmap || x < 0 || y < 0 || x >= pixmap->width || y >= pixmap->height)
         return;
 
+    y = pixmap->height - 1 - y; // Adjust y-coordinate for top-left origin
     pixmap->pixels[y * pixmap->width + x] = color;
 }
 
@@ -1368,19 +1485,10 @@ nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y)
 
 nnFont *nnLoadFont(const char *filepath, float fontSize)
 {
-    nnFont *font = malloc(sizeof(nnFont));
-    if (!font)
-    {
-        printf("Failed to allocate memory for font file: %s\n", filepath);
-        return NULL;
-    }
-
-    // Load the font file into memory
     FILE *file = fopen(filepath, "rb");
     if (!file)
     {
         printf("Failed to open font file: %s\n", filepath);
-        free(font);
         return NULL;
     }
 
@@ -1388,66 +1496,25 @@ nnFont *nnLoadFont(const char *filepath, float fontSize)
     size_t size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    font->fontBuffer = malloc(size);
-    if (!font->fontBuffer)
+    unsigned char *buffer = malloc(size);
+    if (!buffer)
     {
-        printf("Failed to allocate memory for font buffer.\n");
+        printf("Failed to allocate memory for font file: %s\n", filepath);
         fclose(file);
-        free(font);
         return NULL;
     }
-    fread(font->fontBuffer, 1, size, file);
+
+    fread(buffer, 1, size, file);
     fclose(file);
 
-    // Initialize font info
-    if (!stbtt_InitFont(&font->fontInfo, font->fontBuffer, 0))
-    {
-        printf("Failed to initialize font.\n");
-        free(font->fontBuffer);
-        free(font);
-        return NULL;
-    }
-
-    // Calculate font scale
-    font->scale = stbtt_ScaleForPixelHeight(&font->fontInfo, fontSize);
-
-    // Create the font atlas
-    font->atlasWidth = 512;
-    font->atlasHeight = 512;
-
-    unsigned char *bitmap = calloc(1, font->atlasWidth * font->atlasHeight);
-    if (!bitmap)
-    {
-        printf("Failed to allocate memory for font atlas.\n");
-        free(font->fontBuffer);
-        free(font);
-        return NULL;
-    }
-
-    // Bake the font
-    stbtt_BakeFontBitmap(font->fontBuffer, 0, fontSize, bitmap, font->atlasWidth, font->atlasHeight, 32, 96, font->charData);
-
-    // Upload the atlas to OpenGL
-    glGenTextures(1, &font->textureID);
-    glBindTexture(GL_TEXTURE_2D, font->textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, font->atlasWidth, font->atlasHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap);
-
-    if (!_nnstate.filtered)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
-    else
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    free(bitmap);
-
+    nnFont *font = _nnLoadFont(buffer, size, fontSize);
+    free(buffer);
     return font;
+}
+
+nnFont *nnLoadFontMem(const unsigned char *data, size_t dataSize, float fontSize)
+{
+    return _nnLoadFont(data, dataSize, fontSize);
 }
 
 void nnSetFont(nnFont *font)
@@ -1458,6 +1525,14 @@ void nnSetFont(nnFont *font)
     _nnstate.font = font;
 }
 
+nnFont *nnGetFont()
+{
+    if (!_nnstate.font)
+        return NULL;
+
+    return _nnstate.font;
+}
+
 void nnDrawText(const char *format, int x, int y, ...)
 {
     if (!format)
@@ -1465,7 +1540,7 @@ void nnDrawText(const char *format, int x, int y, ...)
 
     if (!_nnstate.font)
     {
-        _nnDrawTextDefaultFont(format, x, y);
+        _nnDrawTextFallback(format, x, y);
         return;
     }
 
@@ -1475,15 +1550,19 @@ void nnDrawText(const char *format, int x, int y, ...)
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
+    nnFont *font = _nnstate.font;
+    if (!font)
+        return;
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, _nnstate.font->textureID);
+    glBindTexture(GL_TEXTURE_2D, font->textureID);
 
     glBegin(GL_QUADS);
 
-    float tx = (float)x;
-    float ty = (float)y;
+    float cursorX = (float)x;
+    float cursorY = (float)(y + font->glyphHeight); // Adjust for font height
 
     for (char *c = buffer; *c != '\0'; c++)
     {
@@ -1491,7 +1570,7 @@ void nnDrawText(const char *format, int x, int y, ...)
             continue;
 
         stbtt_aligned_quad quad;
-        stbtt_GetBakedQuad(_nnstate.font->charData, _nnstate.font->atlasWidth, _nnstate.font->atlasHeight, *c - 32, &tx, &ty, &quad, 1);
+        stbtt_GetBakedQuad(font->charData, font->atlasWidth, font->atlasHeight, *c - 32, &cursorX, &cursorY, &quad, 1);
 
         glTexCoord2f(quad.s0, quad.t1);
         glVertex2f(quad.x0, quad.y1);
@@ -1507,6 +1586,56 @@ void nnDrawText(const char *format, int x, int y, ...)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+}
+
+float nnTextWidth(const char *format, ...)
+{
+    if (!format)
+    {
+        return 0.0f; // Return 0 for null text
+    }
+
+    char buffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    nnFont *font = nnGetFont();
+    if (!font)
+    {
+        printf("No font set. Returning default text width as 0.\n");
+        return 0.0f;
+    }
+
+    float width = 0.0f;
+    for (const char *c = buffer; *c != '\0'; c++)
+    {
+        if (*c < 32 || *c >= 128)
+        {
+            continue; // Skip non-ASCII characters
+        }
+
+        int advanceWidth, leftSideBearing;
+        stbtt_GetCodepointHMetrics(&font->fontInfo, *c, &advanceWidth, &leftSideBearing);
+
+        // Add the scaled advanceWidth to the total width
+        width += font->scale * advanceWidth;
+    }
+
+    return width;
+}
+
+float nnTextHeight()
+{
+    nnFont *font = nnGetFont();
+    if (!font)
+    {
+        printf("No font set. Returning default glyph height as 0.\n");
+        return 0.0f;
+    }
+    return font->glyphHeight;
 }
 
 void nnFreeFont(nnFont *font)
@@ -1702,6 +1831,73 @@ float nnLerp(float min, float max, float speed, float ease)
     }
 
     return currentValue;
+}
+
+/*
+ * GUI
+ */
+
+bool nnButton(const char *format, int x, int y, int width, int height, ...)
+{
+    // Get mouse state
+    nnPos mousePos = nnGetMousePosition();
+    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
+    bool pressed = hovered && nnMouseDown(0);      // Left mouse button down
+    bool released = hovered && nnMouseReleased(0); // Left mouse button released
+
+    // Determine button color based on state
+    nnColorf bgColor = pressed ? _nnCurrentTheme.primaryColorAccent
+                               : (hovered ? _nnCurrentTheme.secondaryColorAccent
+                                          : _nnCurrentTheme.primaryColor);
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+
+    // Draw button background quad
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw button border
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw button text
+    if (format)
+    {
+        char buffer[1024];
+        va_list args;
+        va_start(args, height);
+        vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+
+        int tw = (int)nnTextWidth(buffer);
+        int th = (int)nnTextHeight();
+
+        // Calculate the true centered position
+        int textX = x + (width / 2 - tw / 2);
+        int textY = y + (height / 2 - th / 2);
+
+        // Draw the text
+        glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+        nnDrawText(buffer, textX, textY);
+    }
+
+    glDisable(GL_BLEND);
+
+    // Return true if the button was just released while hovered
+    return released;
 }
 
 #endif // NONOGL_IMPLEMENTATION

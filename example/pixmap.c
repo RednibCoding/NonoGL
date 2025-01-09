@@ -15,10 +15,8 @@ void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
 
-    nnCls();
-
-    int x = 200;
-    int y = 200;
+    int x = 000;
+    int y = 000;
 
     nnDrawPixmap(pixmap, x, y);
     nnDrawPixmap(copyDown, x, y + 34);
@@ -27,8 +25,6 @@ void render()
 
     nnDrawPixmap(pixmapRot, 250, 350);
     nnRotatePixmap(pixmapRot, pixmapRot->angle + 10.0f * nnDT);
-
-    nnFlip(); // Swap buffers to display the scene
 }
 
 int main()

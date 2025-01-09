@@ -4,19 +4,11 @@
 #define NONOGL_IMPLEMENTATION
 #include "../nonogl/ngl.h"
 
-nnFont *font;
-
 void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
 
-    nnSetColor((nnColorf){1.0f, 0.5f, 0.8f, 1.0f});
-    nnDrawText("NonoGL", 200, 200);
-
-    nnSetColor((nnColorf){1.0f, 1.0f, 0.0f, 1.0f});
-    nnDrawText("FPS: %d", 200, 370, nnFPS);
-    nnDrawText("Delta Time: %f", 200, 400, nnDT);
-    nnResetColor();
+    nnButton("Button", 120, 120, 120, 50);
 }
 
 int main()
@@ -28,19 +20,9 @@ int main()
         return -1;
     }
 
-    font = nnLoadFont("./assets/Roboto-Regular.ttf", 24.0f);
-    if (!font)
-    {
-        printf("Failed to load font.\n");
-        return -1;
-    }
-
-    nnSetFont(font);
-
     nnSetRenderFunc(render); // Set the render callback
     nnRun();                 // Start the rendering loop
 
-    nnFreeFont(font);
     nnDestroyWindow(); // Cleanup resources
     return 0;
 }
