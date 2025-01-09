@@ -414,11 +414,11 @@ int main()
   Vertical slider that returns the current set value.
 
 - **`int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width)`**
-  Horizontal progress bar that returns the current fill state in percentage.-
+  Horizontal progress bar that returns the current fill state in percent.
   `deltaFillState` determines how much the fillstate should increase/decrease.
 
 - **`int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width)`**
-  Vertical progress bar that returns the current fill state in percentage.-
+  Vertical progress bar that returns the current fill state in percent.
   `deltaFillState` determines how much the fillstate should increase/decrease.
 
 - **`int nnDropdown(const char \*buttonText, const char \*\*options, int numOptions, int x, int y, int width, int height)`**
