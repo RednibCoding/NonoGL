@@ -25,12 +25,14 @@ void render()
     }
 
     int fillStatePercentage = nnHProgressbar(0, 220, fillAmount, 400, 128, 180);
-    int fillStatePercentage2 = nnHProgressbar(0, 220, 0, 400, 328, 180);
+    int fillStatePercentage2 = nnHProgressbar(0, 220, fillAmount, 400, 350, 180);
     float textLen = nnTextWidth("Progress %d%%", fillStatePercentage);
     nnVProgressbar(0, 220, fillAmount, 490 + textLen / 2 + 5, 95, 25);
     nnDrawText("Progress %d%%", 490 - textLen / 2, 100, fillStatePercentage);
 
-    bool checked = nnCheckbox("Checkbox", true, 120, 180);
+    bool checked1 = nnCheckbox("Checkbox 1", true, 120, 180);
+    bool checked2 = nnCheckbox("Checkbox 2", true, 120, 250);
+
     float hSliderVal = nnHSlider(0.0f, 100.0f, 50.0f, 5.0f, 120, 220, 200);
     float vSliderVal = nnVSlider(0.0f, 100.0f, 50.0f, 5.0f, 80, 120, 200);
 

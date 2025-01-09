@@ -225,7 +225,7 @@ void nnSetFont(nnFont *font);
 // Get the font that is currently set.
 nnFont *nnGetFont();
 
-// Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the default non-scalable font will be used.
+// Render the given formatted text using the font set with `nnSetFont`. If no font has been set, the internal default font will be used.
 void nnDrawText(const char *format, int x, int y, ...);
 
 // Returns the width in pixels of the given string regarding the current font.
@@ -335,12 +335,12 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
 // Vertical slider that returns the current set value.
 float nnVSlider(float min, float max, float initial, float step, int x, int y, int height);
 
-// Horizontal progress bar that returns the current fill state in percentage.
-// `deltaFillState` determines how much the fillstate should increase/decrease.
+// Horizontal progress bar that returns the current fill state in percent.
+// `deltaFillState` determines how much the fillstate should increase/decrease on the next call.
 int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
 
-// Vertical progress bar that returns the current fill state in percentage.
-// `deltaFillState` determines how much the fillstate should increase/decrease.
+// Vertical progress bar that returns the current fill state in percent.
+// `deltaFillState` determines how much the fillstate should increase/decrease on the next call.
 int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
 
 // A dropdown with a list of options to choose from. Returns the selected index.
@@ -420,6 +420,36 @@ static nnTheme _nnCurrentTheme = {
 typedef struct
 {
     unsigned int id;
+    bool isChecked; // Track check state
+} _nnCheckboxState;
+
+#define _NN_MAX_CHECKBOX_STATES 64
+static _nnCheckboxState _nnCheckboxStates[_NN_MAX_CHECKBOX_STATES];
+static int _nnCheckboxStateCount = 0;
+
+typedef struct
+{
+    unsigned int id;
+    float value; // Track value state
+} _nnSliderState;
+
+#define _NN_MAX_SLIDER_STATES 64
+static _nnSliderState _nnSliderStates[_NN_MAX_SLIDER_STATES];
+static int _nnSliderStateCount = 0;
+
+typedef struct
+{
+    unsigned int id;
+    float fillState; // Track fillState state
+} _nnProgressbarState;
+
+#define _NN_MAX_PROGRESSBAR_STATES 64
+static _nnProgressbarState _nnProgressbarStates[_NN_MAX_PROGRESSBAR_STATES];
+static int _nnProgressbarStateCount = 0;
+
+typedef struct
+{
+    unsigned int id;
     bool initialized;  // Track initialization of the button text
     bool isOpen;       // Whether the dropdown list is open
     int selectedIndex; // Selected option index (-1 means no selection)
@@ -448,13 +478,13 @@ unsigned int _nnGenUID(int x, int y)
 }
 
 // Define custom exit handlers
-void _customExitFunction(int status)
+static void _customExitFunction(int status)
 {
     exit(status);
 }
 
 // Wrapper display function that calls the function pointer
-void _nnDisplayCallbackWrapper()
+static void _nnDisplayCallbackWrapper()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -470,7 +500,7 @@ void _nnDisplayCallbackWrapper()
     glutMainLoopEvent();
 }
 
-void _customExitFunctionWithMessage(const char *msg, int status)
+static void _customExitFunctionWithMessage(const char *msg, int status)
 {
     if (msg)
     {
@@ -479,12 +509,12 @@ void _customExitFunctionWithMessage(const char *msg, int status)
     exit(status);
 }
 
-void _nnSpecialKeyCallback(int key, int x, int y)
+static void _nnSpecialKeyCallback(int key, int x, int y)
 {
     // Handle special keys here
 }
 
-void _nnSetupOrthoProjection(int width, int height)
+static void _nnSetupOrthoProjection(int width, int height)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -493,14 +523,14 @@ void _nnSetupOrthoProjection(int width, int height)
     glLoadIdentity();
 }
 
-void _nnSetScale(float scaleX, float scaleY)
+static void _nnSetScale(float scaleX, float scaleY)
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glScalef(scaleX, scaleY, 1.0f);
 }
 
-void _nnUpdateScale(int width, int height, int shouldUpdate)
+static void _nnUpdateScale(int width, int height, int shouldUpdate)
 {
     if (shouldUpdate != 0)
     {
@@ -510,7 +540,7 @@ void _nnUpdateScale(int width, int height, int shouldUpdate)
     }
 }
 
-void _nnFramebufferSizeCallback(int width, int height)
+static void _nnFramebufferSizeCallback(int width, int height)
 {
     _nnstate.windowWidth = width;
     _nnstate.windowHeight = height;
@@ -519,7 +549,7 @@ void _nnFramebufferSizeCallback(int width, int height)
     _nnUpdateScale(width, height, _nnstate.virtual);
 }
 
-void _nnTimerCallback(int value)
+static void _nnTimerCallback(int value)
 {
     // Parameters for FPS averaging
 #define _NN_FPS_BUFFER_SIZE 20                          // Number of frames to average over
@@ -561,7 +591,7 @@ void _nnTimerCallback(int value)
     glutTimerFunc(1000 / _nnstate.targetFPS, _nnTimerCallback, 0);
 }
 
-void _nnKeyDownCallback(unsigned char key, int x, int y)
+static void _nnKeyDownCallback(unsigned char key, int x, int y)
 {
     if (!_nnstate.keys[key])
     {
@@ -570,13 +600,13 @@ void _nnKeyDownCallback(unsigned char key, int x, int y)
     _nnstate.keys[key] = true;
 }
 
-void _nnKeyUpCallback(unsigned char key, int x, int y)
+static void _nnKeyUpCallback(unsigned char key, int x, int y)
 {
     _nnstate.keys[key] = false;
     _nnstate.keysReleased[key] = true;
 }
 
-void _nnMouseButtonCallback(int button, int state, int x, int y)
+static void _nnMouseButtonCallback(int button, int state, int x, int y)
 {
     if (button < _NN_MAX_MOUSE_BUTTONS)
     {
@@ -596,12 +626,12 @@ void _nnMouseButtonCallback(int button, int state, int x, int y)
     }
 }
 
-void _nnMouseWheelFunc(int wheel, int direction, int x, int y)
+static void _nnMouseWheelFunc(int wheel, int direction, int x, int y)
 {
     _nnstate.mouseWheelDelta = direction; // +1 for up, -1 for down
 }
 
-void _nnMouseMotionFunc(int x, int y)
+static void _nnMouseMotionFunc(int x, int y)
 {
     // Motion delta
     nnPos newMousePosition = {(float)x / _nnstate.windowScaleX, (float)y / _nnstate.windowScaleY};
@@ -610,7 +640,7 @@ void _nnMouseMotionFunc(int x, int y)
     _nnstate.mousePosition = newMousePosition;
 }
 
-void _nnDrawTextFallback(const char *format, int x, int y, ...)
+static void _nnDrawTextFallback(const char *format, int x, int y, ...)
 {
     if (!format)
         return;
@@ -713,7 +743,7 @@ static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, f
     return font;
 }
 
-void _nnDrawTextZIndexed(const char *format, int x, int y, float zIndex, ...)
+static void _nnDrawTextZIndexed(const char *format, int x, int y, float zIndex, ...)
 {
     if (!format)
         return;
@@ -771,7 +801,9 @@ void _nnDrawTextZIndexed(const char *format, int x, int y, float zIndex, ...)
 
 /*******************************************************************************************************/
 /*******************************************************************************************************/
+
 // Public api function implementations
+
 /*******************************************************************************************************/
 /*******************************************************************************************************/
 
@@ -2047,15 +2079,29 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...)
 
 bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
 {
-    // Static variable to hold the checkbox's state
-    static bool checked = false;
-    static bool initialized = false;
+    // Unique ID based on position or override
+    unsigned int id = _nnGenUID(x, y);
 
-    // Initialize the checkbox state only once
-    if (!initialized)
+    // Find or initialize checkbox state
+    _nnCheckboxState *state = NULL;
+    for (int i = 0; i < _nnCheckboxStateCount; i++)
     {
-        checked = isChecked;
-        initialized = true;
+        if (_nnCheckboxStates[i].id == id)
+        {
+            state = &_nnCheckboxStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnCheckboxStateCount >= _NN_MAX_CHECKBOX_STATES)
+        {
+            printf("Error: Too many checkboxes! Increase _NN_MAX_CHECKBOX_STATES.\n");
+            return -1;
+        }
+        state = &_nnCheckboxStates[_nnCheckboxStateCount++];
+        state->id = id;
+        state->isChecked = isChecked;
     }
 
     // Dimensions for the checkbox
@@ -2088,7 +2134,7 @@ bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
     // Update checkbox state
     if (released)
     {
-        checked = !checked;
+        state->isChecked = !state->isChecked;
     }
 
     // Draw the checkbox
@@ -2121,7 +2167,7 @@ bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
     glEnd();
 
     // Fill the checkbox with a margin if checked
-    if (checked)
+    if (state->isChecked)
     {
         glBegin(GL_QUADS);
         glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
@@ -2143,7 +2189,7 @@ bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
     nnDrawText(buffer, textX, textY);
 
     // Return the current state
-    return checked;
+    return state->isChecked;
 }
 
 float nnHSlider(float min, float max, float initial, float step, int x, int y, int width)
@@ -2154,19 +2200,35 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
         return 0;
     }
 
-    static float value = 0.0f;
-    static bool initialized = false;
-    float height = 16;
+    // Unique ID based on position or override
+    unsigned int id = _nnGenUID(x, y);
 
-    // Initialize the slider's value only once
-    if (!initialized)
+    // Find or initialize slider state
+    _nnSliderState *state = NULL;
+    for (int i = 0; i < _nnSliderStateCount; i++)
     {
-        value = initial;
-        initialized = true;
+        if (_nnSliderStates[i].id == id)
+        {
+            state = &_nnSliderStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnSliderStateCount >= _NN_MAX_SLIDER_STATES)
+        {
+            printf("Error: Too many sliders! Increase _NN_MAX_SLIDER_STATES.\n");
+            return -1;
+        }
+        state = &_nnSliderStates[_nnSliderStateCount++];
+        state->id = id;
+        state->value = initial;
     }
 
+    float height = 16;
+
     // Ensure the value is clamped between min and max
-    value = fmaxf(min, fminf(max, value));
+    state->value = fmaxf(min, fminf(max, state->value));
 
     // Get mouse state
     nnPos mousePos = nnGetMousePosition();
@@ -2178,12 +2240,12 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
     {
         float relativeX = mousePos.x - x;
         float proportion = fmaxf(0, fminf(1, relativeX / width));
-        value = min + proportion * (max - min);
-        value = roundf(value / step) * step; // Apply step resolution
+        state->value = min + proportion * (max - min);
+        state->value = roundf(state->value / step) * step; // Apply step resolution
     }
 
     // Calculate the knob position
-    float proportion = (value - min) / (max - min);
+    float proportion = (state->value - min) / (max - min);
     int knobX = x + (int)(proportion * width);
 
     // Draw the slider bar
@@ -2237,7 +2299,7 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
 
     nnSetColor(nnGetColor());
 
-    return value;
+    return state->value;
 }
 
 float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)
@@ -2248,19 +2310,35 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
         return 0;
     }
 
-    static float value = 0.0f;
-    static bool initialized = false;
-    float width = 16;
+    // Unique ID based on position or override
+    unsigned int id = _nnGenUID(x, y);
 
-    // Initialize the slider's value only once
-    if (!initialized)
+    // Find or initialize slider state
+    _nnSliderState *state = NULL;
+    for (int i = 0; i < _nnSliderStateCount; i++)
     {
-        value = initial;
-        initialized = true;
+        if (_nnSliderStates[i].id == id)
+        {
+            state = &_nnSliderStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnSliderStateCount >= _NN_MAX_SLIDER_STATES)
+        {
+            printf("Error: Too many sliders! Increase _NN_MAX_SLIDER_STATES.\n");
+            return -1;
+        }
+        state = &_nnSliderStates[_nnSliderStateCount++];
+        state->id = id;
+        state->value = initial;
     }
 
+    float width = 16;
+
     // Ensure the value is clamped between min and max
-    value = fmaxf(min, fminf(max, value));
+    state->value = fmaxf(min, fminf(max, state->value));
 
     // Get mouse state
     nnPos mousePos = nnGetMousePosition();
@@ -2272,12 +2350,12 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
     {
         float relativeY = mousePos.y - y;
         float proportion = fmaxf(0, fminf(1, 1.0f - (relativeY / height)));
-        value = min + proportion * (max - min);
-        value = roundf(value / step) * step; // Apply step resolution
+        state->value = min + proportion * (max - min);
+        state->value = roundf(state->value / step) * step; // Apply step resolution
     }
 
     // Calculate the knob position
-    float proportion = (value - min) / (max - min);
+    float proportion = (state->value - min) / (max - min);
     int knobY = y + height - (int)(proportion * height);
 
     // Draw the slider bar
@@ -2330,7 +2408,7 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
     glDisable(GL_BLEND);
 
     nnSetColor(nnGetColor());
-    return value;
+    return state->value;
 }
 
 int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width)
@@ -2341,32 +2419,43 @@ int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int
         return 0;
     }
 
-    // Static fillState to retain its value across calls
-    static float fillState = 0.0f;
+    // Unique ID based on position or override
+    unsigned int id = _nnGenUID(x, y);
 
-    // Initialize fillState if it's the first call
-    static bool initialized = false;
-    if (!initialized)
+    // Find or initialize progressbar state
+    _nnProgressbarState *state = NULL;
+    for (int i = 0; i < _nnProgressbarStateCount; i++)
     {
-        fillState = min;
-        initialized = true;
+        if (_nnProgressbarStates[i].id == id)
+        {
+            state = &_nnProgressbarStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnProgressbarStateCount >= _NN_MAX_PROGRESSBAR_STATES)
+        {
+            printf("Error: Too many progressbars! Increase _NN_MAX_PROGRESSBAR_STATES.\n");
+            return -1;
+        }
+        state = &_nnProgressbarStates[_nnProgressbarStateCount++];
+        state->id = id;
+        state->fillState = 0.0;
     }
 
     // Adjust the fillState by the delta provided
-    fillState += deltaFillState;
+    state->fillState += deltaFillState;
 
     // Clamp the internal fillState within the range [min, max]
-    if (fillState < min)
-        fillState = min;
-    if (fillState > max)
-        fillState = max;
-
-    // Reset delta after applying it
-    deltaFillState = 0;
+    if (state->fillState < min)
+        state->fillState = min;
+    if (state->fillState > max)
+        state->fillState = max;
 
     // Calculate the percentage fill state
     float range = max - min;
-    float percentage = (fillState - min) / range;
+    float percentage = (state->fillState - min) / range;
     int filledWidth = (int)(percentage * width);
 
     // Draw the progress bar background (secondary color)
@@ -2417,32 +2506,43 @@ int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int
         return 0;
     }
 
-    // Static fillState to retain its value across calls
-    static float fillState = 0.0f;
+    // Unique ID based on position or override
+    unsigned int id = _nnGenUID(x, y);
 
-    // Initialize fillState if it's the first call
-    static bool initialized = false;
-    if (!initialized)
+    // Find or initialize progressbar state
+    _nnProgressbarState *state = NULL;
+    for (int i = 0; i < _nnProgressbarStateCount; i++)
     {
-        fillState = min;
-        initialized = true;
+        if (_nnProgressbarStates[i].id == id)
+        {
+            state = &_nnProgressbarStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnProgressbarStateCount >= _NN_MAX_PROGRESSBAR_STATES)
+        {
+            printf("Error: Too many progressbars! Increase _NN_MAX_PROGRESSBAR_STATES.\n");
+            return -1;
+        }
+        state = &_nnProgressbarStates[_nnProgressbarStateCount++];
+        state->id = id;
+        state->fillState = 0.0;
     }
 
     // Adjust the fillState by the delta provided
-    fillState += deltaFillState;
+    state->fillState += deltaFillState;
 
     // Clamp the internal fillState within the range [min, max]
-    if (fillState < min)
-        fillState = min;
-    if (fillState > max)
-        fillState = max;
-
-    // Reset delta after applying it
-    deltaFillState = 0;
+    if (state->fillState < min)
+        state->fillState = min;
+    if (state->fillState > max)
+        state->fillState = max;
 
     // Calculate the percentage fill state
     float range = max - min;
-    float percentage = (fillState - min) / range;
+    float percentage = (state->fillState - min) / range;
     int filledHeight = (int)(percentage * height);
 
     // Draw the progress bar background (secondary color)
@@ -2513,7 +2613,6 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
         state->selectedIndex = -1;
         state->scrollOffset = 0;
         state->initialized = false;
-        printf("New state created. ID: %d\n", state->id);
     }
 
     const int maxVisibleOptions = 10;
@@ -2771,10 +2870,10 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             nnColorf scrollbarFgColor = _nnCurrentTheme.primaryColor; // Scrollbar color
             glBegin(GL_QUADS);
             glColor4f(scrollbarFgColor.r, scrollbarFgColor.g, scrollbarFgColor.b, scrollbarFgColor.a);
-            glVertex2f(scrollbarX, scrollbarY);
-            glVertex2f(scrollbarX + 2, scrollbarY);
-            glVertex2f(scrollbarX + 2, scrollbarY + scrollbarHeight);
-            glVertex2f(scrollbarX, scrollbarY + scrollbarHeight);
+            glVertex3f(scrollbarX, scrollbarY, _NN_Z_INDEX_POPUP);
+            glVertex3f(scrollbarX + 2, scrollbarY, _NN_Z_INDEX_POPUP);
+            glVertex3f(scrollbarX + 2, scrollbarY + scrollbarHeight, _NN_Z_INDEX_POPUP);
+            glVertex3f(scrollbarX, scrollbarY + scrollbarHeight, _NN_Z_INDEX_POPUP);
             glEnd();
         }
     }

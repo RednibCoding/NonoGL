@@ -421,11 +421,11 @@ int main()
 
 - **`int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width)`**
   Horizontal progress bar that returns the current fill state in percent.
-  `deltaFillState` determines how much the fillstate should increase/decrease.
+  `deltaFillState` determines how much the fillstate should increase/decrease on the next call.
 
 - **`int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width)`**
   Vertical progress bar that returns the current fill state in percent.
-  `deltaFillState` determines how much the fillstate should increase/decrease.
+  `deltaFillState` determines how much the fillstate should increase/decrease on the next call.
 
 - **`int nnDropdown(const char \*buttonText, const char \*\*options, int numOptions, int x, int y, int width, int height)`**
   A dropdown with a list of options to choose from. Returns the selected index.
