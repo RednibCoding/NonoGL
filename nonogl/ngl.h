@@ -291,6 +291,10 @@ nnPos nnGetMousePosition();
 // Returns the mouse motion delta (change in position) since the last frame.
 nnPos nnMouseMotionDelta();
 
+/*
+ * Utility
+ */
+
 // Load a file as bytes into a buffer and return the pointer to that buffer.
 unsigned char *nnLoadFileBytes(const char *filepath, int *size);
 
@@ -306,8 +310,32 @@ int nnFPS;
 // Holds the delta time (time elapsed since the last frame).
 float nnDT;
 
-// Time in milliseconds since the application started
+// Time in milliseconds since the application started.
 unsigned int nnMS;
+
+/*
+ * GUI
+ */
+
+// Button that returns `true` when it has been clicked.
+bool nnButton(const char *format, int x, int y, int width, int height, ...);
+
+// Checkbox that returns `true` when it is checked, otherwise `false`
+bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...);
+
+// Horizontal slider that returns the current set value.
+float nnVSlider(float min, float max, float initial, float step, int x, int y, int height);
+
+// Vertical slider that returns the current set value.
+float nnVSlider(float min, float max, float initial, float step, int x, int y, int height);
+
+// Horizontal progress bar that returns the current fill state in percentage.
+// `deltaFillState` determines how much the fillstate should increase/decrease.
+int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width);
+
+// Vertical progress bar that returns the current fill state in percentage.
+// `deltaFillState` determines how much the fillstate should increase/decrease.
+int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width);
 
 /******************************************************************************************************************************/
 /*  End of Public API */
@@ -386,6 +414,22 @@ void _customExitFunction(int status)
     exit(status);
 }
 
+// Resets all keystates and mouse states.
+void nnFlushKeys()
+{
+    for (int key = 0; key < _NN_MAX_KEYS; key++)
+    {
+        _nnstate.keysPressed[key] = false;
+        _nnstate.keysReleased[key] = false;
+    }
+
+    for (int button = 0; button < _NN_MAX_MOUSE_BUTTONS; button++)
+    {
+        _nnstate.mouseButtonsPressed[button] = false;
+        _nnstate.mouseButtonsReleased[button] = false;
+    }
+}
+
 // Wrapper display function that calls the function pointer
 void _nnDisplayCallbackWrapper()
 {
@@ -395,6 +439,8 @@ void _nnDisplayCallbackWrapper()
     {
         _nnstate.displayCallback();
     }
+
+    nnFlushKeys();
 
     glutSwapBuffers();
     glutMainLoopEvent();
@@ -726,8 +772,7 @@ void nnSetTargetFPS(int fps)
 
 void nnSetWindowTitle(const char *format, ...)
 {
-    char buffer[256];
-
+    char buffer[256] = {0};
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof(buffer), format, args);
@@ -1842,12 +1887,12 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...)
     // Get mouse state
     nnPos mousePos = nnGetMousePosition();
     bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
-    bool pressed = hovered && nnMouseDown(0);      // Left mouse button down
-    bool released = hovered && nnMouseReleased(0); // Left mouse button released
+    bool pressed = hovered && nnMouseDown(0);
+    bool released = hovered && nnMouseReleased(0);
 
     // Determine button color based on state
-    nnColorf bgColor = pressed ? _nnCurrentTheme.primaryColorAccent
-                               : (hovered ? _nnCurrentTheme.secondaryColorAccent
+    nnColorf bgColor = pressed ? _nnCurrentTheme.secondaryColorAccent
+                               : (hovered ? _nnCurrentTheme.primaryColorAccent
                                           : _nnCurrentTheme.primaryColor);
     nnColorf borderColor = _nnCurrentTheme.borderColor;
     nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
@@ -1876,7 +1921,7 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...)
     // Draw button text
     if (format)
     {
-        char buffer[1024];
+        char buffer[256] = {0};
         va_list args;
         va_start(args, height);
         vsnprintf(buffer, sizeof(buffer), format, args);
@@ -1896,8 +1941,450 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...)
 
     glDisable(GL_BLEND);
 
+    nnSetColor(nnGetColor());
+
     // Return true if the button was just released while hovered
     return released;
+}
+
+bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
+{
+    // Static variable to hold the checkbox's state
+    static bool checked = false;
+    static bool initialized = false;
+
+    // Initialize the checkbox state only once
+    if (!initialized)
+    {
+        checked = isChecked;
+        initialized = true;
+    }
+
+    // Dimensions for the checkbox
+    int checkboxSize = 20; // Square checkbox size
+    int spacing = 8;       // Space between checkbox and label
+    int margin = 1;        // Margin for the filled area
+
+    char buffer[256] = {0};
+    if (format)
+    {
+        va_list args;
+        va_start(args, y);
+        vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+    }
+
+    // Calculate text dimensions
+    float textWidth = nnTextWidth(buffer);
+    float textHeight = nnTextHeight();
+
+    // Total clickable area
+    int clickableWidth = checkboxSize + spacing + (int)textWidth;
+    int clickableHeight = checkboxSize > textHeight ? checkboxSize : (int)textHeight;
+
+    // Get mouse state
+    nnPos mousePos = nnGetMousePosition();
+    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, clickableWidth, clickableHeight});
+    bool released = hovered && nnMouseReleased(0);
+
+    // Update checkbox state
+    if (released)
+    {
+        checked = !checked;
+    }
+
+    // Draw the checkbox
+    nnColorf boxColor = hovered ? _nnCurrentTheme.secondaryColorAccent
+                                : _nnCurrentTheme.secondaryColor;
+    nnColorf fillColor = hovered ? _nnCurrentTheme.primaryColorAccent
+                                 : _nnCurrentTheme.primaryColor;
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+
+    // Background of the checkbox (base color)
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_QUADS);
+    glColor4f(boxColor.r, boxColor.g, boxColor.b, boxColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + checkboxSize, y);
+    glVertex2f(x + checkboxSize, y + checkboxSize);
+    glVertex2f(x, y + checkboxSize);
+    glEnd();
+
+    // Border of the checkbox
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + checkboxSize, y);
+    glVertex2f(x + checkboxSize, y + checkboxSize);
+    glVertex2f(x, y + checkboxSize);
+    glEnd();
+
+    // Fill the checkbox with a margin if checked
+    if (checked)
+    {
+        glBegin(GL_QUADS);
+        glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+        glVertex2f(x + margin, y + margin);
+        glVertex2f(x + checkboxSize - margin * 2, y + margin);
+        glVertex2f(x + checkboxSize - margin * 2, y + checkboxSize - margin * 2);
+        glVertex2f(x + margin, y + checkboxSize - margin * 2);
+        glEnd();
+    }
+
+    // Draw the label text
+    int textX = x + checkboxSize + spacing;
+    int textY = y + (checkboxSize - textHeight) / 2; // Vertically center text with checkbox
+    glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+
+    glDisable(GL_BLEND);
+
+    nnSetColor(nnGetColor());
+    nnDrawText(buffer, textX, textY);
+
+    // Return the current state
+    return checked;
+}
+
+float nnHSlider(float min, float max, float initial, float step, int x, int y, int width)
+{
+    if (min >= max)
+    {
+        printf("Error: min must be less than max.\n");
+        return 0;
+    }
+
+    static float value = 0.0f;
+    static bool initialized = false;
+    float height = 16;
+
+    // Initialize the slider's value only once
+    if (!initialized)
+    {
+        value = initial;
+        initialized = true;
+    }
+
+    // Ensure the value is clamped between min and max
+    value = fmaxf(min, fminf(max, value));
+
+    // Get mouse state
+    nnPos mousePos = nnGetMousePosition();
+    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, 16});
+    bool dragging = hovered && nnMouseDown(0);
+
+    // Handle dragging
+    if (dragging)
+    {
+        float relativeX = mousePos.x - x;
+        float proportion = fmaxf(0, fminf(1, relativeX / width));
+        value = min + proportion * (max - min);
+        value = roundf(value / step) * step; // Apply step resolution
+    }
+
+    // Calculate the knob position
+    float proportion = (value - min) / (max - min);
+    int knobX = x + (int)(proportion * width);
+
+    // Draw the slider bar
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Draw the filled portion
+    nnColorf fillColor = hovered ? _nnCurrentTheme.primaryColorAccent : _nnCurrentTheme.primaryColor;
+    glBegin(GL_QUADS);
+    glColor4f(fillColor.r, fillColor.g,
+              fillColor.b, fillColor.a);
+    glVertex2f(x, y);
+    glVertex2f(knobX, y);
+    glVertex2f(knobX, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw the unfilled portion
+    nnColorf unfilledColor = hovered ? _nnCurrentTheme.secondaryColorAccent : _nnCurrentTheme.secondaryColor;
+    glBegin(GL_QUADS);
+    glColor4f(unfilledColor.r, unfilledColor.g,
+              unfilledColor.b, unfilledColor.a);
+    glVertex2f(knobX, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(knobX, y + height);
+    glEnd();
+
+    // Draw the border
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw the knob
+    nnColorf knobColor = hovered ? _nnCurrentTheme.borderColorAccent : _nnCurrentTheme.borderColor;
+    glBegin(GL_QUADS);
+    glColor4f(knobColor.r, knobColor.g,
+              knobColor.b, knobColor.a);
+    glVertex2f(knobX - 4, y - 2);
+    glVertex2f(knobX + 4, y - 2);
+    glVertex2f(knobX + 4, y + height + 2);
+    glVertex2f(knobX - 4, y + height + 2);
+    glEnd();
+
+    glDisable(GL_BLEND);
+
+    nnSetColor(nnGetColor());
+
+    return value;
+}
+
+float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)
+{
+    if (min >= max)
+    {
+        printf("Error: min must be less than max.\n");
+        return 0;
+    }
+
+    static float value = 0.0f;
+    static bool initialized = false;
+    float width = 16;
+
+    // Initialize the slider's value only once
+    if (!initialized)
+    {
+        value = initial;
+        initialized = true;
+    }
+
+    // Ensure the value is clamped between min and max
+    value = fmaxf(min, fminf(max, value));
+
+    // Get mouse state
+    nnPos mousePos = nnGetMousePosition();
+    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, 16, height});
+    bool dragging = hovered && nnMouseDown(0);
+
+    // Handle dragging
+    if (dragging)
+    {
+        float relativeY = mousePos.y - y;
+        float proportion = fmaxf(0, fminf(1, 1.0f - (relativeY / height)));
+        value = min + proportion * (max - min);
+        value = roundf(value / step) * step; // Apply step resolution
+    }
+
+    // Calculate the knob position
+    float proportion = (value - min) / (max - min);
+    int knobY = y + height - (int)(proportion * height);
+
+    // Draw the slider bar
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Draw the filled portion
+    nnColorf fillColor = hovered ? _nnCurrentTheme.primaryColorAccent : _nnCurrentTheme.primaryColor;
+    glBegin(GL_QUADS);
+    glColor4f(fillColor.r, fillColor.g,
+              fillColor.b, fillColor.a);
+    glVertex2f(x, y + height);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x + width, knobY);
+    glVertex2f(x, knobY);
+    glEnd();
+
+    // Draw the unfilled portion
+    nnColorf unfilledColor = hovered ? _nnCurrentTheme.secondaryColorAccent : _nnCurrentTheme.secondaryColor;
+    glBegin(GL_QUADS);
+    glColor4f(unfilledColor.r, unfilledColor.g,
+              unfilledColor.b, unfilledColor.a);
+    glVertex2f(x, knobY);
+    glVertex2f(x + width, knobY);
+    glVertex2f(x + width, y);
+    glVertex2f(x, y);
+    glEnd();
+
+    // Draw the border
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw the knob
+    nnColorf knobColor = hovered ? _nnCurrentTheme.borderColorAccent : _nnCurrentTheme.borderColor;
+    glBegin(GL_QUADS);
+    glColor4f(knobColor.r, knobColor.g,
+              knobColor.b, knobColor.a);
+    glVertex2f(x - 2, knobY - 4);
+    glVertex2f(x + width + 2, knobY - 4);
+    glVertex2f(x + width + 2, knobY + 4);
+    glVertex2f(x - 2, knobY + 4);
+    glEnd();
+
+    glDisable(GL_BLEND);
+
+    nnSetColor(nnGetColor());
+    return value;
+}
+
+int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width)
+{
+    if (min >= max)
+    {
+        printf("Error: min must be less than max.\n");
+        return 0;
+    }
+
+    // Static fillState to retain its value across calls
+    static float fillState = 0.0f;
+
+    // Initialize fillState if it's the first call
+    static bool initialized = false;
+    if (!initialized)
+    {
+        fillState = min;
+        initialized = true;
+    }
+
+    // Adjust the fillState by the delta provided
+    fillState += deltaFillState;
+
+    // Clamp the internal fillState within the range [min, max]
+    if (fillState < min)
+        fillState = min;
+    if (fillState > max)
+        fillState = max;
+
+    // Reset delta after applying it
+    deltaFillState = 0;
+
+    // Calculate the percentage fill state
+    float range = max - min;
+    float percentage = (fillState - min) / range;
+    int filledWidth = (int)(percentage * width);
+
+    // Draw the progress bar background (secondary color)
+    nnColorf bgColor = _nnCurrentTheme.secondaryColor;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + 20);
+    glVertex2f(x, y + 20);
+    glEnd();
+
+    // Draw the filled portion (primary color)
+    nnColorf fillColor = _nnCurrentTheme.primaryColor;
+    glBegin(GL_QUADS);
+    glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + filledWidth, y);
+    glVertex2f(x + filledWidth, y + 20);
+    glVertex2f(x, y + 20);
+    glEnd();
+
+    // Draw the border
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + 20);
+    glVertex2f(x, y + 20);
+    glEnd();
+
+    glDisable(GL_BLEND);
+
+    nnSetColor(nnGetColor());
+
+    return (int)(percentage * 100);
+}
+
+int nnVProgressBar(float min, float max, float deltaFillState, int x, int y, int height)
+{
+    if (min >= max)
+    {
+        printf("Error: min must be less than max.\n");
+        return 0;
+    }
+
+    // Static fillState to retain its value across calls
+    static float fillState = 0.0f;
+
+    // Initialize fillState if it's the first call
+    static bool initialized = false;
+    if (!initialized)
+    {
+        fillState = min;
+        initialized = true;
+    }
+
+    // Adjust the fillState by the delta provided
+    fillState += deltaFillState;
+
+    // Clamp the internal fillState within the range [min, max]
+    if (fillState < min)
+        fillState = min;
+    if (fillState > max)
+        fillState = max;
+
+    // Reset delta after applying it
+    deltaFillState = 0;
+
+    // Calculate the percentage fill state
+    float range = max - min;
+    float percentage = (fillState - min) / range;
+    int filledHeight = (int)(percentage * height);
+
+    // Draw the progress bar background (secondary color)
+    nnColorf bgColor = _nnCurrentTheme.secondaryColor;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + 20, y);
+    glVertex2f(x + 20, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw the filled portion (primary color)
+    nnColorf fillColor = _nnCurrentTheme.primaryColor;
+    glBegin(GL_QUADS);
+    glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+    glVertex2f(x, y + height - filledHeight);
+    glVertex2f(x + 20, y + height - filledHeight);
+    glVertex2f(x + 20, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw the border
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + 20, y);
+    glVertex2f(x + 20, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    glDisable(GL_BLEND);
+
+    nnSetColor(nnGetColor());
+
+    return (int)(percentage * 100);
 }
 
 #endif // NONOGL_IMPLEMENTATION

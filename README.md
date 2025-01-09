@@ -396,10 +396,30 @@ int main()
 - **`float nnDT`**
   Holds the delta time (time elapsed since the last frame).
 
+- **`float nnMS`**
+  Time in milliseconds since the application started.
+
 ### GUI
 
 - **`bool nnButton(const char *format, int x, int y, int width, int height, ...)`**
-  Button that returns `true` when the it has been clicked.
+  Button that returns `true` when it has been clicked, otherwise `false`.
+
+- **`bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)`**
+  Checkbox that returns `true` when it is checked, otherwise `false`
+
+- **`float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)`**
+  Horizontal slider that returns the current set value.
+
+- **`float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)`**
+  Vertical slider that returns the current set value.
+
+- **`int nnHProgressBar(float min, float max, float deltaFillState, int x, int y, int width)`**
+  Horizontal progress bar that returns the current fill state in percentage.-
+  `deltaFillState` determines how much the fillstate should increase/decrease.
+
+- **`int nnVProgressBar(float min, float max, float deltaFillState, int x, int y, int width)`**
+  Vertical progress bar that returns the current fill state in percentage.-
+  `deltaFillState` determines how much the fillstate should increase/decrease.
 
 ## License
 
