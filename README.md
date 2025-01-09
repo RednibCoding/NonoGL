@@ -193,8 +193,8 @@ int main()
 ### Window Management
 
 - **`bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filtered)`**
-  Creates a window with the specified title, width and height. Virtual determines whether to use a fixed, virtual coordinate system for rendering, regardless of the actual size of the window.
-  Filterd determines wether a smoothing filter should be applied to images and text. Otherwise they stay pixelated (good for pixel art).
+  Creates a window with the specified title, width and height. `virtual` determines whether to use a fixed, virtual coordinate system for rendering, regardless of the actual size of the window.
+  `filterd` determines wether a smoothing filter should be applied to images and text. Otherwise they stay pixelated (good for pixel art).
 
 - **`void nnSetRenderFunc(void (*callback)(void));`**
   Set the render callback function that NonoGL will call every frame
