@@ -291,6 +291,12 @@ nnPos nnGetMousePosition();
 // Returns the mouse motion delta (change in position) since the last frame.
 nnPos nnMouseMotionDelta();
 
+// Resets all key and mouse states.
+void nnFlushKeys();
+
+// Resets all mouse button states.
+void nnFlushMouse();
+
 /*
  * Utility
  */
@@ -411,7 +417,35 @@ static nnTheme _nnCurrentTheme = {
     .textSecondaryColor = {0.8f, 0.8f, 0.8f, 1.0f},   // Light Gray
 };
 
-_nnState _nnstate;
+typedef struct
+{
+    unsigned int id;
+    bool initialized;  // Track initialization of the button text
+    bool isOpen;       // Whether the dropdown list is open
+    int selectedIndex; // Selected option index (-1 means no selection)
+    int scrollOffset;  // Tracks the scroll offset in terms of options
+    char selectedText[256];
+} _nnDropdownState;
+
+#define _NN_MAX_DROPDOWN_STATES 64
+static _nnDropdownState _nnDropdownStates[_NN_MAX_DROPDOWN_STATES];
+static int _nnDropdownStateCount = 0;
+
+static _nnState _nnstate;
+
+#define _NN_Z_INDEX_POPUP 0.1f
+#define _NN_Z_INDEX_POPUP_TEXT 0.2f
+
+// Generate a unique id based on two given integer values.
+unsigned int _nnGenUID(int x, int y)
+{
+    unsigned int hash = 2166136261u; // FNV offset basis
+    hash ^= (unsigned int)x;
+    hash *= 16777619u;
+    hash ^= (unsigned int)y;
+    hash *= 16777619u;
+    return hash;
+}
 
 // Define custom exit handlers
 void _customExitFunction(int status)
@@ -419,26 +453,10 @@ void _customExitFunction(int status)
     exit(status);
 }
 
-// Resets all keystates and mouse states.
-void nnFlushKeys()
-{
-    for (int key = 0; key < _NN_MAX_KEYS; key++)
-    {
-        _nnstate.keysPressed[key] = false;
-        _nnstate.keysReleased[key] = false;
-    }
-
-    for (int button = 0; button < _NN_MAX_MOUSE_BUTTONS; button++)
-    {
-        _nnstate.mouseButtonsPressed[button] = false;
-        _nnstate.mouseButtonsReleased[button] = false;
-    }
-}
-
 // Wrapper display function that calls the function pointer
 void _nnDisplayCallbackWrapper()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (_nnstate.displayCallback != NULL)
     {
@@ -446,6 +464,7 @@ void _nnDisplayCallbackWrapper()
     }
 
     nnFlushKeys();
+    nnFlushMouse();
 
     glutSwapBuffers();
     glutMainLoopEvent();
@@ -694,6 +713,62 @@ static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, f
     return font;
 }
 
+void _nnDrawTextZIndexed(const char *format, int x, int y, float zIndex, ...)
+{
+    if (!format)
+        return;
+
+    if (!_nnstate.font)
+    {
+        _nnDrawTextFallback(format, x, y);
+        return;
+    }
+
+    char buffer[1024];
+    va_list args;
+    va_start(args, zIndex);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    nnFont *font = _nnstate.font;
+    if (!font)
+        return;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, font->textureID);
+
+    glBegin(GL_QUADS);
+
+    float cursorX = (float)x;
+    float cursorY = (float)(y + font->glyphHeight); // Adjust for font height
+
+    for (char *c = buffer; *c != '\0'; c++)
+    {
+        if (*c < 32 || *c >= 128)
+            continue;
+
+        stbtt_aligned_quad quad;
+        stbtt_GetBakedQuad(font->charData, font->atlasWidth, font->atlasHeight, *c - 32, &cursorX, &cursorY, &quad, 1);
+
+        glTexCoord2f(quad.s0, quad.t1);
+        glVertex3f(quad.x0, quad.y1, zIndex);
+        glTexCoord2f(quad.s1, quad.t1);
+        glVertex3f(quad.x1, quad.y1, zIndex);
+        glTexCoord2f(quad.s1, quad.t0);
+        glVertex3f(quad.x1, quad.y0, zIndex);
+        glTexCoord2f(quad.s0, quad.t0);
+        glVertex3f(quad.x0, quad.y0, zIndex);
+    }
+
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+}
+
 /*******************************************************************************************************/
 /*******************************************************************************************************/
 // Public api function implementations
@@ -766,6 +841,9 @@ bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filte
 
     nnResetColor();
 
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
     return true;
 }
 
@@ -777,6 +855,7 @@ void nnSetRenderFunc(void (*callback)(void))
 
 void nnDestroyWindow()
 {
+    glDisable(GL_DEPTH_TEST);
     glutDestroyWindow(_nnstate.window);
 }
 
@@ -1631,55 +1710,12 @@ void nnDrawText(const char *format, int x, int y, ...)
     if (!format)
         return;
 
-    if (!_nnstate.font)
-    {
-        _nnDrawTextFallback(format, x, y);
-        return;
-    }
-
     char buffer[1024];
     va_list args;
     va_start(args, y);
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
-
-    nnFont *font = _nnstate.font;
-    if (!font)
-        return;
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, font->textureID);
-
-    glBegin(GL_QUADS);
-
-    float cursorX = (float)x;
-    float cursorY = (float)(y + font->glyphHeight); // Adjust for font height
-
-    for (char *c = buffer; *c != '\0'; c++)
-    {
-        if (*c < 32 || *c >= 128)
-            continue;
-
-        stbtt_aligned_quad quad;
-        stbtt_GetBakedQuad(font->charData, font->atlasWidth, font->atlasHeight, *c - 32, &cursorX, &cursorY, &quad, 1);
-
-        glTexCoord2f(quad.s0, quad.t1);
-        glVertex2f(quad.x0, quad.y1);
-        glTexCoord2f(quad.s1, quad.t1);
-        glVertex2f(quad.x1, quad.y1);
-        glTexCoord2f(quad.s1, quad.t0);
-        glVertex2f(quad.x1, quad.y0);
-        glTexCoord2f(quad.s0, quad.t0);
-        glVertex2f(quad.x0, quad.y0);
-    }
-
-    glEnd();
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
+    _nnDrawTextZIndexed(buffer, x, y, 0.0f);
 }
 
 float nnTextWidth(const char *format, ...)
@@ -1795,7 +1831,6 @@ bool nnCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, 
 bool nnKeyHit(int key)
 {
     bool wasPressed = _nnstate.keysPressed[key];
-    _nnstate.keysPressed[key] = false; // Reset after checking
     return wasPressed;
 }
 
@@ -1807,7 +1842,6 @@ bool nnKeyDown(int key)
 bool nnKeyReleased(int key)
 {
     bool wasReleased = _nnstate.keysReleased[key];
-    _nnstate.keysReleased[key] = false; // Reset after checking
     return wasReleased;
 }
 
@@ -1816,7 +1850,6 @@ bool nnKeyReleased(int key)
 bool nnMouseHit(int button)
 {
     bool wasPressed = _nnstate.mouseButtonsPressed[button];
-    _nnstate.mouseButtonsPressed[button] = false; // Reset after checking
     return wasPressed;
 }
 
@@ -1828,7 +1861,6 @@ bool nnMouseDown(int button)
 bool nnMouseReleased(int button)
 {
     bool wasReleased = _nnstate.mouseButtonsReleased[button];
-    _nnstate.mouseButtonsReleased[button] = false; // Reset after checking
     return wasReleased;
 }
 
@@ -1850,6 +1882,24 @@ nnPos nnMouseMotionDelta()
     _nnstate.mouseMotionDelta.x = 0; // Reset after checking
     _nnstate.mouseMotionDelta.y = 0;
     return delta;
+}
+
+void nnFlushKeys()
+{
+    for (int key = 0; key < _NN_MAX_KEYS; key++)
+    {
+        _nnstate.keysPressed[key] = false;
+        _nnstate.keysReleased[key] = false;
+    }
+}
+
+void nnFlushMouse()
+{
+    for (int button = 0; button < _NN_MAX_MOUSE_BUTTONS; button++)
+    {
+        _nnstate.mouseButtonsPressed[button] = false;
+        _nnstate.mouseButtonsReleased[button] = false;
+    }
 }
 
 /*
@@ -2437,26 +2487,49 @@ int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int
 
 int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height)
 {
-    // Static variables to manage state
-    static bool isOpen = false;      // Whether the dropdown list is open
-    static int selectedIndex = -1;   // Selected option index (-1 means no selection)
-    static bool initialized = false; // Track initialization of the button text
-    static int scrollOffset = 0;     // Tracks the scroll offset in terms of options
+    // Unique ID based on position or override
+    unsigned int id = _nnGenUID(x, y);
+
+    // Find or initialize dropdown state
+    _nnDropdownState *state = NULL;
+    for (int i = 0; i < _nnDropdownStateCount; i++)
+    {
+        if (_nnDropdownStates[i].id == id)
+        {
+            state = &_nnDropdownStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnDropdownStateCount >= _NN_MAX_DROPDOWN_STATES)
+        {
+            printf("Error: Too many dropdowns! Increase _NN_MAX_DROPDOWN_STATES.\n");
+            return -1;
+        }
+        state = &_nnDropdownStates[_nnDropdownStateCount++];
+        state->id = id;
+        state->isOpen = false;
+        state->selectedIndex = -1;
+        state->scrollOffset = 0;
+        state->initialized = false;
+        printf("New state created. ID: %d\n", state->id);
+    }
+
     const int maxVisibleOptions = 10;
 
     // Initialize the button text with the first option if not initialized
-    static char selectedText[256] = {0};
-    if (!initialized)
+    if (!state->initialized)
     {
         if (buttonText)
         {
-            strncpy(selectedText, buttonText, sizeof(selectedText) - 1);
+            strncpy(state->selectedText, buttonText, sizeof(state->selectedText) - 1);
         }
         else if (numOptions > 0 && options[0])
         {
-            strncpy(selectedText, options[0], sizeof(selectedText) - 1);
+            strncpy(state->selectedText, options[0], sizeof(state->selectedText) - 1);
         }
-        initialized = true;
+        state->initialized = true;
     }
 
     // Get mouse position
@@ -2479,24 +2552,24 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     // Toggle dropdown open/close on button click
     if (hoveringButton && nnMouseReleased(0))
     {
-        isOpen = !isOpen;
+        printf("Clicked! ID: %d\n", state->id);
+        state->isOpen = !state->isOpen;
     }
 
     // Close dropdown if mouse is not hovering over button or list
     bool hoveringList = false;
-    if (isOpen)
+    if (state->isOpen)
     {
         int visibleListHeight = maxVisibleOptions * height;
         hoveringList = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, drawAbove ? listY : y, width, drawAbove ? visibleListHeight : visibleListHeight + height});
     }
     if (!hoveringButton && !hoveringList && nnMouseReleased(0))
     {
-        isOpen = false;
+        state->isOpen = false;
     }
 
     // Handle scrolling using nnMouseWheelDelta
-    // Handle scrolling using nnMouseWheelDelta
-    if (isOpen)
+    if (state->isOpen)
     {
         int wheelDelta = nnMouseWheelDelta();
         if (drawAbove)
@@ -2504,11 +2577,11 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             // Reverse the scroll direction for above layout
             if (wheelDelta > 0)
             {
-                scrollOffset = (scrollOffset < numOptions - maxVisibleOptions) ? scrollOffset + 1 : scrollOffset;
+                state->scrollOffset = (state->scrollOffset < numOptions - maxVisibleOptions) ? state->scrollOffset + 1 : state->scrollOffset;
             }
             else if (wheelDelta < 0)
             {
-                scrollOffset = (scrollOffset > 0) ? scrollOffset - 1 : 0;
+                state->scrollOffset = (state->scrollOffset > 0) ? state->scrollOffset - 1 : 0;
             }
         }
         else
@@ -2516,18 +2589,18 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             // Default scroll logic for below layout
             if (wheelDelta > 0)
             {
-                scrollOffset = (scrollOffset > 0) ? scrollOffset - 1 : 0;
+                state->scrollOffset = (state->scrollOffset > 0) ? state->scrollOffset - 1 : 0;
             }
             else if (wheelDelta < 0)
             {
-                scrollOffset = (scrollOffset < numOptions - maxVisibleOptions) ? scrollOffset + 1 : scrollOffset;
+                state->scrollOffset = (state->scrollOffset < numOptions - maxVisibleOptions) ? state->scrollOffset + 1 : state->scrollOffset;
             }
         }
     }
 
     // Draw dropdown button
-    nnColorf bgColor = isOpen ? _nnCurrentTheme.primaryColorAccent
-                              : (hoveringButton ? _nnCurrentTheme.primaryColorAccent : _nnCurrentTheme.primaryColor);
+    nnColorf bgColor = state->isOpen ? _nnCurrentTheme.primaryColorAccent
+                                     : (hoveringButton ? _nnCurrentTheme.primaryColorAccent : _nnCurrentTheme.primaryColor);
     nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
     nnColorf borderColor = _nnCurrentTheme.borderColor;
 
@@ -2574,7 +2647,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
 
     // Draw button text (truncate if necessary)
     char truncatedText[256];
-    strncpy(truncatedText, selectedText, sizeof(truncatedText) - 1);
+    strncpy(truncatedText, state->selectedText, sizeof(truncatedText) - 1);
     truncatedText[sizeof(truncatedText) - 1] = '\0';
 
     float textWidth = nnTextWidth(truncatedText);
@@ -2598,19 +2671,19 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     nnDrawText(truncatedText, textX, textY);
 
     // Draw dropdown list if open
-    if (isOpen)
+    if (state->isOpen)
     {
         // Draw the dropdown list options
         for (int i = 0; i < numOptions; i++)
         {
             // Calculate the visible range of options considering the scroll offset
-            int visibleStart = scrollOffset;
-            int visibleEnd = scrollOffset + actualVisibleOptions;
+            int visibleStart = state->scrollOffset;
+            int visibleEnd = state->scrollOffset + actualVisibleOptions;
             if (i < visibleStart || i >= visibleEnd)
                 continue;
 
             // Calculate option position
-            int visibleIndex = i - scrollOffset;
+            int visibleIndex = i - state->scrollOffset;
             int optionY = drawAbove
                               ? (listY + (actualVisibleOptions - 1 - visibleIndex) * height) // Adjust for drawing above
                               : (listY + visibleIndex * height);                             // Default when drawing below
@@ -2621,22 +2694,22 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             // Background color for the option
             nnColorf optionBgColor = hoveringOption ? _nnCurrentTheme.secondaryColorAccent : _nnCurrentTheme.secondaryColor;
 
-            // Draw option background
+            // Draw option popup background
             glBegin(GL_QUADS);
             glColor4f(optionBgColor.r, optionBgColor.g, optionBgColor.b, optionBgColor.a);
-            glVertex2f(x, optionY);
-            glVertex2f(x + width, optionY);
-            glVertex2f(x + width, optionY + height);
-            glVertex2f(x, optionY + height);
+            glVertex3f(x, optionY, _NN_Z_INDEX_POPUP);
+            glVertex3f(x + width, optionY, _NN_Z_INDEX_POPUP);
+            glVertex3f(x + width, optionY + height, _NN_Z_INDEX_POPUP);
+            glVertex3f(x, optionY + height, _NN_Z_INDEX_POPUP);
             glEnd();
 
-            // Draw option border
+            // Draw option popup border
             glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
             glBegin(GL_LINE_LOOP);
-            glVertex2f(x, optionY);
-            glVertex2f(x + width, optionY);
-            glVertex2f(x + width, optionY + height);
-            glVertex2f(x, optionY + height);
+            glVertex3f(x, optionY, _NN_Z_INDEX_POPUP);
+            glVertex3f(x + width, optionY, _NN_Z_INDEX_POPUP);
+            glVertex3f(x + width, optionY + height, _NN_Z_INDEX_POPUP);
+            glVertex3f(x, optionY + height, _NN_Z_INDEX_POPUP);
             glEnd();
 
             // Draw option text (truncate if necessary)
@@ -2663,14 +2736,14 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             int optionTextX = x + 10; // Left-aligned with a margin of 10 pixels
             int optionTextY = optionY + (height - nnTextHeight()) / 2;
             glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
-            nnDrawText(optionText, optionTextX, optionTextY);
+            _nnDrawTextZIndexed(optionText, optionTextX, optionTextY, _NN_Z_INDEX_POPUP_TEXT);
 
             // Handle option click
             if (hoveringOption && nnMouseReleased(0))
             {
-                selectedIndex = i;
-                strncpy(selectedText, options[i], sizeof(selectedText) - 1);
-                isOpen = false; // Close dropdown after selection
+                state->selectedIndex = i;
+                strncpy(state->selectedText, options[i], sizeof(state->selectedText) - 1);
+                state->isOpen = false; // Close dropdown after selection
             }
         }
 
@@ -2678,7 +2751,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
         if (numOptions > maxVisibleOptions)
         {
             float scrollbarHeight = (float)actualVisibleOptions / numOptions * visibleListHeight;
-            float scrollbarPosition = (float)scrollOffset / numOptions * visibleListHeight;
+            float scrollbarPosition = (float)state->scrollOffset / numOptions * visibleListHeight;
             int scrollbarX = x + width - 2; // 4px wide scrollbar at the right edge
             int scrollbarY = drawAbove
                                  ? (listY + visibleListHeight - scrollbarHeight - scrollbarPosition)
@@ -2709,7 +2782,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     glDisable(GL_BLEND);
 
     // Return the selected index
-    return selectedIndex;
+    return state->selectedIndex;
 }
 
 #endif // NONOGL_IMPLEMENTATION

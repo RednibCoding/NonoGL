@@ -36,10 +36,12 @@ void render()
 
     nnDrawText("%.0f", 330, 220, hSliderVal);
     nnDrawText("%.0f", 40, 220 - nnTextHeight() / 2, vSliderVal);
+    nnDrawText("Hello There", 480, 300);
 
     const char *options[] = {"Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6", "Option 7", "Option 8", "Option 9", "Option 10", "Option 11", "Option 12"};
     // const char *options[] = {"Option 1", "Option 2", "Option 3", "Option 4"};
     int selected1 = nnDropdown("Select Option", options, 12, 400, 160, 150, 30);
+    int selected2 = nnDropdown("Select...", options, 12, 520, 460, 150, 30);
 }
 
 int main()

@@ -379,6 +379,12 @@ int main()
   - **`nnPos nnMouseMotionDelta()`**
     Returns the mouse motion delta (change in position) since the last frame.
 
+- **`void nnFlushKeys()`**
+  Resets all key and mouse states.
+
+- **`void nnFlushMouse()`**
+  Resets all mouse button states.
+
 ### Utility
 
 - **`unsigned char *nnLoadFileBytes(const char *filepath, int *size)`**
