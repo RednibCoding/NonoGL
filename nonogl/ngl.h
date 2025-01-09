@@ -368,9 +368,9 @@ typedef struct
     char *title;
     int initialWidth;
     int initialHeight;
-    int width;
-    int height;
-    bool scalable;
+    int windowWidth;
+    int windowHeight;
+    bool virtual;
     bool filtered;
     float deltaTime;
     double lastTime;
@@ -493,9 +493,11 @@ void _nnUpdateScale(int width, int height, int shouldUpdate)
 
 void _nnFramebufferSizeCallback(int width, int height)
 {
+    _nnstate.windowWidth = width;
+    _nnstate.windowHeight = height;
     glViewport(0, 0, width, height);
     _nnSetupOrthoProjection(width, height);
-    _nnUpdateScale(width, height, _nnstate.scalable);
+    _nnUpdateScale(width, height, _nnstate.virtual);
 }
 
 void _nnTimerCallback(int value)
@@ -692,18 +694,18 @@ static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, f
 /*
  * Window Management
  */
-bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filtered)
+bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filtered)
 {
     _nnstate.displayCallback = NULL;
 
-    _nnstate.scalable = scalable;
+    _nnstate.virtual = virtual;
     _nnstate.filtered = filtered;
 
     _nnstate.title = title;
     _nnstate.initialWidth = width;
     _nnstate.initialHeight = height;
-    _nnstate.width = width;
-    _nnstate.height = height;
+    _nnstate.windowWidth = width;
+    _nnstate.windowHeight = height;
     _nnstate.windowScaleX = 1.0f;
     _nnstate.windowScaleY = 1.0f;
 
@@ -744,8 +746,8 @@ bool nnCreateWindow(char *title, int width, int height, bool scalable, bool filt
     glutReshapeFunc(_nnFramebufferSizeCallback);
 
     /* Set up the orthographic projection */
-    _nnSetupOrthoProjection(_nnstate.width, _nnstate.height);
-    _nnUpdateScale(_nnstate.width, _nnstate.height, _nnstate.scalable);
+    _nnSetupOrthoProjection(_nnstate.windowWidth, _nnstate.windowHeight);
+    _nnUpdateScale(_nnstate.windowWidth, _nnstate.windowHeight, _nnstate.virtual);
 
     /* Set initial scale */
     _nnSetScale(_nnstate.windowScaleX, _nnstate.windowScaleY);
@@ -824,22 +826,30 @@ void nnRun()
 
 int nnWindowWidth()
 {
-    return _nnstate.width;
+    return _nnstate.windowWidth;
 }
 
 int nnWindowHeight()
 {
-    return _nnstate.height;
+    return _nnstate.windowHeight;
 }
 
 int nnScreenWidth()
 {
-    return _nnstate.width / _nnstate.windowScaleX;
+    if (_nnstate.virtual)
+    {
+        return _nnstate.initialWidth;
+    }
+    return _nnstate.windowWidth;
 }
 
 int nnScreenHeight()
 {
-    return _nnstate.height / _nnstate.windowScaleY;
+    if (_nnstate.virtual)
+    {
+        return _nnstate.initialHeight;
+    }
+    return _nnstate.windowHeight;
 }
 
 /*
@@ -2452,7 +2462,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
 
     // Check if the list fits below or above the button
     int screenHeight = nnScreenHeight();
-    bool drawAbove = (y + height + visibleListHeight > screenHeight);
+    bool drawAbove = (y - height / 2) > screenHeight / 2;
 
     // Adjust Y position for the list if drawing above
     int listY = drawAbove ? (y - visibleListHeight) : (y + height);

@@ -25,6 +25,7 @@ void render()
     }
 
     int fillStatePercentage = nnHProgressbar(0, 220, fillAmount, 400, 128, 180);
+    int fillStatePercentage2 = nnHProgressbar(0, 220, 0, 400, 328, 180);
     float textLen = nnTextWidth("Progress %d%%", fillStatePercentage);
     nnVProgressbar(0, 220, fillAmount, 490 + textLen / 2 + 5, 95, 25);
     nnDrawText("Progress %d%%", 490 - textLen / 2, 100, fillStatePercentage);
@@ -39,13 +40,13 @@ void render()
     const char *options[] = {"Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6", "Option 7", "Option 8", "Option 9", "Option 10", "Option 11", "Option 12"};
     // const char *options[] = {"Option 1", "Option 2", "Option 3", "Option 4"};
     int selected1 = nnDropdown("Select Option", options, 12, 400, 160, 150, 30);
-    printf("Selected 1: %d\n", selected1);
+    // printf("Selected 1: %d\n", selected1);
 }
 
 int main()
 {
     // Create a window
-    if (!nnCreateWindow("NonoGL Example", 800, 600, true, false))
+    if (!nnCreateWindow("NonoGL Example", 1024, 600, false, false))
     {
         printf("Failed to create window.\n");
         return -1;
