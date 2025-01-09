@@ -9,7 +9,7 @@ NonoGL is a lightweight and simple 2D game library for C, designed for easy and 
 - **Truetype Font Loading**: Load and render Truetype fonts.
 - **Collision Handling**: Basic functions to check point-rectangle, rectangle-rectangle, point-circle, rectangle-circle and circle-circle collisions.
 - **Mouse and Keyboard Input Handling**: Simple functions to check for mouse and keyboard button presses.
-- **Basic GUI Elements**: Comes with a small list of themable gui elements.
+- **Basic GUI Elements**: Comes with a small set of common and themable gui elements.
 
 ## Installation
 
