@@ -317,7 +317,7 @@ int main()
   Get the font that is currently set.
 
 - **`void nnDrawText(const char *format, int x, int y, ...)`**
-  Render the given formatted text using the font that has been set with `nnSetFont`. If no font has been set, an internal non-scalable font will be used.
+  Render the given formatted text using the font that has been set with `nnSetFont`. If no font has been set, the internal default font will be used.
 
 - **`float nnTextWidth(const char *format, ...)`**
   Returns the width in pixels of the given string regarding the current font.
