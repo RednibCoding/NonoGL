@@ -407,7 +407,7 @@ int main()
 - **`bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)`**
   Checkbox that returns `true` when it is checked, otherwise `false`
 
-- **`float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)`**
+- **`float nnHSlider(float min, float max, float initial, float step, int x, int y, int height)`**
   Horizontal slider that returns the current set value.
 
 - **`float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)`**
