@@ -2476,16 +2476,33 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     }
 
     // Handle scrolling using nnMouseWheelDelta
+    // Handle scrolling using nnMouseWheelDelta
     if (isOpen)
     {
         int wheelDelta = nnMouseWheelDelta();
-        if (wheelDelta > 0)
+        if (drawAbove)
         {
-            scrollOffset = (scrollOffset > 0) ? scrollOffset - 1 : 0;
+            // Reverse the scroll direction for above layout
+            if (wheelDelta > 0)
+            {
+                scrollOffset = (scrollOffset < numOptions - maxVisibleOptions) ? scrollOffset + 1 : scrollOffset;
+            }
+            else if (wheelDelta < 0)
+            {
+                scrollOffset = (scrollOffset > 0) ? scrollOffset - 1 : 0;
+            }
         }
-        else if (wheelDelta < 0)
+        else
         {
-            scrollOffset = (scrollOffset < numOptions - maxVisibleOptions) ? scrollOffset + 1 : scrollOffset;
+            // Default scroll logic for below layout
+            if (wheelDelta > 0)
+            {
+                scrollOffset = (scrollOffset > 0) ? scrollOffset - 1 : 0;
+            }
+            else if (wheelDelta < 0)
+            {
+                scrollOffset = (scrollOffset < numOptions - maxVisibleOptions) ? scrollOffset + 1 : scrollOffset;
+            }
         }
     }
 
@@ -2564,6 +2581,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     // Draw dropdown list if open
     if (isOpen)
     {
+        // Draw the dropdown list options
         for (int i = 0; i < numOptions; i++)
         {
             // Calculate the visible range of options considering the scroll offset
@@ -2635,6 +2653,37 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
                 strncpy(selectedText, options[i], sizeof(selectedText) - 1);
                 isOpen = false; // Close dropdown after selection
             }
+        }
+
+        // Draw scrollbar if the list is scrollable
+        if (numOptions > maxVisibleOptions)
+        {
+            float scrollbarHeight = (float)actualVisibleOptions / numOptions * visibleListHeight;
+            float scrollbarPosition = (float)scrollOffset / numOptions * visibleListHeight;
+            int scrollbarX = x + width - 2; // 4px wide scrollbar at the right edge
+            int scrollbarY = drawAbove
+                                 ? (listY + visibleListHeight - scrollbarHeight - scrollbarPosition)
+                                 : (listY + scrollbarPosition);
+
+            // Draw scrollbar background
+            // nnColorf scrollbarBgColor = _nnCurrentTheme.secondaryColor; // Background color
+            // glBegin(GL_QUADS);
+            // glColor4f(scrollbarBgColor.r, scrollbarBgColor.g, scrollbarBgColor.b, scrollbarBgColor.a);
+            // glVertex2f(scrollbarX, listY);
+            // glVertex2f(scrollbarX + 2, listY);
+            // glVertex2f(scrollbarX + 2, listY + visibleListHeight);
+            // glVertex2f(scrollbarX, listY + visibleListHeight);
+            // glEnd();
+
+            // Draw scrollbar foreground
+            nnColorf scrollbarFgColor = _nnCurrentTheme.primaryColor; // Scrollbar color
+            glBegin(GL_QUADS);
+            glColor4f(scrollbarFgColor.r, scrollbarFgColor.g, scrollbarFgColor.b, scrollbarFgColor.a);
+            glVertex2f(scrollbarX, scrollbarY);
+            glVertex2f(scrollbarX + 2, scrollbarY);
+            glVertex2f(scrollbarX + 2, scrollbarY + scrollbarHeight);
+            glVertex2f(scrollbarX, scrollbarY + scrollbarHeight);
+            glEnd();
         }
     }
 
