@@ -62,8 +62,6 @@ Here is a minimal example of using NonoGL to create a window and a render functi
 
 void render()
 {
-    nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
-
     // Draw stuff here
 }
 
