@@ -195,7 +195,7 @@ int main()
 - **nnCreateWindow**
 
   ```c
-  bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filtered);
+  bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filtered)
   ```
 
   Creates a window with the specified title, width and height. `virtual` determines whether to use a fixed, virtual coordinate system for rendering, regardless of the actual size of the window.
@@ -204,7 +204,7 @@ int main()
 - **nnSetRenderFunc**
 
   ```c
-  void nnSetRenderFunc(void (*callback)(void));
+  void nnSetRenderFunc(void (*callback)(void))
   ```
 
   Set the render callback function that NonoGL will call every frame.
@@ -212,7 +212,7 @@ int main()
 - **nnDestroyWindow**
 
   ```c
-  void nnDestroyWindow();
+  void nnDestroyWindow()
   ```
 
   Destroys the created window and cleans up resources.
@@ -220,7 +220,7 @@ int main()
 - **nnSetTargetFPS**
 
   ```c
-  void nnSetTargetFPS(int fps);
+  void nnSetTargetFPS(int fps)
   ```
 
   Sets the target FPS.
@@ -228,7 +228,7 @@ int main()
 - **nnSetWindowTitle**
 
   ```c
-  void nnSetWindowTitle(const char *format, ...);
+  void nnSetWindowTitle(const char *format, ...)
   ```
 
   Sets the window title with formatted text.
@@ -236,7 +236,7 @@ int main()
 - **nnSetClearColor**
 
   ```c
-  void nnSetClearColor(nnColorf color);
+  void nnSetClearColor(nnColorf color)
   ```
 
   Sets the background color for clearing the window.
@@ -244,7 +244,7 @@ int main()
 - **nnSetColor**
 
   ```c
-  void nnSetColor(nnColorf color);
+  void nnSetColor(nnColorf color)
   ```
 
   Sets the current drawing color.
@@ -252,7 +252,7 @@ int main()
 - **nnGetColor**
 
   ```c
-  nnColorf nnGetColor();
+  nnColorf nnGetColor()
   ```
 
   Gets the current drawing color.
@@ -260,7 +260,7 @@ int main()
 - **nnResetColor**
 
   ```c
-  void nnResetColor();
+  void nnResetColor()
   ```
 
   Resets the color to default (1.0, 1.0, 1.0, 1.0).
@@ -268,7 +268,7 @@ int main()
 - **nnRun**
 
   ```c
-  void nnRun();
+  void nnRun()
   ```
 
   Starts the main rendering loop.
@@ -278,7 +278,7 @@ int main()
 - **nnLoadImage**
 
   ```c
-  nnImage nnLoadImage(const char *filepath);
+  nnImage nnLoadImage(const char *filepath)
   ```
 
   Loads an image from the specified file path.
@@ -286,7 +286,7 @@ int main()
 - **nnLoadImageMem**
 
   ```c
-  nnImage nnLoadImageMem(const unsigned char *data, int size);
+  nnImage nnLoadImageMem(const unsigned char *data, int size)
   ```
 
   Loads an image from memory.
@@ -294,7 +294,7 @@ int main()
 - **nnDrawImage**
 
   ```c
-  void nnDrawImage(nnImage image, int x, int y);
+  void nnDrawImage(nnImage image, int x, int y)
   ```
 
   Draws the loaded image at the specified position.
@@ -302,7 +302,7 @@ int main()
 - **nnDrawImagePortion**
 
   ```c
-  void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec);
+  void nnDrawImagePortion(nnImage image, int x, int y, nnRecf srcRec)
   ```
 
   Draws a portion of the loaded image at the specified position.
@@ -310,7 +310,7 @@ int main()
 - **nnFlipImage**
 
   ```c
-  void nnFlipImage(nnImage image, bool flipX, bool flipY);
+  void nnFlipImage(nnImage image, bool flipX, bool flipY)
   ```
 
   Flips the given image on the given axes.
@@ -318,7 +318,7 @@ int main()
 - **nnRotateImage**
 
   ```c
-  void nnRotateImage(nnImage *image, float degrees);
+  void nnRotateImage(nnImage *image, float degrees)
   ```
 
   Sets the rotation of the given image to the specified degrees.
@@ -326,7 +326,7 @@ int main()
 - **nnScaleImage**
 
   ```c
-  void nnScaleImage(nnImage *image, float scaleX, float scaleY);
+  void nnScaleImage(nnImage *image, float scaleX, float scaleY)
   ```
 
   Sets the scale of the given image to the specified scale values.
@@ -334,7 +334,7 @@ int main()
 - **nnFreeImage**
 
   ```c
-  void nnFreeImage(nnImage image);
+  void nnFreeImage(nnImage image)
   ```
 
   Frees the given image.
@@ -344,7 +344,7 @@ int main()
 - **nnCreatePixmap**
 
   ```c
-  nnPixmap *nnCreatePixmap(int width, int height);
+  nnPixmap *nnCreatePixmap(int width, int height)
   ```
 
   Creates a pixmap with the given width and height.
@@ -352,7 +352,7 @@ int main()
 - **nnCreatePixmapFromImage**
 
   ```c
-  nnPixmap *nnCreatePixmapFromImage(nnImage image);
+  nnPixmap *nnCreatePixmapFromImage(nnImage image)
   ```
 
   Creates a pixmap from an image.
@@ -360,7 +360,7 @@ int main()
 - **nnReadPixel**
 
   ```c
-  nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y);
+  nnColorf nnReadPixel(nnPixmap *pixmap, int x, int y)
   ```
 
   Reads a pixel from the given pixmap.
@@ -368,7 +368,7 @@ int main()
 - **nnUpdatePixmap**
 
   ```c
-  void nnUpdatePixmap(nnPixmap *pixmap);
+  void nnUpdatePixmap(nnPixmap *pixmap)
   ```
 
   Updates pixels that have changed in the given pixmap. Only updates pixels that have actually changed.
@@ -376,7 +376,7 @@ int main()
 - **nnDrawPixmap**
 
   ```c
-  void nnDrawPixmap(nnPixmap *pixmap, int x, int y);
+  void nnDrawPixmap(nnPixmap *pixmap, int x, int y)
   ```
 
   Draws the pixmap to the screen at the specified coordinates.
@@ -384,7 +384,7 @@ int main()
 - **nnFlipPixmap**
 
   ```c
-  void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY);
+  void nnFlipPixmap(nnPixmap *pixmap, bool flipX, bool flipY)
   ```
 
   Flips the given pixmap on the specified axes.
@@ -392,7 +392,7 @@ int main()
 - **nnRotatePixmap**
 
   ```c
-  void nnRotatePixmap(nnPixmap *pixmap, float angle);
+  void nnRotatePixmap(nnPixmap *pixmap, float angle)
   ```
 
   Sets the rotation of the given pixmap to the specified degrees.
@@ -400,7 +400,7 @@ int main()
 - **nnScalePixmap**
 
   ```c
-  void nnScalePixmap(nnPixmap *pixmap, float scaleX, float scaleY);
+  void nnScalePixmap(nnPixmap *pixmap, float scaleX, float scaleY)
   ```
 
   Sets the scale of the given pixmap to the specified scale values.
@@ -408,7 +408,7 @@ int main()
 - **nnCopyPixmap**
 
   ```c
-  nnPixmap *nnCopyPixmap(nnPixmap *pixmap);
+  nnPixmap *nnCopyPixmap(nnPixmap *pixmap)
   ```
 
   Returns a copy of the given pixmap.
@@ -416,7 +416,7 @@ int main()
 - **nnFreePixmap**
 
   ```c
-  void nnFreePixmap(nnPixmap *pixmap);
+  void nnFreePixmap(nnPixmap *pixmap)
   ```
 
   Frees the given pixmap.
@@ -426,7 +426,7 @@ int main()
 - **nnPutPixel**
 
   ```c
-  void nnPutPixel(float x, float y);
+  void nnPutPixel(float x, float y)
   ```
 
   Draws an individual pixel to the screen.
@@ -436,7 +436,7 @@ int main()
 - **nnDrawPixel**
 
   ```c
-  void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color);
+  void nnDrawPixel(nnPixmap *pixmap, int x, int y, nnColorf color)
   ```
 
   Writes a pixel at the specified location with the given color to the given pixmap.
@@ -444,7 +444,7 @@ int main()
 - **nnDrawLine**
 
   ```c
-  void nnDrawLine(nnPixmap *pixmap, int x0, int y0, int x1, int y1, nnColorf color);
+  void nnDrawLine(nnPixmap *pixmap, int x0, int y0, int x1, int y1, nnColorf color)
   ```
 
   Draws a line between the specified points.
@@ -452,7 +452,7 @@ int main()
 - **nnDrawOval**
 
   ```c
-  void nnDrawOval(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled);
+  void nnDrawOval(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled)
   ```
 
   Draws an oval with its center at the specified coordinates.
@@ -460,7 +460,7 @@ int main()
 - **nnDrawTriangle**
 
   ```c
-  void nnDrawTriangle(nnPixmap *pixmap, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled);
+  void nnDrawTriangle(nnPixmap *pixmap, int x1, int y1, int x2, int y2, int x3, int y3, nnColorf color, bool filled)
   ```
 
   Draws a triangle.
@@ -468,7 +468,7 @@ int main()
 - **nnDrawRect**
 
   ```c
-  void nnDrawRect(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled);
+  void nnDrawRect(nnPixmap *pixmap, int x, int y, int width, int height, nnColorf color, bool filled)
   ```
 
   Draws a rectangle where the specified coordinates are the top-left corner.
@@ -478,7 +478,7 @@ int main()
 - **nnLoadFont**
 
   ```c
-  nnFont *nnLoadFont(const char *filepath, float fontSize);
+  nnFont *nnLoadFont(const char *filepath, float fontSize)
   ```
 
   Loads a TTF font from a file.
@@ -486,7 +486,7 @@ int main()
 - **nnLoadFontMem**
 
   ```c
-  nnFont *nnLoadFontMem(const unsigned char *data, size_t dataSize, float fontSize);
+  nnFont *nnLoadFontMem(const unsigned char *data, size_t dataSize, float fontSize)
   ```
 
   Loads a TTF font from memory.
@@ -494,7 +494,7 @@ int main()
 - **nnSetFont**
 
   ```c
-  void nnSetFont(nnFont *font);
+  void nnSetFont(nnFont *font)
   ```
 
   Sets the font for text rendering.
@@ -502,7 +502,7 @@ int main()
 - **nnGetFont**
 
   ```c
-  nnFont *nnGetFont();
+  nnFont *nnGetFont()
   ```
 
   Gets the currently set font.
@@ -510,7 +510,7 @@ int main()
 - **nnDrawText**
 
   ```c
-  void nnDrawText(const char *format, int x, int y, ...);
+  void nnDrawText(const char *format, int x, int y, ...)
   ```
 
   Renders the given formatted text using the font set with `nnSetFont`. If no font is set, the internal default font will be used.
@@ -518,7 +518,7 @@ int main()
 - **nnDrawTextZ**
 
   ```c
-  void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...);
+  void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...)
   ```
 
   Renders the given formatted text with a custom z-index (-1.0 to 1.0).
@@ -526,7 +526,7 @@ int main()
 - **nnDrawDebugText**
 
   ```c
-  void nnDrawDebugText(const char *format, int x, int y, ...);
+  void nnDrawDebugText(const char *format, int x, int y, ...)
   ```
 
   Draws text when debug mode is enabled.
@@ -534,7 +534,7 @@ int main()
 - **nnTextWidth**
 
   ```c
-  float nnTextWidth(const char *format, ...);
+  float nnTextWidth(const char *format, ...)
   ```
 
   Returns the width in pixels of the given formatted text.
@@ -542,7 +542,7 @@ int main()
 - **nnTextHeight**
 
   ```c
-  float nnTextHeight();
+  float nnTextHeight()
   ```
 
   Returns the height in pixels of the current font.
@@ -550,7 +550,7 @@ int main()
 - **nnFreeFont**
 
   ```c
-  void nnFreeFont(nnFont *font);
+  void nnFreeFont(nnFont *font)
   ```
 
   Frees the given font.
@@ -560,7 +560,7 @@ int main()
 - **nnPosRecOverlaps**
 
   ```c
-  bool nnPosRecOverlaps(int x, int y, nnRecf rect);
+  bool nnPosRecOverlaps(int x, int y, nnRecf rect)
   ```
 
   Checks if a point overlaps with a rectangle.
@@ -568,7 +568,7 @@ int main()
 - **nnRecsOverlap**
 
   ```c
-  bool nnRecsOverlap(nnRecf rec1, nnRecf rec2);
+  bool nnRecsOverlap(nnRecf rec1, nnRecf rec2)
   ```
 
   Checks if two rectangles overlap.
@@ -576,7 +576,7 @@ int main()
 - **nnPosCircleOverlaps**
 
   ```c
-  bool nnPosCircleOverlaps(int x, int y, int cx, int cy, float circleRadius);
+  bool nnPosCircleOverlaps(int x, int y, int cx, int cy, float circleRadius)
   ```
 
   Checks if a point overlaps with a circle.
@@ -584,7 +584,7 @@ int main()
 - **nnRecCircleOverlaps**
 
   ```c
-  bool nnRecCircleOverlaps(nnRecf rec, int cx, int cy, float circleRadius);
+  bool nnRecCircleOverlaps(nnRecf rec, int cx, int cy, float circleRadius)
   ```
 
   Checks if a rectangle overlaps with a circle.
@@ -592,7 +592,7 @@ int main()
 - **nnCirclesOverlap**
 
   ```c
-  bool nnCirclesOverlap(int cx1, int cy1, float circle1Radius, int cx2, int cy2, float circle2Radius);
+  bool nnCirclesOverlap(int cx1, int cy1, float circle1Radius, int cx2, int cy2, float circle2Radius)
   ```
 
   Checks if two circles overlap.
@@ -604,7 +604,7 @@ int main()
 - **nnKeyHit**
 
   ```c
-  bool nnKeyHit(int key);
+  bool nnKeyHit(int key)
   ```
 
   Returns `true` if the specified key was pressed since the last frame.
@@ -612,7 +612,7 @@ int main()
 - **nnKeyDown**
 
   ```c
-  bool nnKeyDown(int key);
+  bool nnKeyDown(int key)
   ```
 
   Returns `true` if the specified key is currently being held down.
@@ -620,7 +620,7 @@ int main()
 - **nnKeyReleased**
 
   ```c
-  bool nnKeyReleased(int key);
+  bool nnKeyReleased(int key)
   ```
 
   Returns `true` if the specified key was released since the last frame.
@@ -628,7 +628,7 @@ int main()
 - **nnFlushKeys**
 
   ```c
-  void nnFlushKeys();
+  void nnFlushKeys()
   ```
 
   Resets all key states.
@@ -638,7 +638,7 @@ int main()
 - **nnMouseHit**
 
   ```c
-  bool nnMouseHit(int button);
+  bool nnMouseHit(int button)
   ```
 
   Returns `true` if the specified mouse button was clicked since the last frame.
@@ -646,7 +646,7 @@ int main()
 - **nnMouseDown**
 
   ```c
-  bool nnMouseDown(int button);
+  bool nnMouseDown(int button)
   ```
 
   Returns `true` if the specified mouse button is currently being held down.
@@ -654,7 +654,7 @@ int main()
 - **nnMouseReleased**
 
   ```c
-  bool nnMouseReleased(int button);
+  bool nnMouseReleased(int button)
   ```
 
   Returns `true` if the specified mouse button was released since the last frame.
@@ -662,7 +662,7 @@ int main()
 - **nnMouseWheelDelta**
 
   ```c
-  int nnMouseWheelDelta();
+  int nnMouseWheelDelta()
   ```
 
   Returns the direction of the mouse wheel movement.
@@ -670,7 +670,7 @@ int main()
 - **nnGetMousePosition**
 
   ```c
-  nnPos nnGetMousePosition();
+  nnPos nnGetMousePosition()
   ```
 
   Returns the current position of the mouse cursor.
@@ -678,7 +678,7 @@ int main()
 - **nnMouseMotionDelta**
 
   ```c
-  nnPos nnMouseMotionDelta();
+  nnPos nnMouseMotionDelta()
   ```
 
   Returns the mouse motion delta (change in position) since the last frame.
@@ -686,7 +686,7 @@ int main()
 - **nnFlushMouse**
 
   ```c
-  void nnFlushMouse();
+  void nnFlushMouse()
   ```
 
   Resets all mouse button states.
@@ -696,7 +696,7 @@ int main()
 - **nnLoadFileBytes**
 
   ```c
-  unsigned char *nnLoadFileBytes(const char *filepath, int *size);
+  unsigned char *nnLoadFileBytes(const char *filepath, int *size)
   ```
 
   Loads a file into a buffer and returns its pointer.
@@ -704,7 +704,7 @@ int main()
 - **nnFreeFileBytes**
 
   ```c
-  void nnFreeFileBytes(unsigned char *buffer);
+  void nnFreeFileBytes(unsigned char *buffer)
   ```
 
   Frees the memory allocated by `nnLoadFileBytes`.
@@ -712,7 +712,7 @@ int main()
 - **nnLerp**
 
   ```c
-  float nnLerp(float min, float max, float speed, float ease);
+  float nnLerp(float min, float max, float speed, float ease)
   ```
 
   Lerps between `min` and `max` by the given speed. Use `ease` for smooth transitions.
@@ -720,7 +720,7 @@ int main()
 - **nnSetDebugMode**
 
   ```c
-  void nnSetDebugMode(bool flag);
+  void nnSetDebugMode(bool flag)
   ```
 
   Enables or disables debug mode.
@@ -728,7 +728,7 @@ int main()
 - **nnIsDebugMode**
 
   ```c
-  bool nnIsDebugMode();
+  bool nnIsDebugMode()
   ```
 
   Returns whether debug mode is enabled.
@@ -736,7 +736,7 @@ int main()
 - **nnFPS**
 
   ```c
-  int nnFPS;
+  int nnFPS
   ```
 
   Holds the current frames per second.
@@ -744,7 +744,7 @@ int main()
 - **nnDT**
 
   ```c
-  float nnDT;
+  float nnDT
   ```
 
   Holds the delta time (time elapsed since the last frame).
@@ -752,7 +752,7 @@ int main()
 - **nnMS**
 
   ```c
-  float nnMS;
+  float nnMS
   ```
 
   Time in milliseconds since the application started.
@@ -762,7 +762,7 @@ int main()
 - **nnButton**
 
   ```c
-  bool nnButton(const char *format, int x, int y, int width, int height, ...);
+  bool nnButton(const char *format, int x, int y, int width, int height, ...)
   ```
 
   Creates a button that returns `true` when clicked.
@@ -770,7 +770,7 @@ int main()
 - **nnCheckbox**
 
   ```c
-  bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...);
+  bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
   ```
 
   Creates a checkbox that returns `true` when checked.
@@ -778,7 +778,7 @@ int main()
 - **nnHSlider**
 
   ```c
-  float nnHSlider(float min, float max, float initial, float step, int x, int y, int height);
+  float nnHSlider(float min, float max, float initial, float step, int x, int y, int height)
   ```
 
   Creates a horizontal slider that returns the current value.
@@ -786,7 +786,7 @@ int main()
 - **nnVSlider**
 
   ```c
-  float nnVSlider(float min, float max, float initial, float step, int x, int y, int height);
+  float nnVSlider(float min, float max, float initial, float step, int x, int y, int height)
   ```
 
   Creates a vertical slider that returns the current value.
@@ -794,7 +794,7 @@ int main()
 - **nnHProgressbar**
 
   ```c
-  int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
+  int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int width)
   ```
 
   Creates a horizontal progress bar that returns the current fill state in percent.
@@ -802,7 +802,7 @@ int main()
 - **nnVProgressbar**
 
   ```c
-  int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
+  int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width)
   ```
 
   Creates a vertical progress bar that returns the current fill state in percent.
@@ -810,7 +810,7 @@ int main()
 - **nnDropdown**
 
   ```c
-  int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height);
+  int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height)
   ```
 
   Creates a dropdown that returns the selected index.
@@ -818,7 +818,7 @@ int main()
 - **nnScrollableList**
 
   ```c
-  int nnScrollableList(const char **items, int numItems, int x, int y, int width, int height);
+  int nnScrollableList(const char **items, int numItems, int x, int y, int width, int height)
   ```
 
   Creates a scrollable list that returns the selected index.
