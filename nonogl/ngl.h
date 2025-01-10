@@ -421,6 +421,9 @@ typedef struct
     nnPos mousePosition;
     nnPos mouseMotionDelta;
 
+    // Gui
+    bool isAnyPopupOpen;
+
     // Function pointer for the display callback
     void (*displayCallback)(void);
 
@@ -839,6 +842,8 @@ bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filte
     _nnstate.deltaTime = 0.0f;
     _nnstate.lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
     _nnstate.currentFPS = 0;
+
+    _nnstate.isAnyPopupOpen = false;
 
     // Set default FPS if not already set
     if (_nnstate.targetFPS <= 0)
@@ -2065,7 +2070,7 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...)
 {
     // Get mouse state
     nnPos mousePos = nnMousePosition();
-    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
+    bool hovered = _nnstate.isAnyPopupOpen ? false : nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
     bool pressed = hovered && nnMouseDown(0);
     bool released = hovered && nnMouseReleased(0);
 
@@ -2176,7 +2181,7 @@ bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
 
     // Get mouse state
     nnPos mousePos = nnMousePosition();
-    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, clickableWidth, clickableHeight});
+    bool hovered = _nnstate.isAnyPopupOpen ? false : nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, clickableWidth, clickableHeight});
     bool released = hovered && nnMouseReleased(0);
 
     // Update checkbox state
@@ -2279,7 +2284,7 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
 
     // Get mouse state
     nnPos mousePos = nnMousePosition();
-    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, 16});
+    bool hovered = _nnstate.isAnyPopupOpen ? false : nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, 16});
     bool dragging = hovered && nnMouseDown(0);
 
     // Handle dragging
@@ -2389,7 +2394,7 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
 
     // Get mouse state
     nnPos mousePos = nnMousePosition();
-    bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, 16, height});
+    bool hovered = _nnstate.isAnyPopupOpen ? false : nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, 16, height});
     bool dragging = hovered && nnMouseDown(0);
 
     // Handle dragging
@@ -2700,6 +2705,16 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     if (hoveringButton && nnMouseReleased(0))
     {
         state->isOpen = !state->isOpen;
+        // Other elements can use this to determine of they can be clicked.
+        // If a popup is open, other elements behind should not be clickable.
+        if (state->isOpen)
+        {
+            _nnstate.isAnyPopupOpen = true;
+        }
+        else
+        {
+            _nnstate.isAnyPopupOpen = false;
+        }
     }
 
     // Close dropdown if mouse is not hovering over button or list
@@ -2889,7 +2904,8 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
             {
                 state->selectedIndex = i;
                 strncpy(state->selectedText, options[i], sizeof(state->selectedText) - 1);
-                state->isOpen = false; // Close dropdown after selection
+                state->isOpen = false;
+                nnFlushMouse();
             }
         }
 

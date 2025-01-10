@@ -26,6 +26,8 @@ void render()
         fillAmount = 20.0f;
     }
 
+    nnCheckbox("Test", false, 380, 255);
+
     int fillStatePercentage = nnHProgressbar(0, 220, fillAmount, 400, 128, 180);
     float textLen = nnTextWidth("Progress %d%%", fillStatePercentage);
     nnVProgressbar(0, 220, fillAmount, 490 + textLen / 2 + 5, 95, 25);
