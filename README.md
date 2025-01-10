@@ -1,6 +1,6 @@
 # NonoGL - A Tiny Game Library
 
-NonoGL is a lightweight and simple 2D game library for C, designed for easy and quick setup of 2D rendering using OpenGL and FreeGLUT. It provides basic functionalities for window creation, image loading, text rendering, basic collision handling, and mouse and keyboard input handling.
+NonoGL is a lightweight and simple 2D game library for C, designed for easy and quick setup of 2D rendering using OpenGL and FreeGLUT. It provides basic functionalities for window creation, image loading, text rendering, basic collision handling, and mouse and keyboard input handling, and a small set of ready to use themable GUI elements.
 
 ## Features
 
