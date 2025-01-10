@@ -323,6 +323,9 @@ int main()
 - **`void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...)`**
   Render the given formatted text using the font set with `nnSetFont` and a custom z-index (-1.0 to 1.0). If no font has been set, the internal default font will be used.
 
+- **`void nnDrawDebugText(const char *format, int x, int y, ...)`**
+  Draws text when debug is enabled.
+
 - **`float nnTextWidth(const char *format, ...)`**
   Returns the width in pixels of the given formatted text regarding the current font.
 
@@ -399,6 +402,12 @@ int main()
 - **`float nnLerp(float min, float max, float speed, float ease)`**
   Lerps between min and max by the given speed. Use ease to define a smooth transition when changing direction.
 
+- **`void nnSetDebugMode(bool flag)`**
+  Enable/Disable debug mode.
+
+- **`bool nnIsDebugMode()`**
+  Get wether debug mode in anabled or not.
+
 - **`int nnFPS`**
   Holds the current frames per second.
 
@@ -432,6 +441,9 @@ int main()
 
 - **`int nnDropdown(const char \*buttonText, const char \*\*options, int numOptions, int x, int y, int width, int height)`**
   A dropdown that accepts a list of options to choose from. Returns the selected index.
+
+- **`int nnScrollableList(const char **items, int numItems, int x, int y, int width, int height)`\*\*
+  A scrollable list that accepty items to choose from. Returns the selected index.
 
 ## License
 

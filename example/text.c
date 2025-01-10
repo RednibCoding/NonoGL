@@ -9,6 +9,8 @@ nnFont *font;
 void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
+    int mx = nnMousePosition().x;
+    int my = nnMousePosition().y;
 
     nnSetColor((nnColorf){1.0f, 0.5f, 0.8f, 1.0f});
     nnDrawText("NonoGL", 200, 200);
@@ -17,10 +19,14 @@ void render()
     nnDrawText("FPS: %d", 200, 370, nnFPS);
     nnDrawText("Delta Time: %f", 200, 400, nnDT);
     nnResetColor();
+
+    nnDrawDebugText("mx: %d, my: %d", 10, 20, mx, my);
 }
 
 int main()
 {
+    nnSetDebugMode(true);
+
     // Create a window
     if (!nnCreateWindow("NonoGL Example", 800, 600, false, false))
     {

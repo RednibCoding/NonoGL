@@ -10,7 +10,7 @@
 
 /******************************************************************************************************************************/
 
-/*  Public API */
+/*  Public Interface */
 
 /******************************************************************************************************************************/
 
@@ -84,8 +84,10 @@ typedef struct
 {
     nnColorf primaryColor;         // Main color for elements
     nnColorf primaryColorAccent;   // Accent color for primary elements
+    nnColorf primaryColorMuted;    // Muted color for primary elements
     nnColorf secondaryColor;       // Secondary elements (e.g., backgrounds)
     nnColorf secondaryColorAccent; // Accent color for secondary elements
+    nnColorf secondaryColorMuted;  // Muted color for secondary elements
     nnColorf borderColor;          // Border color
     nnColorf borderColorAccent;    // Accent border color
     nnColorf textPrimaryColor;     // Primary text color
@@ -231,6 +233,9 @@ void nnDrawText(const char *format, int x, int y, ...);
 // Render the given formatted text using the font set with `nnSetFont` and a custom z-index (-1.0 to 1.0). If no font has been set, the internal default font will be used.
 void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...);
 
+// Draws text when debug is enabled.
+void nnDrawDebugText(const char *format, int x, int y, ...);
+
 // Returns the width in pixels of the given string regarding the current font.
 float nnTextWidth(const char *format, ...);
 
@@ -289,7 +294,7 @@ bool nnMouseReleased(int button);
 int nnMouseWheelDelta();
 
 // Returns the current position of the mouse cursor as an `nnPos` struct.
-nnPos nnGetMousePosition();
+nnPos nnMousePosition();
 
 // Returns the mouse motion delta (change in position) since the last frame.
 nnPos nnMouseMotionDelta();
@@ -312,6 +317,12 @@ void nnFreeFileBytes(unsigned char *buffer);
 
 // Lerps between min and max by the given speed. Use ease to define a smooth transition when changing direction.
 float nnLerp(float min, float max, float speed, float ease);
+
+// Enable/Disable debug mode.
+void nnSetDebugMode(bool flag);
+
+// Get wether debug mode in anabled or not.
+bool nnIsDebugMode();
 
 // Holds the current frames per second.
 int nnFPS;
@@ -346,19 +357,24 @@ int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int
 // `deltaFillState` determines how much the fillstate should increase/decrease on the next call.
 int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int width);
 
-// A dropdown with a list of options to choose from. Returns the selected index.
+// A dropdown that accepts a list of options to choose from. Returns the selected index.
 int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height);
 
+// A scrollable list that accepty items to choose from. Returns the selected index.
+int nnScrollableList(const char **items, int numItems, int x, int y, int width, int height);
+
 /******************************************************************************************************************************/
-/*  End of Public API */
+/*  End of Public Interface */
 /******************************************************************************************************************************/
 
 #endif // NONO_GL_H
 
 /******************************************************************************************************************************/
+/******************************************************************************************************************************/
 
 /*  IMPLEMENTATION */
 
+/******************************************************************************************************************************/
 /******************************************************************************************************************************/
 #ifdef NONOGL_IMPLEMENTATION
 
@@ -390,6 +406,7 @@ typedef struct
     float windowScaleY;
     nnFont *font;
     nnColorf currentDrawColor;
+    bool debugMode;
 
     // Keyboard state
     bool keys[_NN_MAX_KEYS];
@@ -410,20 +427,25 @@ typedef struct
 } _nnState;
 
 static nnTheme _nnCurrentTheme = {
-    .primaryColor = {0.2f, 0.5f, 0.8f, 1.0f},         // Blue
-    .primaryColorAccent = {0.3f, 0.6f, 0.9f, 1.0f},   // Light Blue
+    .primaryColor = {0.2f, 0.5f, 0.8f, 1.0f},       // Blue
+    .primaryColorAccent = {0.3f, 0.6f, 0.9f, 1.0f}, // Light Blue
+    .primaryColorMuted = {0.6f, 0.7f, 0.8f, 1.0f},  // Muted Blue
+
     .secondaryColor = {0.1f, 0.1f, 0.1f, 1.0f},       // Dark Gray
     .secondaryColorAccent = {0.2f, 0.2f, 0.2f, 1.0f}, // Gray
-    .borderColor = {0.5f, 0.5f, 0.5f, 1.0f},          // Medium Gray
-    .borderColorAccent = {0.7f, 0.7f, 0.7f, 1.0f},    // Light Gray
-    .textPrimaryColor = {1.0f, 1.0f, 1.0f, 1.0f},     // White
-    .textSecondaryColor = {0.8f, 0.8f, 0.8f, 1.0f},   // Light Gray
+    .secondaryColorMuted = {0.5f, 0.5f, 0.5f, 1.0f},  // Muted Gray
+
+    .borderColor = {0.5f, 0.5f, 0.5f, 1.0f},       // Medium Gray
+    .borderColorAccent = {0.7f, 0.7f, 0.7f, 1.0f}, // Light Gray
+
+    .textPrimaryColor = {0.9f, 0.9f, 0.9f, 1.0f},   // Light Gray
+    .textSecondaryColor = {0.4f, 0.4f, 0.4f, 1.0f}, // Dark Gray
 };
 
 typedef struct
 {
     unsigned int id;
-    bool isChecked; // Track check state
+    bool isChecked;
 } _nnCheckboxState;
 
 #define _NN_MAX_CHECKBOX_STATES 64
@@ -433,7 +455,7 @@ static int _nnCheckboxStateCount = 0;
 typedef struct
 {
     unsigned int id;
-    float value; // Track value state
+    float value;
 } _nnSliderState;
 
 #define _NN_MAX_SLIDER_STATES 64
@@ -443,7 +465,7 @@ static int _nnSliderStateCount = 0;
 typedef struct
 {
     unsigned int id;
-    float fillState; // Track fillState state
+    float fillState;
 } _nnProgressbarState;
 
 #define _NN_MAX_PROGRESSBAR_STATES 64
@@ -463,6 +485,17 @@ typedef struct
 #define _NN_MAX_DROPDOWN_STATES 64
 static _nnDropdownState _nnDropdownStates[_NN_MAX_DROPDOWN_STATES];
 static int _nnDropdownStateCount = 0;
+
+typedef struct
+{
+    unsigned int id;
+    int selectedIndex;
+    int scrollOffset;
+} _nnScrollableListState;
+
+#define _NN_MAX_SCROLLABLELIST_STATES 64
+static _nnScrollableListState _nnScrollableListStates[_NN_MAX_SCROLLABLELIST_STATES];
+static int _nnScrollableListStateCount = 0;
 
 static _nnState _nnstate;
 
@@ -498,6 +531,9 @@ static void _nnDisplayCallbackWrapper()
 
     nnFlushKeys();
     nnFlushMouse();
+    _nnstate.mouseWheelDelta = 0;
+    _nnstate.mouseMotionDelta.x = 0;
+    _nnstate.mouseMotionDelta.y = 0;
 
     glutSwapBuffers();
     glutMainLoopEvent();
@@ -643,25 +679,6 @@ static void _nnMouseMotionFunc(int x, int y)
     _nnstate.mousePosition = newMousePosition;
 }
 
-static void _nnDrawTextFallback(const char *format, int x, int y, ...)
-{
-    if (!format)
-        return;
-
-    char buffer[1024];
-    va_list args;
-    va_start(args, y);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-
-    glRasterPos2i(x, y);
-
-    for (char *c = buffer; *c != '\0'; c++)
-    {
-        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *c);
-    }
-}
-
 static nnFont *_nnLoadFont(const unsigned char *fontBuffer, size_t bufferSize, float fontSize)
 {
     nnFont *font = malloc(sizeof(nnFont));
@@ -751,12 +768,6 @@ static void _nnDrawTextVA(const char *format, int x, int y, float zIndex, va_lis
     if (!format)
         return;
 
-    if (!_nnstate.font)
-    {
-        _nnDrawTextFallback(format, x, y);
-        return;
-    }
-
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), format, args);
 
@@ -802,7 +813,7 @@ static void _nnDrawTextVA(const char *format, int x, int y, float zIndex, va_lis
 /*******************************************************************************************************/
 /*******************************************************************************************************/
 
-// Public api function implementations
+// Public Interface implementations
 
 /*******************************************************************************************************/
 /*******************************************************************************************************/
@@ -1759,6 +1770,28 @@ void nnDrawTextZ(const char *format, int x, int y, float zIndex, ...)
     va_end(args);
 }
 
+void nnDrawDebugText(const char *format, int x, int y, ...)
+{
+    if (!_nnstate.debugMode)
+        return;
+
+    if (!format)
+        return;
+
+    char buffer[1024];
+    va_list args;
+    va_start(args, y);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    glRasterPos2i(x, y);
+
+    for (char *c = buffer; *c != '\0'; c++)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *c);
+    }
+}
+
 float nnTextWidth(const char *format, ...)
 {
     if (!format)
@@ -1908,11 +1941,10 @@ bool nnMouseReleased(int button)
 int nnMouseWheelDelta()
 {
     int delta = _nnstate.mouseWheelDelta;
-    _nnstate.mouseWheelDelta = 0; // Reset after checking
     return delta;
 }
 
-nnPos nnGetMousePosition()
+nnPos nnMousePosition()
 {
     return _nnstate.mousePosition;
 }
@@ -1920,8 +1952,6 @@ nnPos nnGetMousePosition()
 nnPos nnMouseMotionDelta()
 {
     nnPos delta = _nnstate.mouseMotionDelta;
-    _nnstate.mouseMotionDelta.x = 0; // Reset after checking
-    _nnstate.mouseMotionDelta.y = 0;
     return delta;
 }
 
@@ -2017,6 +2047,16 @@ float nnLerp(float min, float max, float speed, float ease)
     return currentValue;
 }
 
+void nnSetDebugMode(bool flag)
+{
+    _nnstate.debugMode = flag;
+}
+
+bool nnIsDebugMode()
+{
+    return _nnstate.debugMode;
+}
+
 /*
  * GUI
  */
@@ -2024,7 +2064,7 @@ float nnLerp(float min, float max, float speed, float ease)
 bool nnButton(const char *format, int x, int y, int width, int height, ...)
 {
     // Get mouse state
-    nnPos mousePos = nnGetMousePosition();
+    nnPos mousePos = nnMousePosition();
     bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
     bool pressed = hovered && nnMouseDown(0);
     bool released = hovered && nnMouseReleased(0);
@@ -2082,13 +2122,12 @@ bool nnButton(const char *format, int x, int y, int width, int height, ...)
 
     nnSetColor(nnGetColor());
 
-    // Return true if the button was just released while hovered
     return released;
 }
 
 bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
 {
-    // Unique ID based on position or override
+    // Unique ID based on position
     unsigned int id = _nnGenUID(x, y);
 
     // Find or initialize checkbox state
@@ -2136,7 +2175,7 @@ bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
     int clickableHeight = checkboxSize > textHeight ? checkboxSize : (int)textHeight;
 
     // Get mouse state
-    nnPos mousePos = nnGetMousePosition();
+    nnPos mousePos = nnMousePosition();
     bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, clickableWidth, clickableHeight});
     bool released = hovered && nnMouseReleased(0);
 
@@ -2197,7 +2236,6 @@ bool nnCheckbox(const char *format, bool isChecked, int x, int y, ...)
     nnSetColor(nnGetColor());
     nnDrawText(buffer, textX, textY);
 
-    // Return the current state
     return state->isChecked;
 }
 
@@ -2209,7 +2247,7 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
         return 0;
     }
 
-    // Unique ID based on position or override
+    // Unique ID based on position
     unsigned int id = _nnGenUID(x, y);
 
     // Find or initialize slider state
@@ -2240,7 +2278,7 @@ float nnHSlider(float min, float max, float initial, float step, int x, int y, i
     state->value = fmaxf(min, fminf(max, state->value));
 
     // Get mouse state
-    nnPos mousePos = nnGetMousePosition();
+    nnPos mousePos = nnMousePosition();
     bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, 16});
     bool dragging = hovered && nnMouseDown(0);
 
@@ -2319,7 +2357,7 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
         return 0;
     }
 
-    // Unique ID based on position or override
+    // Unique ID based on position
     unsigned int id = _nnGenUID(x, y);
 
     // Find or initialize slider state
@@ -2350,7 +2388,7 @@ float nnVSlider(float min, float max, float initial, float step, int x, int y, i
     state->value = fmaxf(min, fminf(max, state->value));
 
     // Get mouse state
-    nnPos mousePos = nnGetMousePosition();
+    nnPos mousePos = nnMousePosition();
     bool hovered = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, 16, height});
     bool dragging = hovered && nnMouseDown(0);
 
@@ -2428,7 +2466,7 @@ int nnHProgressbar(float min, float max, float deltaFillState, int x, int y, int
         return 0;
     }
 
-    // Unique ID based on position or override
+    // Unique ID based on position
     unsigned int id = _nnGenUID(x, y);
 
     // Find or initialize progressbar state
@@ -2515,7 +2553,7 @@ int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int
         return 0;
     }
 
-    // Unique ID based on position or override
+    // Unique ID based on position
     unsigned int id = _nnGenUID(x, y);
 
     // Find or initialize progressbar state
@@ -2596,7 +2634,7 @@ int nnVProgressbar(float min, float max, float deltaFillState, int x, int y, int
 
 int nnDropdown(const char *buttonText, const char **options, int numOptions, int x, int y, int width, int height)
 {
-    // Unique ID based on position or override
+    // Unique ID based on position
     unsigned int id = _nnGenUID(x, y);
 
     // Find or initialize dropdown state
@@ -2625,6 +2663,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     }
 
     const int maxVisibleOptions = 10;
+    const int optionHeight = nnTextHeight() + 12;
 
     // Initialize the button text with the first option if not initialized
     if (!state->initialized)
@@ -2641,7 +2680,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     }
 
     // Get mouse position
-    nnPos mousePos = nnGetMousePosition();
+    nnPos mousePos = nnMousePosition();
 
     // Determine if the mouse is hovering over the dropdown button
     bool hoveringButton = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
@@ -2888,7 +2927,175 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
 
     glDisable(GL_BLEND);
 
-    // Return the selected index
+    nnSetColor(nnGetColor());
+
+    return state->selectedIndex;
+}
+
+int nnScrollableList(const char **items, int numItems, int x, int y, int width, int height)
+{
+    // Unique ID based on position
+    unsigned int id = _nnGenUID(x, y);
+
+    // Find or initialize dropdown state
+    _nnScrollableListState *state = NULL;
+    for (int i = 0; i < _nnScrollableListStateCount; i++)
+    {
+        if (_nnScrollableListStates[i].id == id)
+        {
+            state = &_nnScrollableListStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnScrollableListStateCount >= _NN_MAX_SCROLLABLELIST_STATES)
+        {
+            printf("Error: Too many scrollable lists! Increase _NN_MAX_SCROLLABLELIST_STATES.\n");
+            return -1;
+        }
+        state = &_nnScrollableListStates[_nnScrollableListStateCount++];
+        state->id = id;
+        state->selectedIndex = -1;
+        state->scrollOffset = 0;
+    }
+
+    const int itemHeight = nnTextHeight() + 14; // Fixed height for each item
+    int maxVisibleItems = height / itemHeight;  // Calculate how many items can be displayed
+
+    // Ensure the scroll offset and maxVisibleItems are valid
+    if (maxVisibleItems > numItems)
+        maxVisibleItems = numItems; // No need to scroll if all items fit
+    if (state->scrollOffset > numItems - maxVisibleItems)
+        state->scrollOffset = numItems - maxVisibleItems;
+
+    // Get mouse position
+    nnPos mousePos = nnMousePosition();
+
+    // Draw the background of the scrollable list
+    nnColorf bgColor = _nnCurrentTheme.secondaryColor;
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Draw container background
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw container border
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw visible items
+    for (int i = 0; i < maxVisibleItems && (i + state->scrollOffset) < numItems; i++)
+    {
+        int itemIndex = i + state->scrollOffset;
+        int itemY = y + i * itemHeight;
+
+        // Check if the mouse is hovering over the item
+        bool hovering = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, itemY, width, itemHeight});
+
+        // Determine item background color
+        nnColorf itemBgColor;
+        if (itemIndex == state->selectedIndex)
+        {
+            itemBgColor = _nnCurrentTheme.primaryColor; // Selected item color
+        }
+        else
+        {
+            itemBgColor = hovering ? _nnCurrentTheme.secondaryColorAccent : _nnCurrentTheme.secondaryColor;
+        }
+
+        // Draw item background
+        glBegin(GL_QUADS);
+        glColor4f(itemBgColor.r, itemBgColor.g, itemBgColor.b, itemBgColor.a);
+        glVertex2f(x, itemY);
+        glVertex2f(x + width - 1, itemY);
+        glVertex2f(x + width - 1, itemY + itemHeight);
+        glVertex2f(x, itemY + itemHeight);
+        glEnd();
+
+        // Draw item text (truncate if necessary)
+        char truncatedText[256];
+        strncpy(truncatedText, items[itemIndex], sizeof(truncatedText) - 1);
+        truncatedText[sizeof(truncatedText) - 1] = '\0';
+
+        float textWidth = nnTextWidth(truncatedText);
+        if (textWidth > width - 16) // Leave some padding
+        {
+            for (int j = strlen(truncatedText) - 1; j > 0; j--)
+            {
+                truncatedText[j] = '\0';
+                textWidth = nnTextWidth(truncatedText);
+                if (textWidth <= width - 16 - nnTextWidth("..."))
+                {
+                    strcat(truncatedText, "...");
+                    break;
+                }
+            }
+        }
+
+        int textX = x + 8; // Left-align with a margin of 8 pixels
+        int textY = itemY + (itemHeight - nnTextHeight()) / 2;
+        nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+        glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+        nnDrawText(truncatedText, textX, textY);
+
+        // Handle item click
+        if (hovering && nnMouseReleased(0))
+        {
+            state->selectedIndex = itemIndex;
+        }
+    }
+
+    // Handle scrolling with mouse wheel
+    bool hovering = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
+    int wheelDelta = nnMouseWheelDelta();
+    if (hovering && numItems > maxVisibleItems)
+    {
+        if (wheelDelta > 0)
+        {
+            state->scrollOffset = (state->scrollOffset > 0) ? state->scrollOffset - 1 : 0;
+        }
+        else if (wheelDelta < 0)
+        {
+            state->scrollOffset = (state->scrollOffset < numItems - maxVisibleItems) ? state->scrollOffset + 1 : state->scrollOffset;
+        }
+    }
+
+    // Draw scrollbar if necessary
+    if (numItems > maxVisibleItems)
+    {
+        float scrollbarHeight = (float)maxVisibleItems / numItems * height;
+        float scrollbarPosition = (float)state->scrollOffset / numItems * height;
+        int scrollbarX = x + width - 3; // 4px wide scrollbar at the right edge
+        int scrollbarY = y + scrollbarPosition;
+
+        // Draw scrollbar
+        nnColorf scrollbarColor = _nnCurrentTheme.primaryColor;
+        glBegin(GL_QUADS);
+        glColor4f(scrollbarColor.r, scrollbarColor.g, scrollbarColor.b, scrollbarColor.a);
+        glVertex2f(scrollbarX, scrollbarY);
+        glVertex2f(scrollbarX + 3, scrollbarY);
+        glVertex2f(scrollbarX + 3, scrollbarY + scrollbarHeight);
+        glVertex2f(scrollbarX, scrollbarY + scrollbarHeight);
+        glEnd();
+    }
+
+    glDisable(GL_BLEND);
+
+    nnSetColor(nnGetColor());
+
     return state->selectedIndex;
 }
 

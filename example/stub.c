@@ -7,12 +7,18 @@
 void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
+    int mx = nnMousePosition().x;
+    int my = nnMousePosition().y;
 
     // Draw stuff here
+
+    nnDrawDebugText("mx: %d, my: %d", 10, 20, mx, my);
 }
 
 int main()
 {
+    nnSetDebugMode(true);
+
     // Create a window
     if (!nnCreateWindow("NonoGL Example", 800, 600, false, false))
     {

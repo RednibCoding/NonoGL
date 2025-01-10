@@ -11,6 +11,8 @@ nnFont *font;
 void display()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
+    int mx = nnMousePosition().x;
+    int my = nnMousePosition().y;
 
     nnDrawImage(image, 200, 120);
 
@@ -65,19 +67,26 @@ void display()
         printf("Mouse wheel moved down!\n");
     }
 
-    nnPos pos = nnGetMousePosition();
+    nnPos pos = nnMousePosition();
     nnPos motionDelta = nnMouseMotionDelta();
     if (motionDelta.x != 0 || motionDelta.y != 0)
     {
         printf("Mouse moved: %d, %d | %d, %d \n", motionDelta.x, motionDelta.y, pos.x, pos.y);
     }
+
+    nnDrawDebugText("mx: %d, my: %d", 10, 20, mx, my);
 }
 
 int main()
 {
-    bool success = nnCreateWindow("NonoGL Window", 1024, 600, true, false);
-    if (!success)
+    nnSetDebugMode(true);
+
+    // Create a window
+    if (!nnCreateWindow("NonoGL Example", 800, 600, false, false))
+    {
+        printf("Failed to create window.\n");
         return -1;
+    }
 
     font = nnLoadFont("./assets/Roboto-Regular.ttf", 24.0f);
     if (!font)

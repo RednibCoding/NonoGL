@@ -7,6 +7,8 @@
 void render()
 {
     nnSetWindowTitle("NonoGL Window  FPS: %d", nnFPS);
+    int mx = nnMousePosition().x;
+    int my = nnMousePosition().y;
 
     float fillAmount = 0.0f;
 
@@ -25,29 +27,35 @@ void render()
     }
 
     int fillStatePercentage = nnHProgressbar(0, 220, fillAmount, 400, 128, 180);
-    int fillStatePercentage2 = nnHProgressbar(0, 220, fillAmount, 400, 350, 180);
     float textLen = nnTextWidth("Progress %d%%", fillStatePercentage);
     nnVProgressbar(0, 220, fillAmount, 490 + textLen / 2 + 5, 95, 25);
     nnDrawText("Progress %d%%", 490 - textLen / 2, 100, fillStatePercentage);
 
-    bool checked1 = nnCheckbox("Checkbox 1", true, 120, 180);
-    bool checked2 = nnCheckbox("Checkbox 2", true, 120, 250);
+    nnCheckbox("Checkbox 1", true, 120, 180);
 
     float hSliderVal = nnHSlider(0.0f, 100.0f, 50.0f, 5.0f, 120, 220, 200);
     float vSliderVal = nnVSlider(0.0f, 100.0f, 50.0f, 5.0f, 80, 120, 200);
 
     nnDrawText("%.0f", 330, 220, hSliderVal);
     nnDrawText("%.0f", 40, 220 - nnTextHeight() / 2, vSliderVal);
-    nnDrawText("Hello There", 480, 300);
 
     const char *options[] = {"Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6", "Option 7", "Option 8", "Option 9", "Option 10", "Option 11", "Option 12"};
     // const char *options[] = {"Option 1", "Option 2", "Option 3", "Option 4"};
-    int selected1 = nnDropdown("Select Option", options, 12, 400, 160, 150, 30);
-    int selected2 = nnDropdown("Select...", options, 12, 520, 460, 150, 30);
+    nnDropdown("Select Option", options, 12, 400, 160, 150, 30);
+
+    const char *items[] = {
+        "Item 1", "Item 2", "Item 3", "Item 4", "Item 5",
+        "Item 6", "Item 7", "Item 8", "Item 9", "Item 10",
+        "Item 11", "Item 12", "Item 13", "Item 14", "Item 15 Very Long Text"};
+    nnScrollableList(items, 15, 640, 130, 200, 250);
+
+    nnDrawDebugText("mx: %d, my: %d", 10, 20, mx, my);
 }
 
 int main()
 {
+    nnSetDebugMode(true);
+
     // Create a window
     if (!nnCreateWindow("NonoGL Example", 1024, 600, true, false))
     {
