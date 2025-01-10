@@ -337,6 +337,9 @@ unsigned int nnMS;
  * GUI
  */
 
+// A panel element with background color and border. Returns `true` if the mouse is hovering over it, otherwise `false`.
+bool nnPanel(int x, int y, int width, int height);
+
 // Button that returns `true` when it has been clicked.
 bool nnButton(const char *format, int x, int y, int width, int height, ...);
 
@@ -2065,6 +2068,43 @@ bool nnIsDebugMode()
 /*
  * GUI
  */
+
+bool nnPanel(int x, int y, int width, int height)
+{
+    // Define the background and border colors
+    nnColorf bgColor = _nnCurrentTheme.secondaryColor;  // Background color
+    nnColorf borderColor = _nnCurrentTheme.borderColor; // Border color
+
+    nnPos mousePos = nnMousePosition();
+    bool hovered = _nnstate.isAnyPopupOpen ? false : nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
+
+    // Enable blending for transparency
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Draw the background
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw the border
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Disable blending
+    glDisable(GL_BLEND);
+
+    return hovered;
+}
 
 bool nnButton(const char *format, int x, int y, int width, int height, ...)
 {

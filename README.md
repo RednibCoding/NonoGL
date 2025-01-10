@@ -759,6 +759,14 @@ int main()
 
 ### GUI
 
+- **nnPanel**
+
+  ```c
+  bool nnPanel(int x, int y, int width, int height);
+  ```
+
+  A panel element with background color and border. Returns `true` if the mouse is hovering over it, otherwise `false`.
+
 - **nnButton**
 
   ```c
