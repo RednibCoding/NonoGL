@@ -2715,7 +2715,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     }
 
     // Handle scrolling using nnMouseWheelDelta
-    if (state->isOpen)
+    if (state->isOpen && hoveringList)
     {
         int wheelDelta = nnMouseWheelDelta();
         if (drawAbove)
