@@ -3,5 +3,7 @@
     "stb_truetype.h": "c",
     "ngl.h": "c",
     "nn_default_font.h": "c",
+    "stb_image.h": "c",
+    "stdbool.h": "c"
   }
 }

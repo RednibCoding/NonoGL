@@ -775,6 +775,14 @@ int main()
 
   Displays text with an optional border. Wraps text within the defined width and clips it if it exceeds the provided height.
 
+- **nnLabel**
+
+  ```c
+  int nnTextInput(char *buffer, int maxLength, int x, int y, int width, int height, const char *placeholder);
+  ```
+
+  A basic single line text input box.
+
 - **nnButton**
 
   ```c

@@ -10,32 +10,32 @@ void render()
     int mx = nnMousePosition().x;
     int my = nnMousePosition().y;
 
-    if (nnKeyHit('a'))
+    if (nnKeyHit(nnVK_A))
     {
         printf("Key 'A' was just pressed!\n");
     }
 
-    if (nnKeyDown('a'))
+    if (nnKeyDown(nnVK_A))
     {
         printf("Key 'A' is being held down!\n");
     }
 
-    if (nnKeyReleased('a'))
+    if (nnKeyReleased(nnVK_A))
     {
         printf("Key 'A' was just released!\n");
     }
 
-    if (nnMouseHit(0))
+    if (nnMouseHit(nnVK_MOUSE_LEFT))
     {
         printf("Left mouse button was just clicked!\n");
     }
 
-    if (nnMouseDown(0))
+    if (nnMouseDown(nnVK_MOUSE_LEFT))
     {
         printf("Left mouse button is being held down!\n");
     }
 
-    if (nnMouseReleased(0))
+    if (nnMouseReleased(nnVK_MOUSE_LEFT))
     {
         printf("Left mouse button was just released!\n");
     }

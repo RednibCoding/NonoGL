@@ -7,6 +7,7 @@
 #include "internal/include/GL/freeglut.h"
 #include "internal/include/stb_image.h"
 #include "internal/include/stb_truetype.h"
+#include "internal/include/key_definitions.h"
 
 /******************************************************************************************************************************/
 
@@ -343,6 +344,9 @@ bool nnPanel(int x, int y, int width, int height);
 // Displays text with an optional border. Wraps text within the defined width and clips it if it exceeds the provided height.
 void nnLabel(const char *format, int x, int y, int width, int height, bool border, ...);
 
+// A basic single line text input box.
+int nnTextInput(char *buffer, int maxLength, int x, int y, int width, int height, const char *placeholder);
+
 // Button that returns `true` when it has been clicked.
 bool nnButton(const char *format, int x, int y, int width, int height, ...);
 
@@ -389,6 +393,7 @@ int nnScrollableList(const char **items, int numItems, int x, int y, int width, 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "internal/include/stb_truetype.h"
 
+#include "internal/include/key_definitions.h"
 #include "internal/include/default_font.h"
 
 #define _NN_MAX_KEYS 256
@@ -415,9 +420,13 @@ typedef struct
     bool debugMode;
 
     // Keyboard state
-    bool keys[_NN_MAX_KEYS];
-    bool keysPressed[_NN_MAX_KEYS];
-    bool keysReleased[_NN_MAX_KEYS];
+    bool keys[_NN_MAX_KEYS];         // Normal key states
+    bool keysPressed[_NN_MAX_KEYS];  // Normal key pressed states
+    bool keysReleased[_NN_MAX_KEYS]; // Normal key released states
+
+    bool skeys[_NN_MAX_KEYS];         // Special key states
+    bool skeysPressed[_NN_MAX_KEYS];  // Special key pressed states
+    bool skeysReleased[_NN_MAX_KEYS]; // Special key released states
 
     // Mouse state
     bool mouseButtons[_NN_MAX_MOUSE_BUTTONS];
@@ -450,6 +459,22 @@ static nnTheme _nnCurrentTheme = {
     .textPrimaryColor = {0.9f, 0.9f, 0.9f, 1.0f},   // Light Gray
     .textSecondaryColor = {0.4f, 0.4f, 0.4f, 1.0f}, // Dark Gray
 };
+
+#define _NN_TEXT_INPUT_MAX_LENGTH 1024
+#define _NN_MAX_TEXTINPUT_STATES 128
+typedef struct
+{
+    unsigned int id;
+    char text[_NN_TEXT_INPUT_MAX_LENGTH];
+    int cursorIndex;
+    int selectionStart;
+    int selectionEnd;
+    bool hasFocus;
+    float scrollOffsetX; // Horizontal scroll position
+} _nnTextInputState;
+
+static _nnTextInputState _nnTextInputStates[_NN_MAX_TEXTINPUT_STATES];
+static int _nnTextInputStateCount = 0;
 
 typedef struct
 {
@@ -522,12 +547,6 @@ unsigned int _nnGenUID(int x, int y)
     return hash;
 }
 
-// Define custom exit handlers
-static void _customExitFunction(int status)
-{
-    exit(status);
-}
-
 // Wrapper display function that calls the function pointer
 static void _nnDisplayCallbackWrapper()
 {
@@ -546,20 +565,6 @@ static void _nnDisplayCallbackWrapper()
 
     glutSwapBuffers();
     glutMainLoopEvent();
-}
-
-static void _customExitFunctionWithMessage(const char *msg, int status)
-{
-    if (msg)
-    {
-        fprintf(stderr, "%s\n", msg);
-    }
-    exit(status);
-}
-
-static void _nnSpecialKeyCallback(int key, int x, int y)
-{
-    // Handle special keys here
 }
 
 static void _nnSetupOrthoProjection(int width, int height)
@@ -641,7 +646,7 @@ static void _nnTimerCallback(int value)
 
 static void _nnKeyDownCallback(unsigned char key, int x, int y)
 {
-    if (!_nnstate.keys[key])
+    if (!_nnstate.keys[key]) // Normal keys (0-255)
     {
         _nnstate.keysPressed[key] = true;
     }
@@ -652,6 +657,21 @@ static void _nnKeyUpCallback(unsigned char key, int x, int y)
 {
     _nnstate.keys[key] = false;
     _nnstate.keysReleased[key] = true;
+}
+
+static void _nnSpecialKeyCallback(int key, int x, int y)
+{
+    if (!_nnstate.skeys[key]) // Special keys (e.g., GLUT keys)
+    {
+        _nnstate.skeysPressed[key] = true;
+    }
+    _nnstate.skeys[key] = true;
+}
+
+static void _nnSpecialKeyUpCallback(int key, int x, int y)
+{
+    _nnstate.skeys[key] = false;
+    _nnstate.skeysReleased[key] = true;
 }
 
 static void _nnMouseButtonCallback(int button, int state, int x, int y)
@@ -819,6 +839,65 @@ static void _nnDrawTextVA(const char *format, int x, int y, float zIndex, va_lis
     glDisable(GL_BLEND);
 }
 
+// static const char *_nnFetchTextInput()
+// {
+//     static char typedText[1024];
+//     int index = 0;
+
+//     // Clear the buffer before starting
+//     typedText[0] = '\0';
+
+//     // Iterate over printable ASCII characters (32-126)
+//     for (int key = 32; key <= 126; key++)
+//     {
+//         bool pressed = _nnstate.keysPressed[key];
+//         if (pressed) // Check if the key is pressed
+//         {
+//             typedText[index++] = (char)key; // Add the character to the buffer
+//         }
+//     }
+
+//     // Handle backspace
+//     // if (nnKeyHit(8)) // Backspace key code
+//     // {
+//     //     typedText[index++] = '\b'; // Add backspace marker
+//     // }
+
+//     // Handle enter (if needed for a text input)
+//     // if (nnKeyHit(13)) // Enter key code
+//     // {
+//     //     typedText[index++] = '\n'; // Add newline marker
+//     // }
+
+//     // Null-terminate the string
+//     typedText[index] = '\0';
+
+//     return typedText;
+// }
+
+static const char *_nnFetchTextInput()
+{
+    static char typedText[1024];
+    int index = 0;
+
+    // Clear the buffer before starting
+    typedText[0] = '\0';
+
+    // Iterate over printable ASCII characters (32-126)
+    for (int key = 32; key <= 126; key++)
+    {
+        if (_nnstate.keysPressed[key]) // Check only normal keys
+        {
+            typedText[index++] = (char)key; // Add the character to the buffer
+        }
+    }
+
+    // Null-terminate the string
+    typedText[index] = '\0';
+
+    return typedText;
+}
+
 /*******************************************************************************************************/
 /*******************************************************************************************************/
 
@@ -876,11 +955,12 @@ bool nnCreateWindow(char *title, int width, int height, bool virtual, bool filte
     /* Set the callbacks */
     glutKeyboardFunc(_nnKeyDownCallback);
     glutKeyboardUpFunc(_nnKeyUpCallback);
+    glutSpecialFunc(_nnSpecialKeyCallback);
+    glutSpecialUpFunc(_nnSpecialKeyUpCallback);
     glutMouseFunc(_nnMouseButtonCallback);
     glutMouseWheelFunc(_nnMouseWheelFunc);
     glutMotionFunc(_nnMouseMotionFunc);
     glutPassiveMotionFunc(_nnMouseMotionFunc);
-    glutSpecialFunc(_nnSpecialKeyCallback);
     glutReshapeFunc(_nnFramebufferSizeCallback);
 
     /* Set up the orthographic projection */
@@ -1915,19 +1995,44 @@ bool nnCirclesOverlaps(int cx1, int cy1, float circle1Radius, int cx2, int cy2, 
 //// Keyboard Input
 bool nnKeyHit(int key)
 {
-    bool wasPressed = _nnstate.keysPressed[key];
-    return wasPressed;
+    if (key < _NN_MAX_KEYS) // Normal key
+    {
+        return _nnstate.keysPressed[key];
+    }
+    else if (key < _NN_MAX_KEYS + _NN_MAX_KEYS) // Special key
+    {
+        int specialKey = key - _NN_MAX_KEYS; // Map to special key range
+        return _nnstate.skeysPressed[specialKey];
+    }
+    return false; // Invalid key
 }
 
 bool nnKeyDown(int key)
 {
-    return _nnstate.keys[key];
+    if (key < _NN_MAX_KEYS) // Normal key
+    {
+        return _nnstate.keys[key];
+    }
+    else if (key < _NN_MAX_KEYS + _NN_MAX_KEYS) // Special key
+    {
+        int specialKey = key - _NN_MAX_KEYS; // Map to special key range
+        return _nnstate.skeys[specialKey];
+    }
+    return false; // Invalid key
 }
 
 bool nnKeyReleased(int key)
 {
-    bool wasReleased = _nnstate.keysReleased[key];
-    return wasReleased;
+    if (key < _NN_MAX_KEYS) // Normal key
+    {
+        return _nnstate.keysReleased[key];
+    }
+    else if (key < _NN_MAX_KEYS + _NN_MAX_KEYS) // Special key
+    {
+        int specialKey = key - _NN_MAX_KEYS; // Map to special key range
+        return _nnstate.skeysReleased[specialKey];
+    }
+    return false; // Invalid key
 }
 
 //// Mouse Input
@@ -1972,6 +2077,8 @@ void nnFlushKeys()
     {
         _nnstate.keysPressed[key] = false;
         _nnstate.keysReleased[key] = false;
+        _nnstate.skeysPressed[key] = false;
+        _nnstate.skeysReleased[key] = false;
     }
 }
 
@@ -2164,7 +2271,6 @@ void nnLabel(const char *format, int x, int y, int width, int height, bool borde
     while (*current != '\0' && linesDrawn < maxLines)
     {
         // Accumulate words into a line
-        int lineLength = 0;
         int lastBreak = 0;
         bool isLastLine = (linesDrawn == maxLines - 1);
         bool truncated = false;
@@ -2228,78 +2334,281 @@ void nnLabel(const char *format, int x, int y, int width, int height, bool borde
     glDisable(GL_BLEND);
 }
 
-void nnLabel(const char *format, int x, int y, int width, int height, ...)
+int nnTextInput(char *buffer, int maxLength, int x, int y, int width, int height, const char *placeholder)
 {
-    if (!format)
-        return;
+    // Generate a unique ID based on position
+    unsigned int id = _nnGenUID(x, y);
 
-    // Format the text
-    char buffer[1024];
-    va_list args;
-    va_start(args, height);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-
-    // Prepare to draw
-    nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // Split text into words for wrapping
-    const char *current = buffer;
-    char line[256];
-    int lineHeight = nnTextHeight();
-    int maxLines = height / lineHeight;
-
-    int currentY = y;
-    int linesDrawn = 0;
-
-    while (*current != '\0' && linesDrawn < maxLines)
+    // Find or initialize state
+    _nnTextInputState *state = NULL;
+    for (int i = 0; i < _nnTextInputStateCount; i++)
     {
-        // Accumulate words into a line
-        int lineLength = 0;
-        int lastBreak = 0;
-        for (int i = 0; current[i] != '\0'; i++)
+        if (_nnTextInputStates[i].id == id)
         {
-            line[i] = current[i];
-            line[i + 1] = '\0';
+            state = &_nnTextInputStates[i];
+            break;
+        }
+    }
+    if (!state)
+    {
+        if (_nnTextInputStateCount >= _NN_MAX_TEXTINPUT_STATES)
+        {
+            printf("Error: Too many text inputs! Increase _NN_MAX_TEXTINPUT_STATES.\n");
+            return -1;
+        }
+        state = &_nnTextInputStates[_nnTextInputStateCount++];
+        state->id = id;
+        state->cursorIndex = 0;
+        state->selectionStart = 0;
+        state->selectionEnd = 0;
+        state->hasFocus = false;
+        state->scrollOffsetX = 0.0f;
+        state->text[0] = '\0';
 
-            // Break line on spaces or forced newlines
-            if (current[i] == ' ' || current[i] == '\n')
-                lastBreak = i;
+        // Initialize the internal text state with the external buffer if provided
+        if (buffer && buffer[0] != '\0')
+        {
+            strncpy(state->text, buffer, sizeof(state->text) - 1);
+            state->text[sizeof(state->text) - 1] = '\0';
+            state->cursorIndex = strlen(state->text);
+        }
+    }
 
-            // If the line is too wide, break it
-            if (nnTextWidth(line) > width)
+    // Get mouse position and input states
+    nnPos mousePos = nnMousePosition();
+    bool hovering = nnPosRecOverlaps(mousePos.x, mousePos.y, (nnRecf){x, y, width, height});
+
+    // Focus handling
+    if (hovering && nnMouseReleased(0))
+    {
+        state->hasFocus = true;
+    }
+    else if (!hovering && nnMouseReleased(0))
+    {
+        state->hasFocus = false;
+    }
+
+    const int padding = 4;
+
+    // Text input handling (only if focused)
+    if (state->hasFocus)
+    {
+        const char *inputText = _nnFetchTextInput(); // Fetch input text
+        if (inputText && *inputText)
+        {
+            // Insert text at cursor position
+            int inputLength = strlen(inputText);
+            int remainingSpace = maxLength - strlen(state->text) - 1;
+
+            if (inputLength > remainingSpace)
+                inputLength = remainingSpace;
+
+            // Replace selected text or insert at cursor
+            if (state->selectionStart != state->selectionEnd)
             {
-                if (lastBreak == 0) // No break point, force truncation
-                {
-                    line[i] = '\0';
-                    current += i;
-                }
-                else // Break at the last space or newline
-                {
-                    line[lastBreak] = '\0';
-                    current += lastBreak + 1;
-                }
-                break;
+                int selStart = state->selectionStart < state->selectionEnd ? state->selectionStart : state->selectionEnd;
+                int selEnd = state->selectionStart > state->selectionEnd ? state->selectionStart : state->selectionEnd;
+                memmove(&state->text[selStart], &state->text[selEnd], strlen(&state->text[selEnd]) + 1);
+                state->cursorIndex = selStart;
             }
 
-            // Handle end of text
-            if (current[i + 1] == '\0')
+            // Insert new text
+            memmove(&state->text[state->cursorIndex + inputLength], &state->text[state->cursorIndex], strlen(&state->text[state->cursorIndex]) + 1);
+            memcpy(&state->text[state->cursorIndex], inputText, inputLength);
+            state->cursorIndex += inputLength;
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+        }
+
+        // Handle backspace
+        if (nnKeyHit(nnVK_BACKSPACE))
+        {
+            if (state->selectionStart != state->selectionEnd)
             {
-                current += i + 1;
-                break;
+                // Delete selected text
+                int selStart = state->selectionStart < state->selectionEnd ? state->selectionStart : state->selectionEnd;
+                int selEnd = state->selectionStart > state->selectionEnd ? state->selectionStart : state->selectionEnd;
+                memmove(&state->text[selStart], &state->text[selEnd], strlen(&state->text[selEnd]) + 1);
+                state->cursorIndex = selStart;
+            }
+            else if (state->cursorIndex > 0)
+            {
+                // Delete one character
+                memmove(&state->text[state->cursorIndex - 1], &state->text[state->cursorIndex], strlen(&state->text[state->cursorIndex]) + 1);
+                state->cursorIndex--;
+            }
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+        }
+
+        // Handle delete
+        if (nnKeyHit(nnVK_DELETE))
+        {
+            if (state->selectionStart != state->selectionEnd)
+            {
+                // Delete selected text
+                int selStart = state->selectionStart < state->selectionEnd ? state->selectionStart : state->selectionEnd;
+                int selEnd = state->selectionStart > state->selectionEnd ? state->selectionStart : state->selectionEnd;
+                memmove(&state->text[selStart], &state->text[selEnd], strlen(&state->text[selEnd]) + 1);
+                state->cursorIndex = selStart;
+            }
+            else if (state->cursorIndex < strlen(state->text))
+            {
+                // Delete one character to the right of the cursor
+                memmove(&state->text[state->cursorIndex], &state->text[state->cursorIndex + 1], strlen(&state->text[state->cursorIndex + 1]) + 1);
+            }
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+        }
+
+        // Handle arrow keys
+        if (nnKeyHit(nnVK_LEFT) && state->cursorIndex > 0)
+        {
+            state->cursorIndex--;
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+
+            // Ensure the cursor stays visible
+            float cursorX = x + padding + nnTextWidth(&state->text[0]) - nnTextWidth(&state->text[state->cursorIndex]);
+            if (cursorX < x + padding)
+            {
+                state->scrollOffsetX -= nnTextWidth(&state->text[state->cursorIndex]) - nnTextWidth(&state->text[state->cursorIndex - 1]);
+                if (state->scrollOffsetX < 0)
+                    state->scrollOffsetX = 0;
             }
         }
 
-        // Draw the line
-        glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
-        nnDrawText(line, x, currentY);
-        currentY += lineHeight;
-        linesDrawn++;
+        if (nnKeyHit(nnVK_RIGHT) && state->cursorIndex < strlen(state->text))
+        {
+            state->cursorIndex++;
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+
+            // Ensure the cursor stays visible
+            float cursorX = x + padding + nnTextWidth(&state->text[0]) - nnTextWidth(&state->text[state->cursorIndex]);
+            if (cursorX > x + width - padding)
+            {
+                state->scrollOffsetX += nnTextWidth(&state->text[state->cursorIndex]) - nnTextWidth(&state->text[state->cursorIndex - 1]);
+            }
+        }
+
+        // Handle Home/End keys
+        if (nnKeyHit(nnVK_HOME))
+        {
+            state->cursorIndex = 0;
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+            state->scrollOffsetX = 0; // Scroll to the start
+        }
+
+        if (nnKeyHit(nnVK_END))
+        {
+            // Move cursor to the end of the actual text
+            state->cursorIndex = strlen(state->text);
+            state->selectionStart = state->selectionEnd = state->cursorIndex;
+
+            // Scroll to the end of the text
+            float textWidth = nnTextWidth(state->text);
+            if (textWidth > width - padding * 2)
+            {
+                // If the text is wider than the visible width, scroll to the end
+                state->scrollOffsetX = textWidth - (width - padding * 2);
+            }
+            else
+            {
+                // If text fits, no need to scroll
+                state->scrollOffsetX = 0;
+            }
+        }
     }
 
+    // Calculate text width and cursor position
+    float cursorX = x + padding + nnTextWidth(&state->text[0]) - nnTextWidth(&state->text[state->cursorIndex]);
+
+    // Adjust scroll offset for the cursor position
+    if (cursorX < x + padding)
+    {
+        // Cursor is left of the visible area
+        state->scrollOffsetX = nnTextWidth(&state->text[0]) - nnTextWidth(&state->text[state->cursorIndex]) - padding;
+    }
+    else if (cursorX > x + width - padding)
+    {
+        // Cursor is right of the visible area
+        state->scrollOffsetX = nnTextWidth(&state->text[0]) - nnTextWidth(&state->text[state->cursorIndex]) + padding - width;
+    }
+
+    // Draw text input background and border
+    nnColorf bgColor = _nnCurrentTheme.secondaryColor;
+    nnColorf borderColor = state->hasFocus ? _nnCurrentTheme.primaryColor : _nnCurrentTheme.borderColor;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_QUADS);
+    glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+
+    // Draw cursor
+    if (state->hasFocus)
+    {
+        // Calculate the width of the text up to the cursor position
+        float cursorDrawX = x + padding + nnTextWidth(&state->text[0]) - nnTextWidth(&state->text[state->cursorIndex]) - state->scrollOffsetX;
+
+        // Clamp the cursor position to the visible area
+        if (cursorDrawX < x + padding)
+        {
+            cursorDrawX = x + padding;
+        }
+        else if (cursorDrawX > x + width - padding)
+        {
+            cursorDrawX = x + width - padding;
+        }
+
+        // Draw the cursor line
+        glBegin(GL_LINES);
+        glVertex2f(cursorDrawX, y + padding);
+        glVertex2f(cursorDrawX, y + height - padding);
+        glEnd();
+    }
+
+    // Set scissor for clipping
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(x + padding, nnScreenHeight() - (y + height), width - padding * 2, height);
+
+    const char *placeholderText = state->text;
+    const bool hasEnteredText = strlen(state->text) > 0;
+    // Draw placeholder if textbox is empty and placeholder exists
+    if (!hasEnteredText && placeholder)
+    {
+        nnColorf placeholderColor = _nnCurrentTheme.textSecondaryColor;
+        glColor4f(placeholderColor.r, placeholderColor.g, placeholderColor.b, placeholderColor.a);
+        placeholderText = placeholder;
+        nnDrawText(placeholderText, x + 4, y + (height - nnTextHeight()) / 2);
+    }
+    else if (hasEnteredText) // Otherwise the entered text
+    {
+        nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+        glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+        nnDrawText(state->text, x + padding - state->scrollOffsetX, y + (height - nnTextHeight()) / 2);
+    }
+
+    glDisable(GL_SCISSOR_TEST);
     glDisable(GL_BLEND);
+
+    // Sync internal state back to external buffer
+    if (buffer)
+    {
+        strncpy(buffer, state->text, maxLength - 1);
+        buffer[maxLength - 1] = '\0';
+    }
+
+    return state->cursorIndex;
 }
 
 bool nnButton(const char *format, int x, int y, int width, int height, ...)
@@ -2904,7 +3213,7 @@ int nnDropdown(const char *buttonText, const char **options, int numOptions, int
     }
 
     const int maxVisibleOptions = 10;
-    const int optionHeight = nnTextHeight() + 12;
+    // const int optionHeight = nnTextHeight() + 12;
 
     // Initialize the button text with the first option if not initialized
     if (!state->initialized)
