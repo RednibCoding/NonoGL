@@ -767,6 +767,14 @@ int main()
 
   A panel element with background color and border. Returns `true` if the mouse is hovering over it, otherwise `false`.
 
+- **nnLabel**
+
+  ```c
+  void nnLabel(const char *format, int x, int y, int width, int height, bool border, ...);
+  ```
+
+  Displays text with an optional border. Wraps text within the defined width and clips it if it exceeds the provided height.
+
 - **nnButton**
 
   ```c

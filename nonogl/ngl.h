@@ -340,6 +340,9 @@ unsigned int nnMS;
 // A panel element with background color and border. Returns `true` if the mouse is hovering over it, otherwise `false`.
 bool nnPanel(int x, int y, int width, int height);
 
+// Displays text with an optional border. Wraps text within the defined width and clips it if it exceeds the provided height.
+void nnLabel(const char *format, int x, int y, int width, int height, bool border, ...);
+
 // Button that returns `true` when it has been clicked.
 bool nnButton(const char *format, int x, int y, int width, int height, ...);
 
@@ -2104,6 +2107,199 @@ bool nnPanel(int x, int y, int width, int height)
     glDisable(GL_BLEND);
 
     return hovered;
+}
+
+void nnLabel(const char *format, int x, int y, int width, int height, bool border, ...)
+{
+    if (!format)
+        return;
+
+    // Format the text
+    char buffer[1024];
+    va_list args;
+    va_start(args, border);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    // Prepare to draw
+    nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+    nnColorf borderColor = _nnCurrentTheme.borderColor;
+    nnColorf bgColor = _nnCurrentTheme.secondaryColor;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Draw background and border if enabled
+    if (border)
+    {
+        // Draw background
+        glBegin(GL_QUADS);
+        glColor4f(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+        glVertex2f(x, y);
+        glVertex2f(x + width, y);
+        glVertex2f(x + width, y + height);
+        glVertex2f(x, y + height);
+        glEnd();
+
+        // Draw border
+        glColor4f(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(x, y);
+        glVertex2f(x + width, y);
+        glVertex2f(x + width, y + height);
+        glVertex2f(x, y + height);
+        glEnd();
+    }
+
+    // Split text into words for wrapping
+    const char *current = buffer;
+    char line[256];
+    int lineHeight = nnTextHeight() + 12;
+    int padding = 8;
+    int maxLines = (height - padding) / lineHeight;
+
+    int currentY = y;
+    int linesDrawn = 0;
+
+    while (*current != '\0' && linesDrawn < maxLines)
+    {
+        // Accumulate words into a line
+        int lineLength = 0;
+        int lastBreak = 0;
+        bool isLastLine = (linesDrawn == maxLines - 1);
+        bool truncated = false;
+
+        for (int i = 0; current[i] != '\0'; i++)
+        {
+            line[i] = current[i];
+            line[i + 1] = '\0';
+
+            // Break line on spaces or forced newlines
+            if (current[i] == ' ' || current[i] == '\n')
+                lastBreak = i;
+
+            // If the line is too wide, break it
+            if (nnTextWidth(line) > width - padding) // Account for padding
+            {
+                if (lastBreak == 0) // No break point, force truncation
+                {
+                    line[i] = '\0';
+                    current += i;
+                }
+                else // Break at the last space or newline
+                {
+                    line[lastBreak] = '\0';
+                    current += lastBreak + 1;
+                }
+                break;
+            }
+
+            // Handle end of text
+            if (current[i + 1] == '\0')
+            {
+                current += i + 1;
+                break;
+            }
+        }
+
+        // If this is the last line and there's more text, truncate it and add "..."
+        if (isLastLine && *current != '\0')
+        {
+            truncated = true;
+            int len = strlen(line);
+            while (len > 0 && nnTextWidth(line) + nnTextWidth("...") > width - padding)
+            {
+                line[--len] = '\0';
+            }
+            strcat(line, "...");
+        }
+
+        // Draw the line
+        glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+        nnDrawText(line, x + padding, currentY + padding); // Add slight padding
+        currentY += lineHeight;
+        linesDrawn++;
+
+        // Stop drawing if truncated
+        if (truncated)
+            break;
+    }
+
+    glDisable(GL_BLEND);
+}
+
+void nnLabel(const char *format, int x, int y, int width, int height, ...)
+{
+    if (!format)
+        return;
+
+    // Format the text
+    char buffer[1024];
+    va_list args;
+    va_start(args, height);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    // Prepare to draw
+    nnColorf textColor = _nnCurrentTheme.textPrimaryColor;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Split text into words for wrapping
+    const char *current = buffer;
+    char line[256];
+    int lineHeight = nnTextHeight();
+    int maxLines = height / lineHeight;
+
+    int currentY = y;
+    int linesDrawn = 0;
+
+    while (*current != '\0' && linesDrawn < maxLines)
+    {
+        // Accumulate words into a line
+        int lineLength = 0;
+        int lastBreak = 0;
+        for (int i = 0; current[i] != '\0'; i++)
+        {
+            line[i] = current[i];
+            line[i + 1] = '\0';
+
+            // Break line on spaces or forced newlines
+            if (current[i] == ' ' || current[i] == '\n')
+                lastBreak = i;
+
+            // If the line is too wide, break it
+            if (nnTextWidth(line) > width)
+            {
+                if (lastBreak == 0) // No break point, force truncation
+                {
+                    line[i] = '\0';
+                    current += i;
+                }
+                else // Break at the last space or newline
+                {
+                    line[lastBreak] = '\0';
+                    current += lastBreak + 1;
+                }
+                break;
+            }
+
+            // Handle end of text
+            if (current[i + 1] == '\0')
+            {
+                current += i + 1;
+                break;
+            }
+        }
+
+        // Draw the line
+        glColor4f(textColor.r, textColor.g, textColor.b, textColor.a);
+        nnDrawText(line, x, currentY);
+        currentY += lineHeight;
+        linesDrawn++;
+    }
+
+    glDisable(GL_BLEND);
 }
 
 bool nnButton(const char *format, int x, int y, int width, int height, ...)

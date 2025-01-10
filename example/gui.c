@@ -52,6 +52,8 @@ void render()
     nnScrollableList(items, 15, 640, 130, 200, 250);
 
     nnDrawDebugText("mx: %d, my: %d", 10, 20, mx, my);
+
+    nnLabel("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore!", 120, 375, 300, 100, true);
 }
 
 int main()
